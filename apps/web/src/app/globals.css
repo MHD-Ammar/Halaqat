@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Global styles for Halaqat Web
+ *
+ * This file contains base styles and CSS custom properties
+ * for the entire application.
+ */
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 240, 253, 244;
+  --background-end-rgb: 220, 252, 231;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 20, 83, 45;
+    --background-end-rgb: 5, 46, 22;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  min-height: 100vh;
+}
+
+/* Mobile-first responsive utilities */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

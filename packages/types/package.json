@@ -1,0 +1,26 @@
+{
+  "name": "@halaqat/types",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared TypeScript types, DTOs, and interfaces for Halaqat",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "clean": "rimraf dist",
+    "lint": "eslint src --ext .ts"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  }
+}
