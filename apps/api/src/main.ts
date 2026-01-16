@@ -6,7 +6,7 @@
  */
 
 import { NestFactory } from "@nestjs/core";
-import { Logger } from "@nestjs/common";
+import { Logger, ValidationPipe } from "@nestjs/common";
 
 import { AppModule } from "./app.module";
 
@@ -19,6 +19,15 @@ async function bootstrap(): Promise<void> {
 
   // Configure port (3001 to avoid conflict with Next.js on 3000)
   const port = process.env.PORT || 3001;
+
+  // Global validation pipe for DTO validation
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Strip non-whitelisted properties
+      forbidNonWhitelisted: true, // Throw error on unknown properties
+      transform: true, // Auto-transform payloads to DTO instances
+    }),
+  );
 
   // Enable CORS for development
   app.enableCors({

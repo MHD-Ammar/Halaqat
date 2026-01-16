@@ -12,6 +12,8 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { envValidationSchema, typeOrmConfig } from "@/config";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
+import { UsersModule } from "./users/users.module";
+import { AuthModule } from "./auth/auth.module";
 
 @Module({
   imports: [
@@ -28,6 +30,10 @@ import { AppService } from "./app.service";
 
     // TypeORM Database Module
     TypeOrmModule.forRootAsync(typeOrmConfig),
+
+    // Feature Modules
+    UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
