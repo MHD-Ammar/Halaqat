@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useTodaySession, useUpdateAttendance } from "@/hooks/use-today-session";
 import { useUserProfile } from "@/hooks/use-user-profile";
+import { StudentActionSheet } from "@/components/student-action-sheet";
 
 /**
  * Status cycle order for toggling
@@ -131,8 +132,9 @@ export default function DashboardPage() {
       if (nextStatus === originalStatus) {
         // Remove from local changes if back to original
         setLocalChanges((prev) => {
-          const { [studentId]: _, ...rest } = prev;
-          return rest;
+          const newState = { ...prev };
+          delete newState[studentId];
+          return newState;
         });
       } else {
         setLocalChanges((prev) => ({
@@ -297,37 +299,44 @@ export default function DashboardPage() {
           const hasChange = localChanges[attendance.studentId] !== undefined;
 
           return (
-            <Card
+            <StudentActionSheet
               key={attendance.id}
-              className={`transition-all ${hasChange ? "ring-2 ring-primary" : ""}`}
+              student={attendance.student}
+              sessionId={session!.id}
+              circleId={circleId!}
             >
-              <CardContent className="p-4 flex items-center gap-4">
-                {/* Avatar */}
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                  {getInitials(attendance.student.name)}
-                </div>
+              <Card
+                className={`transition-all cursor-pointer hover:shadow-md ${hasChange ? "ring-2 ring-primary" : ""}`}
+              >
+                <CardContent className="p-4 flex items-center gap-4">
+                  {/* Avatar */}
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                    {getInitials(attendance.student.name)}
+                  </div>
 
-                {/* Name */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">
-                    {attendance.student.name}
-                  </p>
-                </div>
+                  {/* Name */}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">
+                      {attendance.student.name}
+                    </p>
+                  </div>
 
-                {/* Status Badge Button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`min-w-[100px] h-11 ${config.bgColor} ${config.color}`}
-                  onClick={() =>
-                    toggleStatus(attendance.studentId, effectiveStatus)
-                  }
-                >
-                  {config.icon}
-                  <span className="ml-2">{config.label}</span>
-                </Button>
-              </CardContent>
-            </Card>
+                  {/* Status Badge Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`min-w-[100px] h-11 ${config.bgColor} ${config.color}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleStatus(attendance.studentId, effectiveStatus);
+                    }}
+                  >
+                    {config.icon}
+                    <span className="ml-2">{config.label}</span>
+                  </Button>
+                </CardContent>
+              </Card>
+            </StudentActionSheet>
           );
         })}
       </div>

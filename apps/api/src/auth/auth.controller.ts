@@ -24,9 +24,14 @@ import { RolesGuard } from "./guards/roles.guard";
 import { Roles } from "./decorators/roles.decorator";
 import { CurrentUser } from "./decorators/current-user.decorator";
 
+import { UsersService } from "../users/users.service";
+
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly usersService: UsersService,
+  ) {}
 
   /**
    * Register a new user
@@ -67,7 +72,8 @@ export class AuthController {
    */
   @Get("profile")
   @UseGuards(JwtAuthGuard)
-  getProfile(@CurrentUser() user: any) {
+  async getProfile(@CurrentUser() currentUser: any) {
+    const user = await this.usersService.findProfile(currentUser.id);
     return {
       message: "Profile retrieved successfully",
       user,

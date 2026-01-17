@@ -39,6 +39,16 @@ export class UsersService {
   }
 
   /**
+   * Find user profile with relations (circles)
+   */
+  async findProfile(id: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { id },
+      relations: ["circles"],
+    });
+  }
+
+  /**
    * Create a new user with hashed password
    * @throws ConflictException if email already exists
    */
