@@ -7,6 +7,7 @@
  */
 
 import { useState, useMemo, useCallback } from "react";
+import Link from "next/link";
 import { Check, X, Clock, AlertCircle, Save, RefreshCw, Users } from "lucide-react";
 import { AttendanceStatus } from "@halaqat/types";
 
@@ -316,9 +317,13 @@ export default function DashboardPage() {
 
                   {/* Name */}
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">
+                    <Link
+                      href={`/students/${attendance.student.id}`}
+                      className="font-medium truncate hover:text-primary hover:underline block"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {attendance.student.name}
-                    </p>
+                    </Link>
                   </div>
 
                   {/* Status Badge Button */}

@@ -82,6 +82,15 @@ export class StudentsController {
   }
 
   /**
+   * Get comprehensive student profile with stats
+   * GET /api/students/:id/profile
+   */
+  @Get(":id/profile")
+  getProfile(@Param("id", ParseUUIDPipe) id: string) {
+    return this.studentsService.getStudentProfile(id);
+  }
+
+  /**
    * Get a single student by ID
    * GET /api/students/:id
    */
@@ -111,3 +120,4 @@ export class StudentsController {
     return this.studentsService.remove(id);
   }
 }
+

@@ -8,3 +8,10 @@ export { useSurahs, type Surah } from "./use-surahs";
 export { useRecordRecitation, type RecordRecitationDto } from "./use-record-recitation";
 export { useAdminStats, type DailyOverview } from "./use-admin-stats";
 export { useTeacherPerformance, type TeacherPerformance } from "./use-teacher-performance";
+export {
+  useStudentProfile,
+  type StudentProfile,
+  type Recitation,
+  type PointTransaction,
+  type AttendanceRecord,
+} from "./use-student-profile";
