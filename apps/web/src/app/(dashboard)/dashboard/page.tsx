@@ -123,7 +123,7 @@ export default function DashboardPage() {
     (studentId: string, currentStatus: AttendanceStatus) => {
       const currentIndex = STATUS_CYCLE.indexOf(currentStatus);
       const nextIndex = (currentIndex + 1) % STATUS_CYCLE.length;
-      const nextStatus = STATUS_CYCLE[nextIndex];
+      const nextStatus = STATUS_CYCLE[nextIndex]!;
 
       // Find the original status from the session data
       const originalStatus = session?.attendances.find(
