@@ -73,6 +73,17 @@ export class StudentsController {
   }
 
   /**
+   * Get unassigned students (no circle)
+   * GET /api/students/unassigned?search=...
+   */
+  @Get("unassigned")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  findUnassigned(@Query("search") search?: string) {
+    return this.studentsService.findUnassigned(search);
+  }
+
+  /**
    * Get students for a specific circle
    * GET /api/students/by-circle/:circleId
    */

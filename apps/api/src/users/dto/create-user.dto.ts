@@ -17,10 +17,9 @@ export class CreateUserDto {
   @MinLength(2, { message: "Full name must be at least 2 characters" })
   fullName!: string;
 
-  @IsOptional()
   @IsString()
   @Matches(/^[0-9+\-\s()]+$/, { message: "Please enter a valid phone number" })
-  phoneNumber?: string;
+  phoneNumber!: string;
 
   @IsOptional()
   @IsEnum(UserRole, { message: "Invalid role. Must be ADMIN, TEACHER, or SUPERVISOR" })

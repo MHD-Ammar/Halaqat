@@ -63,12 +63,12 @@ export class CirclesService {
   }
 
   /**
-   * Get a single circle by ID
+   * Get a single circle by ID with teacher and students
    */
   async findOne(id: string): Promise<Circle> {
     const circle = await this.circlesRepository.findOne({
       where: { id },
-      relations: ["teacher"],
+      relations: ["teacher", "students"],
     });
 
     if (!circle) {

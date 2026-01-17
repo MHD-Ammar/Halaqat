@@ -116,6 +116,26 @@ export class StudentsService {
   }
 
   /**
+   * Get students without a circle assignment (unassigned)
+   * Optionally filter by search term
+   */
+  async findUnassigned(search?: string): Promise<Student[]> {
+    const queryBuilder = this.studentsRepository
+      .createQueryBuilder("student")
+      .where("student.circleId IS NULL")
+      .orderBy("student.name", "ASC")
+      .take(50);
+
+    if (search && search.trim()) {
+      queryBuilder.andWhere("student.name ILIKE :search", {
+        search: `%${search.trim()}%`,
+      });
+    }
+
+    return queryBuilder.getMany();
+  }
+
+  /**
    * Get a single student by ID
    */
   async findOne(id: string): Promise<Student> {

@@ -59,7 +59,7 @@ export class AuthService {
   /**
    * Register a new user
    */
-  async register(email: string, password: string, fullName: string, phoneNumber?: string): Promise<Omit<User, "password">> {
+  async register(email: string, password: string, fullName: string, phoneNumber: string): Promise<Omit<User, "password">> {
     const user = await this.usersService.create({ email, password, fullName, phoneNumber });
     
     // Return user without password

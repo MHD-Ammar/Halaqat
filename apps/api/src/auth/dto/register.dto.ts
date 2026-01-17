@@ -2,7 +2,7 @@
  * Register DTO
  */
 
-import { IsEmail, IsString, MinLength, IsOptional, Matches } from "class-validator";
+import { IsEmail, IsString, MinLength, Matches } from "class-validator";
 
 export class RegisterDto {
   @IsEmail({}, { message: "Please provide a valid email address" })
@@ -16,8 +16,7 @@ export class RegisterDto {
   @MinLength(2, { message: "Full name must be at least 2 characters" })
   fullName!: string;
 
-  @IsOptional()
   @IsString()
   @Matches(/^[0-9+\-\s()]+$/, { message: "Please enter a valid phone number" })
-  phoneNumber?: string;
+  phoneNumber!: string;
 }

@@ -24,10 +24,9 @@ import { authService } from "@/services/auth.service";
 const registerSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  phoneNumber: z.string().optional().refine(
-    (val) => !val || /^[0-9+\-\s()]+$/.test(val),
-    { message: "Please enter a valid phone number" }
-  ),
+  phoneNumber: z.string()
+    .min(10, "Phone number must be at least 10 digits")
+    .regex(/^[0-9+\-\s()]+$/, "Please enter a valid phone number"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -126,10 +125,10 @@ export default function RegisterPage() {
             )}
           </div>
 
-          {/* Phone Number Field (Optional) */}
+          {/* Phone Number Field (Required) */}
           <div className="space-y-2">
             <label htmlFor="phoneNumber" className="text-sm font-medium">
-              Phone Number <span className="text-muted-foreground">(Optional)</span>
+              Phone Number
             </label>
             <Input
               id="phoneNumber"

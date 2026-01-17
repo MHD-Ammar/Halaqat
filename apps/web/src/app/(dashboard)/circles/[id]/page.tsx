@@ -23,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { AddStudentToCircleDialog } from "@/components/add-student-to-circle-dialog";
 import { useCircle } from "@/hooks";
 
 interface PageProps {
@@ -154,11 +155,12 @@ export default function CircleDetailsPage({ params }: PageProps) {
 
       {/* Students List */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
             Students ({circle.students?.length || 0})
           </CardTitle>
+          <AddStudentToCircleDialog circleId={id} />
         </CardHeader>
         <CardContent>
           {circle.students && circle.students.length > 0 ? (
