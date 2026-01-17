@@ -18,6 +18,8 @@ import { CirclesModule } from "./circles/circles.module";
 import { StudentsModule } from "./students/students.module";
 import { CurriculumModule } from "./curriculum/curriculum.module";
 import { SessionsModule } from "./sessions/sessions.module";
+import { PointsModule } from "./points/points.module";
+import { ProgressModule } from "./progress/progress.module";
 
 @Module({
   imports: [
@@ -42,6 +44,8 @@ import { SessionsModule } from "./sessions/sessions.module";
     StudentsModule,
     CurriculumModule,
     SessionsModule,
+    PointsModule,
+    ProgressModule,
   ],
   controllers: [AppController],
   providers: [AppService],

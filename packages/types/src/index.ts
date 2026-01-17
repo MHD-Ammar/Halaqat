@@ -9,3 +9,8 @@
 export { UserRole, isUserRole } from "./UserRole";
 export { Gender, isGender } from "./Gender";
 export { MaterialType, isMaterialType } from "./MaterialType";
+export { AttendanceStatus, isAttendanceStatus } from "./AttendanceStatus";
+export { SessionStatus, isSessionStatus } from "./SessionStatus";
+export { RecitationType, isRecitationType } from "./RecitationType";
+export { RecitationQuality, isRecitationQuality } from "./RecitationQuality";
+export { PointSourceType, isPointSourceType } from "./PointSourceType";

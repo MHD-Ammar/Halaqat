@@ -60,4 +60,10 @@ export class Student extends BaseEntity {
   @Column({ name: "circle_id", type: "uuid", nullable: true })
   @Index()
   circleId!: string | null;
+
+  /**
+   * Total accumulated points for gamification
+   */
+  @Column({ name: "total_points", type: "int", default: 0 })
+  totalPoints!: number;
 }
