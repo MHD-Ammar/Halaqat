@@ -15,6 +15,7 @@ import { AppService } from "./app.service";
 import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
 import { CirclesModule } from "./circles/circles.module";
+import { StudentsModule } from "./students/students.module";
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { CirclesModule } from "./circles/circles.module";
     UsersModule,
     AuthModule,
     CirclesModule,
+    StudentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

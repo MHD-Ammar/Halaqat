@@ -5,11 +5,14 @@
  * Each circle belongs to a teacher and can contain multiple students.
  */
 
-import { Entity, Column, ManyToOne, JoinColumn, Index } from "typeorm";
+import { Entity, Column, ManyToOne, OneToMany, JoinColumn, Index } from "typeorm";
 import { Gender } from "@halaqat/types";
 
 import { BaseEntity } from "../../common/entities/base.entity";
 import { User } from "../../users/entities/user.entity";
+
+// Forward reference to avoid circular dependency
+import type { Student } from "../../students/entities/student.entity";
 
 @Entity("circle")
 export class Circle extends BaseEntity {
@@ -59,4 +62,12 @@ export class Circle extends BaseEntity {
   @Column({ name: "teacher_id", type: "uuid", nullable: true })
   @Index()
   teacherId!: string | null;
+
+  /**
+   * Students enrolled in this circle
+   * Relationship: One Circle -> Many Students
+   */
+  @OneToMany("Student", "circle")
+  students!: Student[];
 }
+
