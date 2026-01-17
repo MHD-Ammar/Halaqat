@@ -65,8 +65,8 @@ export default function LoginPage() {
         description: "You have been logged in successfully.",
       });
 
-      // Redirect to dashboard
-      router.push("/dashboard");
+      // Redirect to home (role-based redirect will forward appropriately)
+      router.push("/");
       router.refresh();
     } catch (error: any) {
       const message = error.response?.data?.message || "Invalid email or password";

@@ -133,12 +133,25 @@ export default function StudentsPage() {
                     >
                       {student.name}
                     </Link>
-                    {student.circle && (
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <BookOpen className="h-3 w-3" />
-                        {student.circle.name}
-                      </div>
-                    )}
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                      {/* Circle */}
+                      {student.circle && (
+                        <div className="flex items-center gap-1">
+                          <BookOpen className="h-3 w-3" />
+                          <span>{student.circle.name}</span>
+                        </div>
+                      )}
+                      {/* Guardian Info */}
+                      {student.guardianName && (
+                        <div className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          <span>
+                            {student.guardianName}
+                            {student.guardianPhone && ` (${student.guardianPhone})`}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Points Badge */}

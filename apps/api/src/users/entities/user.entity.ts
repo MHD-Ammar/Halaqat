@@ -38,6 +38,12 @@ export class User extends BaseEntity {
   fullName!: string;
 
   /**
+   * User's phone number for contact
+   */
+  @Column({ type: "varchar", length: 20 })
+  phoneNumber!: string;
+
+  /**
    * User role determines permissions and access level
    * Uses the shared UserRole enum from @halaqat/types
    */

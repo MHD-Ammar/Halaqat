@@ -24,6 +24,10 @@ import { authService } from "@/services/auth.service";
 const registerSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
+  phoneNumber: z.string().optional().refine(
+    (val) => !val || /^[0-9+\-\s()]+$/.test(val),
+    { message: "Please enter a valid phone number" }
+  ),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -43,6 +47,7 @@ export default function RegisterPage() {
     defaultValues: {
       fullName: "",
       email: "",
+      phoneNumber: "",
       password: "",
     },
   });
@@ -118,6 +123,25 @@ export default function RegisterPage() {
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
+            )}
+          </div>
+
+          {/* Phone Number Field (Optional) */}
+          <div className="space-y-2">
+            <label htmlFor="phoneNumber" className="text-sm font-medium">
+              Phone Number <span className="text-muted-foreground">(Optional)</span>
+            </label>
+            <Input
+              id="phoneNumber"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="+966 50 123 4567"
+              disabled={isLoading}
+              {...register("phoneNumber")}
+            />
+            {errors.phoneNumber && (
+              <p className="text-sm text-destructive">{errors.phoneNumber.message}</p>
             )}
           </div>
 

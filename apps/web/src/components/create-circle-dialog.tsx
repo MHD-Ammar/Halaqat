@@ -4,6 +4,7 @@
  * CreateCircleDialog Component
  *
  * Dialog for creating a new study circle.
+ * Includes required fields: name, teacher, and gender.
  */
 
 import { useState } from "react";
@@ -29,41 +30,80 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useCreateCircle } from "@/hooks";
+import { useCreateCircle, useTeachers } from "@/hooks";
 
-// Validation schema
+/**
+ * Validation schema for circle creation
+ * Requires name, gender, and teacherId
+ */
 const createCircleSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().optional(),
+  gender: z.enum(["MALE", "FEMALE"], {
+    message: "Please select a gender",
+  }),
+  teacherId: z.string().uuid("Please select a teacher"),
 });
 
 type CreateCircleFormData = z.infer<typeof createCircleSchema>;
 
 interface CreateCircleDialogProps {
+  /** Optional custom trigger button */
   children?: React.ReactNode;
 }
 
+/**
+ * Dialog component for creating new study circles
+ *
+ * @example
+ * ```tsx
+ * <CreateCircleDialog />
+ * // Or with custom trigger
+ * <CreateCircleDialog>
+ *   <Button>Add Circle</Button>
+ * </CreateCircleDialog>
+ * ```
+ */
 export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const createMutation = useCreateCircle();
+  const { data: teachers = [], isLoading: teachersLoading } = useTeachers();
 
   const form = useForm<CreateCircleFormData>({
     resolver: zodResolver(createCircleSchema),
     defaultValues: {
       name: "",
       description: "",
+      gender: undefined,
+      teacherId: undefined,
     },
   });
 
+  /**
+   * Handle form submission
+   * Creates a new circle and closes the dialog on success
+   */
   const onSubmit = async (data: CreateCircleFormData) => {
     try {
-      await createMutation.mutateAsync(data);
-      
+      await createMutation.mutateAsync({
+        name: data.name,
+        description: data.description,
+        gender: data.gender,
+        teacherId: data.teacherId,
+      });
+
       toast({
         title: "Circle created!",
         description: `${data.name} has been created successfully.`,
@@ -71,12 +111,16 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
 
       setOpen(false);
       form.reset();
-    } catch (error: any) {
-      const message = error.response?.data?.message || "Failed to create circle";
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to create circle. Please try again.";
+      
       toast({
         variant: "destructive",
         title: "Error",
-        description: message,
+        description: errorMessage,
       });
     }
   };
@@ -100,6 +144,7 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Circle Name */}
             <FormField
               control={form.control}
               name="name"
@@ -117,6 +162,77 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
                 </FormItem>
               )}
             />
+
+            {/* Teacher Selection */}
+            <FormField
+              control={form.control}
+              name="teacherId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Teacher</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={createMutation.isPending || teachersLoading}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={
+                            teachersLoading
+                              ? "Loading teachers..."
+                              : "Select a teacher"
+                          }
+                        />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {teachers.length === 0 && !teachersLoading ? (
+                        <SelectItem value="_none" disabled>
+                          No teachers available
+                        </SelectItem>
+                      ) : (
+                        teachers.map((teacher) => (
+                          <SelectItem key={teacher.id} value={teacher.id}>
+                            {teacher.fullName}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Gender Selection */}
+            <FormField
+              control={form.control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Gender</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={createMutation.isPending}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="MALE">Male</SelectItem>
+                      <SelectItem value="FEMALE">Female</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Description (Optional) */}
             <FormField
               control={form.control}
               name="description"
@@ -135,6 +251,7 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
                 </FormItem>
               )}
             />
+
             <DialogFooter>
               <Button
                 type="button"

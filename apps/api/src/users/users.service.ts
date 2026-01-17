@@ -67,8 +67,27 @@ export class UsersService {
       email: dto.email,
       password: hashedPassword,
       fullName: dto.fullName,
+      phoneNumber: dto.phoneNumber,
+      role: dto.role, // Defaults to TEACHER via entity
     });
 
     return this.userRepository.save(user);
+  }
+
+  /**
+   * Find all users with optional role filter
+   * @param role - Optional role to filter by
+   * @returns Array of users (without password)
+   */
+  async findAll(role?: string): Promise<User[]> {
+    const query = this.userRepository.createQueryBuilder("user")
+      .select(["user.id", "user.email", "user.fullName", "user.role", "user.createdAt"])
+      .orderBy("user.fullName", "ASC");
+    
+    if (role) {
+      query.where("user.role = :role", { role });
+    }
+
+    return query.getMany();
   }
 }

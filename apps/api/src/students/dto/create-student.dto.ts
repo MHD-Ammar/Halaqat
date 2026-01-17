@@ -55,4 +55,18 @@ export class CreateStudentDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  /**
+   * Guardian/Parent name (optional)
+   */
+  @IsString()
+  @IsOptional()
+  guardianName?: string;
+
+  /**
+   * Guardian/Parent phone number (optional)
+   */
+  @IsString()
+  @IsOptional()
+  guardianPhone?: string;
 }

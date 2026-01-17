@@ -43,6 +43,18 @@ export class Student extends BaseEntity {
   notes!: string | null;
 
   /**
+   * Guardian/Parent name (optional)
+   */
+  @Column({ name: "guardian_name", type: "varchar", nullable: true })
+  guardianName!: string | null;
+
+  /**
+   * Guardian/Parent phone number (optional)
+   */
+  @Column({ name: "guardian_phone", type: "varchar", nullable: true })
+  guardianPhone!: string | null;
+
+  /**
    * The circle this student belongs to
    * Relationship: Many Students -> One Circle
    */

@@ -27,7 +27,8 @@ export interface Circle {
 export interface CreateCircleDto {
   name: string;
   description?: string;
-  teacherId?: string;
+  gender: "MALE" | "FEMALE";
+  teacherId: string;
 }
 
 /**

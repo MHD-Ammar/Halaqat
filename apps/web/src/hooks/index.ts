@@ -33,3 +33,7 @@ export {
   type PaginatedStudents,
 } from "./use-students";
 export { useAuth, type AuthUser, type UserRole } from "./use-auth";
+export { useTeachers, type Teacher } from "./use-teachers";
+export { useCircle, type CircleDetails, type CircleStudent } from "./use-circle";
+export { useCreateTeacher } from "./use-create-teacher";
+

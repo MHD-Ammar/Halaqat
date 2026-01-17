@@ -3,9 +3,9 @@ import { DataSource } from "typeorm";
 import { User } from "../apps/api/src/users/entities/user.entity";
 import { Circle } from "../apps/api/src/circles/entities/circle.entity";
 import { Student } from "../apps/api/src/students/entities/student.entity";
-import { UserRole } from "./packages/types/src/UserRole";
 import * as dotenv from "dotenv";
 import * as bcrypt from "bcrypt";
+import { UserRole } from "@halaqat/types";
 
 // Load env vars
 dotenv.config();

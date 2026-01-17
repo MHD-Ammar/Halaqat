@@ -20,6 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatsCard } from "@/components/stats-card";
+import { CreateTeacherDialog } from "@/components/create-teacher-dialog";
 import { useAdminStats, useTeacherPerformance } from "@/hooks";
 
 /**
@@ -94,11 +95,12 @@ export default function AdminDashboardPage() {
 
       {/* Teachers Table */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
             Teacher Performance
           </CardTitle>
+          <CreateTeacherDialog />
         </CardHeader>
         <CardContent>
           {teachersLoading ? (

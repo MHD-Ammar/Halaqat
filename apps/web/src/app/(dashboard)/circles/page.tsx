@@ -106,7 +106,7 @@ export default function CirclesPage() {
                     </div>
                     <div>
                       <Link
-                        href={`/dashboard/circle/${circle.id}`}
+                        href={`/circles/${circle.id}`}
                         className="font-semibold hover:text-primary hover:underline"
                       >
                         {circle.name}
