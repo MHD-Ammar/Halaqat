@@ -5,10 +5,14 @@
  * Uses the shared UserRole enum from @halaqat/types.
  */
 
-import { Entity, Column, Index } from "typeorm";
+import { Entity, Column, Index, OneToMany } from "typeorm";
 import { UserRole } from "@halaqat/types";
+import { Exclude } from "class-transformer";
 
 import { BaseEntity } from "../../common/entities/base.entity";
+
+// Forward reference to avoid circular dependency
+import type { Circle } from "../../circles/entities/circle.entity";
 
 @Entity("user")
 export class User extends BaseEntity {
@@ -21,8 +25,10 @@ export class User extends BaseEntity {
 
   /**
    * Hashed password (never store plain text passwords!)
+   * Excluded from serialization for security
    */
   @Column()
+  @Exclude({ toPlainOnly: true })
   password!: string;
 
   /**
@@ -49,4 +55,11 @@ export class User extends BaseEntity {
   @Column({ type: "uuid", nullable: true })
   @Index()
   mosqueId!: string | null;
+
+  /**
+   * Circles that this teacher leads
+   * Relationship: One Teacher -> Many Circles
+   */
+  @OneToMany("Circle", "teacher")
+  circles!: Circle[];
 }

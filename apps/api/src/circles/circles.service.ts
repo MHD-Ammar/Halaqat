@@ -1,0 +1,143 @@
+/**
+ * Circles Service
+ *
+ * Business logic for managing study circles.
+ */
+
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { UserRole } from "@halaqat/types";
+
+import { Circle } from "./entities/circle.entity";
+import { CreateCircleDto } from "./dto/create-circle.dto";
+import { UpdateCircleDto } from "./dto/update-circle.dto";
+import { User } from "../users/entities/user.entity";
+
+@Injectable()
+export class CirclesService {
+  constructor(
+    @InjectRepository(Circle)
+    private circlesRepository: Repository<Circle>,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+  ) {}
+
+  /**
+   * Create a new circle and assign it to a teacher
+   */
+  async create(createCircleDto: CreateCircleDto): Promise<Circle> {
+    const { teacherId, ...circleData } = createCircleDto;
+
+    // Verify teacher exists and has TEACHER role
+    const teacher = await this.usersRepository.findOne({
+      where: { id: teacherId },
+    });
+
+    if (!teacher) {
+      throw new NotFoundException(`Teacher with ID ${teacherId} not found`);
+    }
+
+    if (teacher.role !== UserRole.TEACHER) {
+      throw new BadRequestException(
+        `User with ID ${teacherId} is not a teacher`,
+      );
+    }
+
+    const circle = this.circlesRepository.create({
+      ...circleData,
+      teacherId,
+    });
+
+    return this.circlesRepository.save(circle);
+  }
+
+  /**
+   * Get all circles with teacher information
+   */
+  async findAll(): Promise<Circle[]> {
+    return this.circlesRepository.find({
+      relations: ["teacher"],
+      order: { createdAt: "DESC" },
+    });
+  }
+
+  /**
+   * Get a single circle by ID
+   */
+  async findOne(id: string): Promise<Circle> {
+    const circle = await this.circlesRepository.findOne({
+      where: { id },
+      relations: ["teacher"],
+    });
+
+    if (!circle) {
+      throw new NotFoundException(`Circle with ID ${id} not found`);
+    }
+
+    return circle;
+  }
+
+  /**
+   * Get circles assigned to a specific teacher
+   */
+  async findMyCircles(teacherId: string): Promise<Circle[]> {
+    return this.circlesRepository.find({
+      where: { teacherId },
+      relations: ["teacher"],
+      order: { name: "ASC" },
+    });
+  }
+
+  /**
+   * Update a circle
+   */
+  async update(id: string, updateCircleDto: UpdateCircleDto): Promise<Circle> {
+    const circle = await this.findOne(id);
+
+    // If teacherId is being updated, verify the new teacher
+    if (updateCircleDto.teacherId) {
+      const teacher = await this.usersRepository.findOne({
+        where: { id: updateCircleDto.teacherId },
+      });
+
+      if (!teacher) {
+        throw new NotFoundException(
+          `Teacher with ID ${updateCircleDto.teacherId} not found`,
+        );
+      }
+
+      if (teacher.role !== UserRole.TEACHER) {
+        throw new BadRequestException(
+          `User with ID ${updateCircleDto.teacherId} is not a teacher`,
+        );
+      }
+    }
+
+    Object.assign(circle, updateCircleDto);
+    return this.circlesRepository.save(circle);
+  }
+
+  /**
+   * Soft delete a circle
+   */
+  async remove(id: string): Promise<void> {
+    const circle = await this.findOne(id);
+    await this.circlesRepository.softRemove(circle);
+  }
+
+  /**
+   * Validate that a circle belongs to a specific teacher
+   * Useful for authorization checks
+   */
+  async validateCircleOwnership(
+    circleId: string,
+    teacherId: string,
+  ): Promise<boolean> {
+    const circle = await this.circlesRepository.findOne({
+      where: { id: circleId, teacherId },
+    });
+
+    return !!circle;
+  }
+}

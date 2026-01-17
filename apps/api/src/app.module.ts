@@ -14,6 +14,7 @@ import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
+import { CirclesModule } from "./circles/circles.module";
 
 @Module({
   imports: [
@@ -34,8 +35,10 @@ import { AuthModule } from "./auth/auth.module";
     // Feature Modules
     UsersModule,
     AuthModule,
+    CirclesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
+
