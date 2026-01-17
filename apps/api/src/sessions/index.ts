@@ -1,0 +1,5 @@
+/**
+ * Sessions Module - Barrel Export
+ */
+
+export * from "./entities";

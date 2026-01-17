@@ -17,6 +17,7 @@ import { AuthModule } from "./auth/auth.module";
 import { CirclesModule } from "./circles/circles.module";
 import { StudentsModule } from "./students/students.module";
 import { CurriculumModule } from "./curriculum/curriculum.module";
+import { SessionsModule } from "./sessions/sessions.module";
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { CurriculumModule } from "./curriculum/curriculum.module";
     CirclesModule,
     StudentsModule,
     CurriculumModule,
+    SessionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
