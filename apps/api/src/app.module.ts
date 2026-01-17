@@ -20,6 +20,7 @@ import { CurriculumModule } from "./curriculum/curriculum.module";
 import { SessionsModule } from "./sessions/sessions.module";
 import { PointsModule } from "./points/points.module";
 import { ProgressModule } from "./progress/progress.module";
+import { AnalyticsModule } from "./analytics/analytics.module";
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { ProgressModule } from "./progress/progress.module";
     SessionsModule,
     PointsModule,
     ProgressModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -174,4 +174,109 @@ export class StudentsService {
       where: { circleId },
     });
   }
+
+  /**
+   * Get comprehensive student profile with aggregated stats
+   */
+  async getStudentProfile(id: string): Promise<{
+    student: Student;
+    stats: {
+      attendanceRate: number;
+      totalRecitations: number;
+      totalPoints: number;
+    };
+    recentActivity: any[];
+    pointsHistory: any[];
+    attendanceHistory: any[];
+  }> {
+    const student = await this.findOne(id);
+
+    // Parallel queries for all aggregated data
+    const [attendanceData, recitations, pointsHistory] = await Promise.all([
+      // Attendance stats
+      this.studentsRepository.manager
+        .createQueryBuilder()
+        .select("COUNT(*)", "total")
+        .addSelect(
+          "SUM(CASE WHEN a.status = 'PRESENT' THEN 1 ELSE 0 END)",
+          "present"
+        )
+        .from("attendance", "a")
+        .where("a.student_id = :studentId", { studentId: id })
+        .getRawOne(),
+
+      // Recent recitations (last 10)
+      this.studentsRepository.manager
+        .createQueryBuilder()
+        .select([
+          "r.id",
+          "r.type",
+          "r.quality",
+          "r.start_verse as startVerse",
+          "r.end_verse as endVerse",
+          "r.created_at as createdAt",
+          "s.name_english as surahName",
+          "s.name_arabic as surahNameArabic",
+        ])
+        .from("recitation", "r")
+        .leftJoin("surah", "s", "s.id = r.surah_id")
+        .where("r.student_id = :studentId", { studentId: id })
+        .orderBy("r.created_at", "DESC")
+        .limit(10)
+        .getRawMany(),
+
+      // Points history (last 10)
+      this.studentsRepository.manager
+        .createQueryBuilder()
+        .select([
+          "pt.id",
+          "pt.amount",
+          "pt.reason",
+          "pt.source_type as sourceType",
+          "pt.created_at as createdAt",
+        ])
+        .from("point_transaction", "pt")
+        .where("pt.student_id = :studentId", { studentId: id })
+        .orderBy("pt.created_at", "DESC")
+        .limit(10)
+        .getRawMany(),
+    ]);
+
+    // Attendance history (last 20)
+    const attendanceHistory = await this.studentsRepository.manager
+      .createQueryBuilder()
+      .select([
+        "a.id",
+        "a.status",
+        "a.created_at as createdAt",
+        "sess.date as sessionDate",
+      ])
+      .from("attendance", "a")
+      .leftJoin("session", "sess", "sess.id = a.session_id")
+      .where("a.student_id = :studentId", { studentId: id })
+      .orderBy("sess.date", "DESC")
+      .limit(20)
+      .getRawMany();
+
+    // Calculate stats
+    const totalAttendances = parseInt(attendanceData?.total || "0", 10);
+    const presentCount = parseInt(attendanceData?.present || "0", 10);
+    const attendanceRate =
+      totalAttendances > 0
+        ? Math.round((presentCount / totalAttendances) * 100)
+        : 0;
+
+    return {
+      student,
+      stats: {
+        attendanceRate,
+        totalRecitations: recitations.length,
+        totalPoints: student.totalPoints,
+      },
+      recentActivity: recitations,
+      pointsHistory,
+      attendanceHistory,
+    };
+  }
 }
+
