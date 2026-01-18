@@ -8,14 +8,25 @@
 
 import { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { Check, X, Clock, AlertCircle, Save, RefreshCw, Users } from "lucide-react";
+import {
+  Check,
+  X,
+  Clock,
+  AlertCircle,
+  Save,
+  RefreshCw,
+  Users,
+} from "lucide-react";
 import { AttendanceStatus } from "@halaqat/types";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { useTodaySession, useUpdateAttendance } from "@/hooks/use-today-session";
+import {
+  useTodaySession,
+  useUpdateAttendance,
+} from "@/hooks/use-today-session";
 import { useUserProfile } from "@/hooks/use-user-profile";
 import { StudentActionSheet } from "@/components/student-action-sheet";
 
@@ -88,10 +99,10 @@ function getInitials(name: string): string {
 
 export default function DashboardPage() {
   const { toast } = useToast();
-  
+
   // Get user profile to find their circle
   const { data: profile, isLoading: profileLoading } = useUserProfile();
-  
+
   // For demo purposes, use first circle if available
   // In production, you might let the teacher select their circle
   const circleId = profile?.circles?.[0]?.id;
@@ -115,7 +126,7 @@ export default function DashboardPage() {
   // Calculate if there are unsaved changes
   const hasChanges = useMemo(
     () => Object.keys(localChanges).length > 0,
-    [localChanges]
+    [localChanges],
   );
 
   // Toggle attendance status for a student
@@ -127,7 +138,7 @@ export default function DashboardPage() {
 
       // Find the original status from the session data
       const originalStatus = session?.attendances.find(
-        (a) => a.studentId === studentId
+        (a) => a.studentId === studentId,
       )?.status;
 
       if (nextStatus === originalStatus) {
@@ -144,7 +155,7 @@ export default function DashboardPage() {
         }));
       }
     },
-    [session?.attendances]
+    [session?.attendances],
   );
 
   // Get effective status (local change or original)
@@ -152,7 +163,7 @@ export default function DashboardPage() {
     (studentId: string, originalStatus: AttendanceStatus): AttendanceStatus => {
       return localChanges[studentId] ?? originalStatus;
     },
-    [localChanges]
+    [localChanges],
   );
 
   // Save changes
@@ -180,7 +191,8 @@ export default function DashboardPage() {
 
   // Calculate stats
   const stats = useMemo(() => {
-    if (!session?.attendances) return { total: 0, present: 0, absent: 0, late: 0 };
+    if (!session?.attendances)
+      return { total: 0, present: 0, absent: 0, late: 0 };
 
     const attendances = session.attendances.map((a) => ({
       ...a,
@@ -193,7 +205,8 @@ export default function DashboardPage() {
         .length,
       absent: attendances.filter((a) => a.status === AttendanceStatus.ABSENT)
         .length,
-      late: attendances.filter((a) => a.status === AttendanceStatus.LATE).length,
+      late: attendances.filter((a) => a.status === AttendanceStatus.LATE)
+        .length,
     };
   }, [session?.attendances, getEffectiveStatus]);
 
@@ -224,7 +237,8 @@ export default function DashboardPage() {
             <Users className="w-12 h-12 text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold mb-2">No Circle Assigned</h2>
             <p className="text-muted-foreground">
-              You don&apos;t have any circles assigned yet. Please contact an admin.
+              You don&apos;t have any circles assigned yet. Please contact an
+              admin.
             </p>
           </CardContent>
         </Card>
@@ -239,7 +253,9 @@ export default function DashboardPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <AlertCircle className="w-12 h-12 text-destructive mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Failed to Load Session</h2>
+            <h2 className="text-xl font-semibold mb-2">
+              Failed to Load Session
+            </h2>
             <p className="text-muted-foreground mb-4">
               Something went wrong while loading today&apos;s session.
             </p>
@@ -294,7 +310,7 @@ export default function DashboardPage() {
         {session?.attendances.map((attendance) => {
           const effectiveStatus = getEffectiveStatus(
             attendance.studentId,
-            attendance.status
+            attendance.status,
           );
           const config = STATUS_CONFIG[effectiveStatus];
           const hasChange = localChanges[attendance.studentId] !== undefined;
@@ -309,21 +325,27 @@ export default function DashboardPage() {
               <Card
                 className={`transition-all cursor-pointer hover:shadow-md ${hasChange ? "ring-2 ring-primary" : ""}`}
               >
-                <CardContent className="p-4 flex items-center gap-4">
-                  {/* Avatar */}
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                    {getInitials(attendance.student.name)}
-                  </div>
-
-                  {/* Name */}
-                  <div className="flex-1 min-w-0">
+                <CardContent className="p-4 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    {/* Avatar - Links to student profile */}
                     <Link
                       href={`/students/${attendance.student.id}`}
-                      className="font-medium truncate hover:text-primary hover:underline block"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {attendance.student.name}
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold hover:bg-primary/20 transition-colors">
+                        {getInitials(attendance.student.name)}
+                      </div>
                     </Link>
+                    {/* Name - Links to student profile */}
+                    <div className="min-w-0">
+                      <Link
+                        href={`/students/${attendance.student.id}`}
+                        className="font-medium truncate hover:text-primary hover:underline block"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {attendance.student.name}
+                      </Link>
+                    </div>
                   </div>
 
                   {/* Status Badge Button */}

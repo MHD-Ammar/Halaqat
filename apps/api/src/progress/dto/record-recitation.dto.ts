@@ -1,7 +1,7 @@
 /**
  * Record Recitation DTO
  *
- * Data transfer object for recording a student's recitation.
+ * Data transfer object for recording a single page recitation.
  */
 
 import {
@@ -29,26 +29,12 @@ export class RecordRecitationDto {
   sessionId!: string;
 
   /**
-   * ID of the Surah recited
+   * Madinah Mushaf page number (1-604)
    */
   @IsInt()
   @Min(1)
-  @Max(114)
-  surahId!: number;
-
-  /**
-   * Starting verse number
-   */
-  @IsInt()
-  @Min(1)
-  startVerse!: number;
-
-  /**
-   * Ending verse number
-   */
-  @IsInt()
-  @Min(1)
-  endVerse!: number;
+  @Max(604)
+  pageNumber!: number;
 
   /**
    * Type of recitation
@@ -63,7 +49,7 @@ export class RecordRecitationDto {
   quality!: RecitationQuality;
 
   /**
-   * Number of mistakes
+   * Number of mistakes (optional)
    */
   @IsInt()
   @Min(0)

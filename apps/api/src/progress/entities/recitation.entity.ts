@@ -2,6 +2,7 @@
  * Recitation Entity
  *
  * Records a student's Quran recitation during a session.
+ * Tracks pages from Madinah Mushaf (1-604).
  */
 
 import { Entity, Column, ManyToOne, JoinColumn, Index } from "typeorm";
@@ -33,16 +34,11 @@ export class Recitation extends BaseEntity {
   quality!: RecitationQuality;
 
   /**
-   * Starting verse number
+   * Madinah Mushaf page number (1-604)
    */
-  @Column({ name: "start_verse", type: "int" })
-  startVerse!: number;
-
-  /**
-   * Ending verse number
-   */
-  @Column({ name: "end_verse", type: "int" })
-  endVerse!: number;
+  @Column({ name: "page_number", type: "int" })
+  @Index()
+  pageNumber!: number;
 
   /**
    * Number of mistakes made
@@ -89,16 +85,15 @@ export class Recitation extends BaseEntity {
   sessionId!: string;
 
   /**
-   * The Surah being recited
+   * Optional: The Surah being recited (metadata only)
    */
-  @ManyToOne(() => Surah)
+  @ManyToOne(() => Surah, { nullable: true })
   @JoinColumn({ name: "surah_id" })
-  surah!: Surah;
+  surah!: Surah | null;
 
   /**
-   * Foreign key for the Surah
+   * Foreign key for the Surah (optional metadata)
    */
-  @Column({ name: "surah_id", type: "int" })
-  @Index()
-  surahId!: number;
+  @Column({ name: "surah_id", type: "int", nullable: true })
+  surahId!: number | null;
 }

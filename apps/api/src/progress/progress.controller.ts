@@ -2,6 +2,7 @@
  * Progress Controller
  *
  * REST API endpoints for recording and viewing recitations.
+ * Uses Madinah Mushaf pages (1-604) for tracking.
  */
 
 import {
@@ -18,6 +19,7 @@ import {
 
 import { ProgressService } from "./progress.service";
 import { RecordRecitationDto } from "./dto/record-recitation.dto";
+import { BulkRecitationDto } from "./dto/bulk-recitation.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
 @Controller("progress")
@@ -27,12 +29,21 @@ export class ProgressController {
   constructor(private readonly progressService: ProgressService) {}
 
   /**
-   * Record a student recitation (auto-awards points)
+   * Record a single page recitation (auto-awards points)
    * POST /api/progress/recitations
    */
   @Post("recitations")
   recordRecitation(@Body() dto: RecordRecitationDto) {
     return this.progressService.recordRecitation(dto);
+  }
+
+  /**
+   * Record multiple pages in bulk (each page gets separate points)
+   * POST /api/progress/recitations/bulk
+   */
+  @Post("recitations/bulk")
+  recordBulkRecitation(@Body() dto: BulkRecitationDto) {
+    return this.progressService.recordBulkRecitation(dto);
   }
 
   /**
@@ -64,5 +75,14 @@ export class ProgressController {
     @Param("sessionId", ParseUUIDPipe) sessionId: string,
   ) {
     return this.progressService.getSessionRecitations(sessionId);
+  }
+
+  /**
+   * Get total distinct pages memorized by a student
+   * GET /api/progress/students/:studentId/total-pages
+   */
+  @Get("students/:studentId/total-pages")
+  getTotalPages(@Param("studentId", ParseUUIDPipe) studentId: string) {
+    return this.progressService.getTotalPagesMemorized(studentId);
   }
 }

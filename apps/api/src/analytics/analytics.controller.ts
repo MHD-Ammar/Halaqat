@@ -11,6 +11,7 @@ import { AnalyticsService } from "./analytics.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
 
 @Controller("analytics")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -27,6 +28,20 @@ export class AnalyticsController {
     const data = await this.analyticsService.getDailyOverview();
     return {
       message: "Daily overview retrieved successfully",
+      data,
+    };
+  }
+
+  /**
+   * GET /analytics/my-overview
+   * Returns daily statistics for the current teacher's circles only
+   */
+  @Get("my-overview")
+  @Roles(UserRole.TEACHER)
+  async getMyOverview(@CurrentUser() user: { sub: string }) {
+    const data = await this.analyticsService.getTeacherStats(user.sub);
+    return {
+      message: "Teacher overview retrieved successfully",
       data,
     };
   }

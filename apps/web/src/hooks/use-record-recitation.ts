@@ -3,60 +3,61 @@
 /**
  * useRecordRecitation Hook
  *
- * Mutation hook for recording a student's recitation.
+ * Mutation hook for recording bulk page recitations.
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { RecitationType, RecitationQuality } from "@halaqat/types";
 import api from "@/lib/api";
+import { RecitationType, RecitationQuality } from "@halaqat/types";
 
-interface RecordRecitationDto {
-  studentId: string;
-  sessionId: string;
-  surahId: number;
-  startVerse: number;
-  endVerse: number;
-  type: RecitationType;
+/**
+ * Single page recitation detail
+ */
+export interface PageDetail {
+  pageNumber: number;
   quality: RecitationQuality;
-  mistakesCount?: number;
-  notes?: string;
-}
-
-interface RecitationResponse {
-  id: string;
-  studentId: string;
-  sessionId: string;
-  surahId: number;
-  startVerse: number;
-  endVerse: number;
   type: RecitationType;
-  quality: RecitationQuality;
-  mistakesCount: number;
 }
 
 /**
- * Record a new recitation
+ * Bulk recitation request DTO
  */
-export function useRecordRecitation(circleId: string | undefined) {
+export interface BulkRecitationDto {
+  studentId: string;
+  sessionId: string;
+  details: PageDetail[];
+}
+
+/**
+ * Bulk recitation response
+ */
+interface BulkRecitationResponse {
+  recitations: unknown[];
+  totalPointsAwarded: number;
+  pageCount: number;
+}
+
+/**
+ * Hook for recording bulk page recitations
+ */
+export function useRecordRecitation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: RecordRecitationDto) => {
-      const response = await api.post<RecitationResponse>(
-        "/progress/recitations",
-        data
+    mutationFn: async (dto: BulkRecitationDto) => {
+      const response = await api.post<BulkRecitationResponse>(
+        "/progress/recitations/bulk",
+        dto
       );
       return response.data;
     },
-    onSuccess: () => {
-      // Invalidate session query to refresh attendance and points
-      if (circleId) {
-        queryClient.invalidateQueries({
-          queryKey: ["session", "today", circleId],
-        });
-      }
+    onSuccess: (_, variables) => {
+      // Invalidate student-related queries
+      queryClient.invalidateQueries({ queryKey: ["student", "profile", variables.studentId] });
+      queryClient.invalidateQueries({ queryKey: ["session"] });
+      queryClient.invalidateQueries({ queryKey: ["recitations"] });
     },
   });
 }
 
-export type { RecordRecitationDto };
+export type { BulkRecitationResponse as RecordRecitationResult };

@@ -21,7 +21,12 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatsCard } from "@/components/stats-card";
 import { CreateTeacherDialog } from "@/components/create-teacher-dialog";
-import { useAdminStats, useTeacherPerformance } from "@/hooks";
+import {
+  useAdminStats,
+  useTeacherPerformance,
+  useAuth,
+  useTeacherStats,
+} from "@/hooks";
 
 /**
  * Format date for display
@@ -47,17 +52,31 @@ function daysAgo(dateString: string | null): number {
 }
 
 export default function AdminDashboardPage() {
-  const { data: stats, isLoading: statsLoading } = useAdminStats();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERVISOR";
+
+  // Use different stats hooks based on role
+  const { data: adminStats, isLoading: adminStatsLoading } = useAdminStats();
+  const { data: teacherStatistics, isLoading: teacherStatsLoading } =
+    useTeacherStats();
   const { data: teachers = [], isLoading: teachersLoading } =
     useTeacherPerformance();
+
+  // For teachers, use their specific stats; for admins, use admin stats
+  const stats = isAdmin ? adminStats : teacherStatistics;
+  const statsLoading = isAdmin ? adminStatsLoading : teacherStatsLoading;
 
   return (
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
+        <h1 className="text-2xl font-bold text-foreground">
+          {isAdmin ? "Dashboard Overview" : "My Performance"}
+        </h1>
         <p className="text-muted-foreground">
-          Monitor mosque performance and teacher activity
+          {isAdmin
+            ? "Monitor mosque performance and teacher activity"
+            : "View your circle's statistics and performance"}
         </p>
       </div>
 
@@ -93,81 +112,88 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      {/* Teachers Table */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Teacher Performance
-          </CardTitle>
-          <CreateTeacherDialog />
-        </CardHeader>
-        <CardContent>
-          {teachersLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : teachers.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No teachers found
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Teacher</TableHead>
-                    <TableHead>Circle</TableHead>
-                    <TableHead className="text-center">Students</TableHead>
-                    <TableHead>Last Session</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {teachers.map((teacher) => {
-                    const days = daysAgo(teacher.lastSessionDate);
-                    const isInactive = days > 3;
+      {/* Teachers Table - Admin/Supervisor only */}
+      {isAdmin && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Teacher Performance
+            </CardTitle>
+            <CreateTeacherDialog />
+          </CardHeader>
+          <CardContent>
+            {teachersLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : teachers.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No teachers found
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Teacher</TableHead>
+                      <TableHead>Circle</TableHead>
+                      <TableHead className="text-center">Students</TableHead>
+                      <TableHead>Last Session</TableHead>
+                      <TableHead className="text-center">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {teachers.map((teacher) => {
+                      const days = daysAgo(teacher.lastSessionDate);
+                      const isInactive = days > 3;
 
-                    return (
-                      <TableRow
-                        key={teacher.teacherId}
-                        className={isInactive ? "bg-red-50 dark:bg-red-950/20" : ""}
-                      >
-                        <TableCell className="font-medium">
-                          {teacher.teacherName}
-                        </TableCell>
-                        <TableCell>{teacher.circleName}</TableCell>
-                        <TableCell className="text-center">
-                          {teacher.studentCount}
-                        </TableCell>
-                        <TableCell>
-                          <span className={isInactive ? "text-red-600" : ""}>
-                            {formatDate(teacher.lastSessionDate)}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {isInactive ? (
-                            <Badge variant="destructive" className="gap-1">
-                              <AlertTriangle className="h-3 w-3" />
-                              Inactive
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="bg-green-100 text-green-700">
-                              Active
-                            </Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                      return (
+                        <TableRow
+                          key={teacher.teacherId}
+                          className={
+                            isInactive ? "bg-red-50 dark:bg-red-950/20" : ""
+                          }
+                        >
+                          <TableCell className="font-medium">
+                            {teacher.teacherName}
+                          </TableCell>
+                          <TableCell>{teacher.circleName}</TableCell>
+                          <TableCell className="text-center">
+                            {teacher.studentCount}
+                          </TableCell>
+                          <TableCell>
+                            <span className={isInactive ? "text-red-600" : ""}>
+                              {formatDate(teacher.lastSessionDate)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {isInactive ? (
+                              <Badge variant="destructive" className="gap-1">
+                                <AlertTriangle className="h-3 w-3" />
+                                Inactive
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="secondary"
+                                className="bg-green-100 text-green-700"
+                              >
+                                Active
+                              </Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

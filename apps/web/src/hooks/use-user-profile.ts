@@ -35,8 +35,12 @@ export function useUserProfile() {
     queryKey: ["user", "profile"],
     queryFn: async () => {
       const response = await api.get<ProfileResponse>("/auth/profile");
-      // API returns { message, user } - extract user
-      return response.data.user;
+      // API returns { message, user } - extract user and transform fullName to name
+      const user = response.data.user;
+      return {
+        ...user,
+        name: (user as unknown as { fullName?: string }).fullName || user.name,
+      };
     },
     staleTime: 5 * 60 * 1000, // Profile rarely changes, cache for 5 minutes
     retry: 1, // Only retry once on failure

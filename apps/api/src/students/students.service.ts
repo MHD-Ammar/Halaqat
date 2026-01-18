@@ -229,17 +229,13 @@ export class StudentsService {
       this.studentsRepository.manager
         .createQueryBuilder()
         .select([
-          "r.id",
-          "r.type",
-          "r.quality",
-          "r.start_verse as startVerse",
-          "r.end_verse as endVerse",
-          "r.created_at as createdAt",
-          "s.name_english as surahName",
-          "s.name_arabic as surahNameArabic",
+          'r.id as "id"',
+          'r.type as "type"',
+          'r.quality as "quality"',
+          'r.page_number as "pageNumber"',
+          'r.created_at as "createdAt"',
         ])
         .from("recitation", "r")
-        .leftJoin("surah", "s", "s.id = r.surah_id")
         .where("r.student_id = :studentId", { studentId: id })
         .orderBy("r.created_at", "DESC")
         .limit(10)
@@ -249,11 +245,11 @@ export class StudentsService {
       this.studentsRepository.manager
         .createQueryBuilder()
         .select([
-          "pt.id",
-          "pt.amount",
-          "pt.reason",
-          "pt.source_type as sourceType",
-          "pt.created_at as createdAt",
+          'pt.id as "id"',
+          'pt.amount as "amount"',
+          'pt.reason as "reason"',
+          'pt.source_type as "sourceType"',
+          'pt.created_at as "createdAt"',
         ])
         .from("point_transaction", "pt")
         .where("pt.student_id = :studentId", { studentId: id })
@@ -266,10 +262,10 @@ export class StudentsService {
     const attendanceHistory = await this.studentsRepository.manager
       .createQueryBuilder()
       .select([
-        "a.id",
-        "a.status",
-        "a.created_at as createdAt",
-        "sess.date as sessionDate",
+        'a.id as "id"',
+        'a.status as "status"',
+        'a.created_at as "createdAt"',
+        'sess.date as "sessionDate"',
       ])
       .from("attendance", "a")
       .leftJoin("session", "sess", "sess.id = a.session_id")

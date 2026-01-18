@@ -3,26 +3,20 @@
 /**
  * RecitationItem Component
  *
- * Ticket-style display of a recitation record.
+ * Ticket-style display of a page recitation record.
  */
 
 import { Badge } from "@/components/ui/badge";
 import { RecitationQuality } from "@halaqat/types";
 
 interface RecitationItemProps {
-  surahName: string;
-  surahNameArabic?: string;
-  startVerse: number;
-  endVerse: number;
+  pageNumber: number;
   quality: string;
   type: string;
   createdAt: string;
 }
 
-const qualityConfig: Record<
-  string,
-  { label: string; className: string }
-> = {
+const qualityConfig: Record<string, { label: string; className: string }> = {
   [RecitationQuality.EXCELLENT]: {
     label: "Excellent",
     className: "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -46,10 +40,7 @@ const qualityConfig: Record<
 };
 
 export function RecitationItem({
-  surahName,
-  surahNameArabic,
-  startVerse,
-  endVerse,
+  pageNumber,
   quality,
   type,
   createdAt,
@@ -67,15 +58,10 @@ export function RecitationItem({
     <div className="flex items-center justify-between p-3 bg-card rounded-lg border">
       <div className="flex-1">
         <div className="flex items-center gap-2">
-          <span className="font-medium">{surahName}</span>
-          {surahNameArabic && (
-            <span className="text-muted-foreground text-sm">
-              ({surahNameArabic})
-            </span>
-          )}
+          <span className="font-medium">Page {pageNumber}</span>
         </div>
         <div className="text-sm text-muted-foreground">
-          Verses {startVerse}-{endVerse} • {type === "NEW" ? "New Lesson" : "Review"} • {date}
+          {type === "NEW" ? "New Lesson" : "Review"} • {date}
         </div>
       </div>
       <Badge variant="outline" className={qualityInfo.className}>

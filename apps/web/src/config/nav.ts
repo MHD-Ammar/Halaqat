@@ -6,7 +6,6 @@
  */
 
 import {
-  Home,
   Users,
   BookOpen,
   User,
@@ -28,21 +27,15 @@ export interface NavItem {
 /**
  * All navigation items with role requirements
  * Routes are now FLATTENED (no /dashboard prefix)
+ * Note: Landing page (/) is only for unauthenticated users
  */
 export const NAV_ITEMS: NavItem[] = [
-  {
-    title: "Home",
-    href: "/",
-    icon: Home,
-    description: "Dashboard home",
-    // Available to all authenticated users
-  },
   {
     title: "Overview",
     href: "/overview",
     icon: LayoutDashboard,
-    description: "Admin dashboard and analytics",
-    roles: ["ADMIN", "SUPERVISOR"],
+    description: "Dashboard and analytics",
+    roles: ["ADMIN", "SUPERVISOR", "TEACHER"],
   },
   {
     title: "Circles",

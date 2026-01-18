@@ -102,6 +102,91 @@ export class AnalyticsService {
   }
 
   /**
+   * Get teacher-specific statistics for their circles only
+   */
+  async getTeacherStats(teacherId: string): Promise<DailyOverview> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Get circles belonging to this teacher
+    const teacherCircles = await this.circleRepository.find({
+      where: { teacherId },
+      relations: ["students"],
+    });
+
+    const circleIds = teacherCircles.map((c) => c.id);
+
+    if (circleIds.length === 0) {
+      return {
+        totalStudents: 0,
+        attendanceRate: 0,
+        pointsAwardedToday: 0,
+        activeCircles: 0,
+      };
+    }
+
+    // Total students in teacher's circles
+    const totalStudents = teacherCircles.reduce(
+      (sum, circle) => sum + (circle.students?.length || 0),
+      0
+    );
+
+    // Today's sessions for teacher's circles
+    const todaySessions = await this.sessionRepository.find({
+      where: circleIds.map((circleId) => ({
+        circleId,
+        date: MoreThanOrEqual(today),
+      })),
+      relations: ["attendances"],
+    });
+
+    // Calculate attendance rate
+    let presentCount = 0;
+    let totalAttendances = 0;
+
+    for (const session of todaySessions) {
+      for (const attendance of session.attendances || []) {
+        totalAttendances++;
+        if (attendance.status === AttendanceStatus.PRESENT) {
+          presentCount++;
+        }
+      }
+    }
+
+    const attendanceRate =
+      totalAttendances > 0
+        ? Math.round((presentCount / totalAttendances) * 100)
+        : 0;
+
+    // Points awarded today for students in teacher's circles
+    const studentIds = teacherCircles.flatMap(
+      (c) => c.students?.map((s) => s.id) || []
+    );
+
+    let pointsAwardedToday = 0;
+    if (studentIds.length > 0) {
+      const pointsResult = await this.pointTransactionRepository
+        .createQueryBuilder("pt")
+        .select("COALESCE(SUM(pt.amount), 0)", "total")
+        .where("pt.createdAt >= :today", { today })
+        .andWhere("pt.studentId IN (:...studentIds)", { studentIds })
+        .getRawOne();
+
+      pointsAwardedToday = parseInt(pointsResult?.total || "0", 10);
+    }
+
+    // Active circles (have session today)
+    const activeCircles = new Set(todaySessions.map((s) => s.circleId)).size;
+
+    return {
+      totalStudents,
+      attendanceRate,
+      pointsAwardedToday,
+      activeCircles,
+    };
+  }
+
+  /**
    * Get teacher performance data
    */
   async getTeacherPerformance(): Promise<TeacherPerformance[]> {

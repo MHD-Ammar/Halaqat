@@ -7,7 +7,14 @@
  */
 
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Star, Percent, BookOpen, Calendar, Award } from "lucide-react";
+import {
+  ArrowLeft,
+  Star,
+  Percent,
+  BookOpen,
+  Calendar,
+  Award,
+} from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -172,18 +179,17 @@ export default function StudentProfilePage() {
                   No recitations yet
                 </p>
               ) : (
-                recentActivity.slice(0, 5).map((rec) => (
-                  <RecitationItem
-                    key={rec.id}
-                    surahName={rec.surahName}
-                    surahNameArabic={rec.surahNameArabic}
-                    startVerse={rec.startVerse}
-                    endVerse={rec.endVerse}
-                    quality={rec.quality}
-                    type={rec.type}
-                    createdAt={rec.createdAt}
-                  />
-                ))
+                recentActivity
+                  .slice(0, 5)
+                  .map((rec) => (
+                    <RecitationItem
+                      key={rec.id}
+                      pageNumber={rec.pageNumber}
+                      quality={rec.quality}
+                      type={rec.type}
+                      createdAt={rec.createdAt}
+                    />
+                  ))
               )}
             </CardContent>
           </Card>
@@ -201,10 +207,7 @@ export default function StudentProfilePage() {
             recentActivity.map((rec) => (
               <RecitationItem
                 key={rec.id}
-                surahName={rec.surahName}
-                surahNameArabic={rec.surahNameArabic}
-                startVerse={rec.startVerse}
-                endVerse={rec.endVerse}
+                pageNumber={rec.pageNumber}
                 quality={rec.quality}
                 type={rec.type}
                 createdAt={rec.createdAt}

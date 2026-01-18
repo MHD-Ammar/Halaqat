@@ -3,117 +3,39 @@
 /**
  * StudentActionSheet Component
  *
- * Bottom sheet for recording student recitations.
- * Features: Surah search, verse inputs, quality grading buttons.
+ * A 2-step wizard for recording page recitations:
+ * Step 1: Range Input - Enter page range and global quality
+ * Step 2: Review List - Adjust individual page qualities before saving
  */
 
 import { useState, useMemo } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import {
-  Check,
-  ChevronsUpDown,
-  BookOpen,
-  RefreshCcw,
   Loader2,
+  Check,
+  ChevronRight,
+  ArrowLeft,
+  BookOpen,
 } from "lucide-react";
 import { RecitationType, RecitationQuality } from "@halaqat/types";
 
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  SheetFooter,
 } from "@/components/ui/sheet";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useSurahs, type Surah } from "@/hooks/use-surahs";
-import { useRecordRecitation } from "@/hooks/use-record-recitation";
-
-/**
- * Zod schema for recitation form validation
- */
-const recitationSchema = z
-  .object({
-    type: z.nativeEnum(RecitationType),
-    surahId: z.number().min(1, "Please select a Surah"),
-    startVerse: z.number().min(1, "Start verse must be at least 1"),
-    endVerse: z.number().min(1, "End verse must be at least 1"),
-    quality: z.nativeEnum(RecitationQuality),
-  })
-  .refine((data) => data.endVerse >= data.startVerse, {
-    message: "End verse must be greater than or equal to start verse",
-    path: ["endVerse"],
-  });
-
-type RecitationFormData = z.infer<typeof recitationSchema>;
-
-/**
- * Quality button configuration
- */
-const QUALITY_OPTIONS: {
-  value: RecitationQuality;
-  label: string;
-  color: string;
-  points: number;
-}[] = [
-  {
-    value: RecitationQuality.EXCELLENT,
-    label: "Excellent",
-    color: "bg-emerald-500 hover:bg-emerald-600 text-white",
-    points: 5,
-  },
-  {
-    value: RecitationQuality.VERY_GOOD,
-    label: "V. Good",
-    color: "bg-blue-500 hover:bg-blue-600 text-white",
-    points: 3,
-  },
-  {
-    value: RecitationQuality.GOOD,
-    label: "Good",
-    color: "bg-yellow-500 hover:bg-yellow-600 text-white",
-    points: 1,
-  },
-  {
-    value: RecitationQuality.ACCEPTABLE,
-    label: "Acceptable",
-    color: "bg-orange-500 hover:bg-orange-600 text-white",
-    points: 0,
-  },
-  {
-    value: RecitationQuality.POOR,
-    label: "Poor",
-    color: "bg-red-500 hover:bg-red-600 text-white",
-    points: 0,
-  },
-];
+import {
+  useRecordRecitation,
+  type PageDetail,
+} from "@/hooks/use-record-recitation";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface StudentActionSheetProps {
   student: {
@@ -125,312 +47,357 @@ interface StudentActionSheetProps {
   children: React.ReactNode;
 }
 
+/**
+ * Quality configuration with colors
+ */
+const QUALITY_OPTIONS = [
+  {
+    value: RecitationQuality.EXCELLENT,
+    label: "Excellent",
+    shortLabel: "Exc",
+    color: "bg-emerald-500 hover:bg-emerald-600 text-white",
+    selectedColor: "ring-2 ring-emerald-500 ring-offset-2",
+    badgeColor: "bg-emerald-100 text-emerald-700",
+  },
+  {
+    value: RecitationQuality.VERY_GOOD,
+    label: "Very Good",
+    shortLabel: "V.Good",
+    color: "bg-green-500 hover:bg-green-600 text-white",
+    selectedColor: "ring-2 ring-green-500 ring-offset-2",
+    badgeColor: "bg-green-100 text-green-700",
+  },
+  {
+    value: RecitationQuality.GOOD,
+    label: "Good",
+    shortLabel: "Good",
+    color: "bg-blue-500 hover:bg-blue-600 text-white",
+    selectedColor: "ring-2 ring-blue-500 ring-offset-2",
+    badgeColor: "bg-blue-100 text-blue-700",
+  },
+  {
+    value: RecitationQuality.ACCEPTABLE,
+    label: "Acceptable",
+    shortLabel: "Acc",
+    color: "bg-yellow-500 hover:bg-yellow-600 text-white",
+    selectedColor: "ring-2 ring-yellow-500 ring-offset-2",
+    badgeColor: "bg-yellow-100 text-yellow-700",
+  },
+  {
+    value: RecitationQuality.POOR,
+    label: "Poor",
+    shortLabel: "Poor",
+    color: "bg-red-500 hover:bg-red-600 text-white",
+    selectedColor: "ring-2 ring-red-500 ring-offset-2",
+    badgeColor: "bg-red-100 text-red-700",
+  },
+];
+
+type WizardStep = "INPUT" | "REVIEW";
+
 export function StudentActionSheet({
   student,
   sessionId,
-  circleId,
   children,
 }: StudentActionSheetProps) {
-  const [open, setOpen] = useState(false);
-  const [surahOpen, setSurahOpen] = useState(false);
   const { toast } = useToast();
+  const recordRecitation = useRecordRecitation();
 
-  // Fetch Surahs
-  const { data: surahs = [], isLoading: surahsLoading } = useSurahs();
+  // Wizard state
+  const [step, setStep] = useState<WizardStep>("INPUT");
+  const [isOpen, setIsOpen] = useState(false);
 
-  // Mutation
-  const recordMutation = useRecordRecitation(circleId);
+  // Step 1: Range input state
+  const [startPage, setStartPage] = useState<number | "">("");
+  const [endPage, setEndPage] = useState<number | "">("");
+  const [globalQuality, setGlobalQuality] = useState<RecitationQuality>(
+    RecitationQuality.EXCELLENT,
+  );
+  const [lessonType, setLessonType] = useState<RecitationType>(
+    RecitationType.NEW_LESSON,
+  );
 
-  // Form
-  const form = useForm<RecitationFormData>({
-    resolver: zodResolver(recitationSchema),
-    defaultValues: {
-      type: RecitationType.NEW_LESSON,
-      surahId: 0,
-      startVerse: 1,
-      endVerse: 1,
-      quality: undefined,
-    },
-  });
+  // Step 2: Page details state (with individual quality overrides)
+  const [pageDetails, setPageDetails] = useState<PageDetail[]>([]);
 
-  // Selected Surah for display
-  const selectedSurah = useMemo(() => {
-    return surahs.find((s: Surah) => s.id === form.watch("surahId"));
-  }, [surahs, form.watch("surahId")]);
+  // Reset form
+  const resetForm = () => {
+    setStep("INPUT");
+    setStartPage("");
+    setEndPage("");
+    setGlobalQuality(RecitationQuality.EXCELLENT);
+    setLessonType(RecitationType.NEW_LESSON);
+    setPageDetails([]);
+  };
 
-  // Max verse count for selected Surah
-  const maxVerseCount = selectedSurah?.verseCount || 999;
+  // Handle open change
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      resetForm();
+    }
+  };
 
-  // Handle form submit
-  const onSubmit = async (data: RecitationFormData) => {
+  // Validate step 1
+  const isStep1Valid = useMemo(() => {
+    if (startPage === "" || endPage === "") return false;
+    if (startPage < 1 || startPage > 604) return false;
+    if (endPage < 1 || endPage > 604) return false;
+    if (endPage < startPage) return false;
+    return true;
+  }, [startPage, endPage]);
+
+  // Handle Next button (go to review step)
+  const handleNext = () => {
+    if (!isStep1Valid) return;
+
+    // Generate page details array from range
+    const pages: PageDetail[] = [];
+    for (let page = startPage as number; page <= (endPage as number); page++) {
+      pages.push({
+        pageNumber: page,
+        quality: globalQuality,
+        type: lessonType,
+      });
+    }
+
+    setPageDetails(pages);
+    setStep("REVIEW");
+  };
+
+  // Handle Back button (go back to input step)
+  const handleBack = () => {
+    setStep("INPUT");
+  };
+
+  // Update individual page quality
+  const updatePageQuality = (
+    pageNumber: number,
+    quality: RecitationQuality,
+  ) => {
+    setPageDetails((prev) =>
+      prev.map((p) => (p.pageNumber === pageNumber ? { ...p, quality } : p)),
+    );
+  };
+
+  // Handle Save All
+  const handleSaveAll = async () => {
+    if (pageDetails.length === 0) return;
+
     try {
-      await recordMutation.mutateAsync({
+      const result = await recordRecitation.mutateAsync({
         studentId: student.id,
         sessionId,
-        surahId: data.surahId,
-        startVerse: data.startVerse,
-        endVerse: data.endVerse,
-        type: data.type,
-        quality: data.quality,
+        details: pageDetails,
       });
-
-      // Find points for the quality
-      const points =
-        QUALITY_OPTIONS.find((q) => q.value === data.quality)?.points || 0;
 
       toast({
-        title: "Recitation saved!",
-        description: points > 0 ? `+${points} Points awarded` : "Recorded successfully",
+        title: "Recitation Recorded!",
+        description: `${result.pageCount} pages saved. +${result.totalPointsAwarded} points awarded.`,
       });
 
-      // Close sheet and reset form
-      setOpen(false);
-      form.reset();
+      handleOpenChange(false);
     } catch {
       toast({
-        title: "Error saving recitation",
-        description: "Please try again.",
+        title: "Error",
+        description: "Failed to save recitation. Please try again.",
         variant: "destructive",
       });
     }
   };
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent side="bottom" className="h-[90vh] md:h-auto md:max-h-[85vh]">
-        <SheetHeader className="text-left">
+      <SheetContent side="bottom" className="h-[85vh] flex flex-col">
+        <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5" />
+            <BookOpen className="h-5 w-5" />
             Record Recitation - {student.name}
           </SheetTitle>
+          <SheetDescription>
+            {step === "INPUT"
+              ? "Enter page range and select quality"
+              : `Review ${pageDetails.length} pages before saving`}
+          </SheetDescription>
         </SheetHeader>
 
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-6 mt-6 pb-6"
-          >
-            {/* Lesson Type */}
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Lesson Type</FormLabel>
-                  <FormControl>
-                    <Tabs
-                      value={field.value}
-                      onValueChange={(v) =>
-                        field.onChange(v as RecitationType)
-                      }
-                      className="w-full"
-                    >
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value={RecitationType.NEW_LESSON}>
-                          New Lesson (Hifz)
-                        </TabsTrigger>
-                        <TabsTrigger value={RecitationType.REVIEW}>
-                          <RefreshCcw className="w-4 h-4 mr-2" />
-                          Review
-                        </TabsTrigger>
-                      </TabsList>
-                    </Tabs>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Surah Selection - Combobox */}
-            <FormField
-              control={form.control}
-              name="surahId"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Surah</FormLabel>
-                  <Popover open={surahOpen} onOpenChange={setSurahOpen}>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={surahOpen}
-                          className="w-full justify-between h-11"
-                          disabled={surahsLoading}
-                        >
-                          {surahsLoading ? (
-                            <span className="text-muted-foreground">
-                              Loading...
-                            </span>
-                          ) : selectedSurah ? (
-                            <span>
-                              {selectedSurah.number}. {selectedSurah.nameEnglish}{" "}
-                              <span className="text-muted-foreground">
-                                ({selectedSurah.nameArabic})
-                              </span>
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">
-                              Select a Surah...
-                            </span>
-                          )}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search Surah..." />
-                        <CommandList>
-                          <CommandEmpty>No Surah found.</CommandEmpty>
-                          <CommandGroup className="max-h-64 overflow-auto">
-                            {surahs.map((surah: Surah) => (
-                              <CommandItem
-                                key={surah.id}
-                                value={`${surah.number} ${surah.nameEnglish} ${surah.nameArabic}`}
-                                onSelect={() => {
-                                  field.onChange(surah.id);
-                                  setSurahOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    field.value === surah.id
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                                <span className="font-medium mr-2">
-                                  {surah.number}.
-                                </span>
-                                {surah.nameEnglish}
-                                <span className="ml-2 text-muted-foreground">
-                                  {surah.nameArabic}
-                                </span>
-                                <span className="ml-auto text-xs text-muted-foreground">
-                                  {surah.verseCount} verses
-                                </span>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Verses - Start and End */}
+        {/* Step 1: Range Input */}
+        {step === "INPUT" && (
+          <div className="flex-1 space-y-6 py-4 overflow-auto">
+            {/* Page Range */}
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="startVerse"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Verse</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={maxVerseCount}
-                        className="h-11"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value, 10) || 1)
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="endVerse"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>End Verse</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={maxVerseCount}
-                        className="h-11"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value, 10) || 1)
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="startPage">Start Page</Label>
+                <Input
+                  id="startPage"
+                  type="number"
+                  min={1}
+                  max={604}
+                  placeholder="1"
+                  value={startPage}
+                  onChange={(e) =>
+                    setStartPage(
+                      e.target.value === "" ? "" : parseInt(e.target.value, 10),
+                    )
+                  }
+                  className="h-12 text-lg"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endPage">End Page</Label>
+                <Input
+                  id="endPage"
+                  type="number"
+                  min={1}
+                  max={604}
+                  placeholder="604"
+                  value={endPage}
+                  onChange={(e) =>
+                    setEndPage(
+                      e.target.value === "" ? "" : parseInt(e.target.value, 10),
+                    )
+                  }
+                  className="h-12 text-lg"
+                />
+              </div>
             </div>
 
-            {/* Quality Rating - Large Buttons */}
-            <FormField
-              control={form.control}
-              name="quality"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Quality Rating</FormLabel>
-                  <FormControl>
-                    <div className="grid grid-cols-5 gap-2">
+            {/* Page count indicator */}
+            {isStep1Valid && (
+              <div className="text-center text-sm text-muted-foreground">
+                {(endPage as number) - (startPage as number) + 1} page(s)
+                selected
+              </div>
+            )}
+
+            {/* Quality Selection */}
+            <div className="space-y-2">
+              <Label>Quality</Label>
+              <div className="grid grid-cols-5 gap-2">
+                {QUALITY_OPTIONS.map((option) => (
+                  <Button
+                    key={option.value}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={`h-12 text-sm font-medium ${option.color} ${
+                      globalQuality === option.value ? option.selectedColor : ""
+                    }`}
+                    onClick={() => setGlobalQuality(option.value)}
+                  >
+                    {option.shortLabel}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Lesson Type Toggle */}
+            <div className="space-y-2">
+              <Label>Lesson Type</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={
+                    lessonType === RecitationType.NEW_LESSON
+                      ? "default"
+                      : "outline"
+                  }
+                  className="flex-1 h-12"
+                  onClick={() => setLessonType(RecitationType.NEW_LESSON)}
+                >
+                  New Lesson
+                </Button>
+                <Button
+                  type="button"
+                  variant={
+                    lessonType === RecitationType.REVIEW ? "default" : "outline"
+                  }
+                  className="flex-1 h-12"
+                  onClick={() => setLessonType(RecitationType.REVIEW)}
+                >
+                  Review
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Review List */}
+        {step === "REVIEW" && (
+          <ScrollArea className="flex-1 py-4">
+            <div className="space-y-3 pr-4">
+              {pageDetails.map((page) => {
+                return (
+                  <div
+                    key={page.pageNumber}
+                    className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                  >
+                    <div className="font-medium">Page {page.pageNumber}</div>
+                    <div className="flex gap-1">
                       {QUALITY_OPTIONS.map((option) => (
                         <Button
                           key={option.value}
                           type="button"
-                          variant="outline"
-                          className={cn(
-                            "h-14 flex flex-col items-center justify-center text-xs font-medium transition-all",
-                            field.value === option.value
-                              ? option.color
-                              : "hover:opacity-80"
-                          )}
-                          onClick={() => field.onChange(option.value)}
+                          variant="ghost"
+                          size="sm"
+                          className={`h-8 px-2 text-xs ${
+                            page.quality === option.value
+                              ? option.badgeColor + " font-semibold"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                          onClick={() =>
+                            updatePageQuality(page.pageNumber, option.value)
+                          }
                         >
-                          <span>{option.label}</span>
-                          {option.points > 0 && (
-                            <span className="text-[10px] opacity-75">
-                              +{option.points}
-                            </span>
-                          )}
+                          {option.shortLabel}
                         </Button>
                       ))}
                     </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        )}
 
-            {/* TODO: Auto-Increment Suggestion
-             * Future feature: If the student recited "Al-Baqara 1-10" yesterday,
-             * default the inputs to "Al-Baqara 11-..." based on their last recitation.
-             */}
-
-            {/* Submit Button */}
+        {/* Footer with Actions */}
+        <SheetFooter className="flex-row gap-2 pt-4 border-t">
+          {step === "INPUT" ? (
             <Button
-              type="submit"
-              className="w-full h-12"
-              disabled={recordMutation.isPending || !form.formState.isValid}
+              className="flex-1 h-12"
+              disabled={!isStep1Valid}
+              onClick={handleNext}
             >
-              {recordMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Recitation"
-              )}
+              Next
+              <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
-          </form>
-        </Form>
+          ) : (
+            <>
+              <Button variant="outline" className="h-12" onClick={handleBack}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <Button
+                className="flex-1 h-12"
+                disabled={recordRecitation.isPending}
+                onClick={handleSaveAll}
+              >
+                {recordRecitation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    Save All ({pageDetails.length} pages)
+                  </>
+                )}
+              </Button>
+            </>
+          )}
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   );

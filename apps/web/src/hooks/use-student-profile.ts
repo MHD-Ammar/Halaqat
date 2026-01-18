@@ -19,11 +19,8 @@ interface Recitation {
   id: string;
   type: string;
   quality: string;
-  startVerse: number;
-  endVerse: number;
+  pageNumber: number;
   createdAt: string;
-  surahName: string;
-  surahNameArabic: string;
 }
 
 interface PointTransaction {
