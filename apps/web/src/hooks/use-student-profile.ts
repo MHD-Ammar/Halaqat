@@ -20,6 +20,8 @@ interface Recitation {
   type: string;
   quality: string;
   pageNumber: number;
+  surahName?: string;
+  surahNameArabic?: string;
   createdAt: string;
 }
 

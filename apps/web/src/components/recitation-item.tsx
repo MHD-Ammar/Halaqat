@@ -4,13 +4,17 @@
  * RecitationItem Component
  *
  * Ticket-style display of a page recitation record.
+ * Shows page number with corresponding Surah name.
  */
 
 import { Badge } from "@/components/ui/badge";
+import { BookOpen } from "lucide-react";
 import { RecitationQuality } from "@halaqat/types";
 
 interface RecitationItemProps {
   pageNumber: number;
+  surahName?: string;
+  surahNameArabic?: string;
   quality: string;
   type: string;
   createdAt: string;
@@ -41,6 +45,8 @@ const qualityConfig: Record<string, { label: string; className: string }> = {
 
 export function RecitationItem({
   pageNumber,
+  surahName,
+  surahNameArabic,
   quality,
   type,
   createdAt,
@@ -56,14 +62,37 @@ export function RecitationItem({
 
   return (
     <div className="flex items-center justify-between p-3 bg-card rounded-lg border">
-      <div className="flex-1">
-        <div className="flex items-center gap-2">
-          <span className="font-medium">Page {pageNumber}</span>
+      <div className="flex items-start gap-3">
+        {/* Page Number Badge */}
+        <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary font-semibold text-lg">
+          {pageNumber}
         </div>
-        <div className="text-sm text-muted-foreground">
-          {type === "NEW" ? "New Lesson" : "Review"} • {date}
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            {surahName && (
+              <>
+                <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="font-medium truncate">{surahName}</span>
+                {surahNameArabic && (
+                  <span className="text-muted-foreground text-sm" dir="rtl">
+                    {surahNameArabic}
+                  </span>
+                )}
+              </>
+            )}
+            {!surahName && (
+              <span className="font-medium">Page {pageNumber}</span>
+            )}
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {type === "NEW" || type === "NEW_LESSON" ? "New Lesson" : "Review"}{" "}
+            • {date}
+          </div>
         </div>
       </div>
+
       <Badge variant="outline" className={qualityInfo.className}>
         {qualityInfo.label}
       </Badge>

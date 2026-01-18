@@ -1,6 +1,6 @@
 /**
  * API Client Configuration
- * 
+ *
  * Axios instance with base URL and auth interceptor.
  */
 
@@ -9,7 +9,7 @@ import Cookies from "js-cookie";
 
 // Create axios instance
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -22,16 +22,16 @@ export const TOKEN_COOKIE_NAME = "token";
 api.interceptors.request.use(
   (config) => {
     const token = Cookies.get(TOKEN_COOKIE_NAME);
-    
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     return config;
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor for handling errors
@@ -42,15 +42,15 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Remove invalid token
       Cookies.remove(TOKEN_COOKIE_NAME);
-      
+
       // Redirect to login if we're in the browser
       if (typeof window !== "undefined") {
         window.location.href = "/login";
       }
     }
-    
+
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

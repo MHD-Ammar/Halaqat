@@ -11,9 +11,10 @@ import {
   ParseIntPipe,
   UseInterceptors,
   ClassSerializerInterceptor,
+  NotFoundException,
 } from "@nestjs/common";
 
-import { CurriculumService } from "./curriculum.service";
+import { CurriculumService, CachedSurah } from "./curriculum.service";
 
 @Controller("curriculum")
 @UseInterceptors(ClassSerializerInterceptor)
@@ -39,5 +40,32 @@ export class CurriculumController {
   @Get("surahs/:number")
   findSurahByNumber(@Param("number", ParseIntPipe) number: number) {
     return this.curriculumService.findSurahByNumber(number);
+  }
+
+  /**
+   * Get Surah info by page number (uses in-memory cache)
+   * GET /api/curriculum/by-page/:pageNumber
+   */
+  @Get("by-page/:pageNumber")
+  findSurahByPage(@Param("pageNumber", ParseIntPipe) pageNumber: number): CachedSurah {
+    if (pageNumber < 1 || pageNumber > 604) {
+      throw new NotFoundException(`Page ${pageNumber} is outside valid range (1-604)`);
+    }
+
+    const surah = this.curriculumService.findSurahByPage(pageNumber);
+    if (!surah) {
+      throw new NotFoundException(`No surah found for page ${pageNumber}`);
+    }
+
+    return surah;
+  }
+
+  /**
+   * Get all surahs with page ranges from cache (fast endpoint)
+   * GET /api/curriculum/surahs-with-pages
+   */
+  @Get("surahs-with-pages")
+  getAllSurahsWithPages(): CachedSurah[] {
+    return this.curriculumService.getAllCachedSurahs();
   }
 }

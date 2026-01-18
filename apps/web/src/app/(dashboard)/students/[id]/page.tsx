@@ -185,6 +185,8 @@ export default function StudentProfilePage() {
                     <RecitationItem
                       key={rec.id}
                       pageNumber={rec.pageNumber}
+                      surahName={rec.surahName}
+                      surahNameArabic={rec.surahNameArabic}
                       quality={rec.quality}
                       type={rec.type}
                       createdAt={rec.createdAt}
@@ -208,6 +210,8 @@ export default function StudentProfilePage() {
               <RecitationItem
                 key={rec.id}
                 pageNumber={rec.pageNumber}
+                surahName={rec.surahName}
+                surahNameArabic={rec.surahNameArabic}
                 quality={rec.quality}
                 type={rec.type}
                 createdAt={rec.createdAt}

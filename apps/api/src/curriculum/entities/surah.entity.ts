@@ -2,7 +2,7 @@
  * Surah Entity
  *
  * Represents a Surah (chapter) of the Holy Quran.
- * Designed to be scalable for other reference materials.
+ * Includes Madinah Mushaf page range for each Surah.
  */
 
 import { Entity, Column, PrimaryGeneratedColumn, Index } from "typeorm";
@@ -41,6 +41,18 @@ export class Surah {
    */
   @Column()
   verseCount!: number;
+
+  /**
+   * First page of this Surah in Madinah Mushaf (1-604)
+   */
+  @Column({ name: "start_page", type: "int", default: 1 })
+  startPage!: number;
+
+  /**
+   * Last page of this Surah in Madinah Mushaf (1-604)
+   */
+  @Column({ name: "end_page", type: "int", default: 1 })
+  endPage!: number;
 
   /**
    * Type of reference material

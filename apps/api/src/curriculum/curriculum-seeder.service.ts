@@ -28,22 +28,14 @@ export class CurriculumSeederService implements OnApplicationBootstrap {
   }
 
   /**
-   * Seed all 114 Surahs into the database
-   * Uses upsert to avoid duplicates
+   * Seed all 114 Surahs into the database with page ranges
+   * Uses upsert to avoid duplicates and update existing
    */
   async seedSurahs(): Promise<void> {
     this.logger.log("Starting Surah seeding...");
 
     try {
-      // Check if data already exists
-      const existingCount = await this.surahRepository.count();
-
-      if (existingCount === 114) {
-        this.logger.log("Surahs already seeded (114 found). Skipping.");
-        return;
-      }
-
-      // Upsert each Surah
+      // Always upsert to ensure page ranges are updated
       for (const surahData of SURAH_DATA) {
         await this.surahRepository.upsert(
           {
@@ -51,13 +43,15 @@ export class CurriculumSeederService implements OnApplicationBootstrap {
             nameArabic: surahData.nameArabic,
             nameEnglish: surahData.nameEnglish,
             verseCount: surahData.verseCount,
+            startPage: surahData.startPage,
+            endPage: surahData.endPage,
             type: surahData.type,
           },
           ["number"], // Conflict on number column
         );
       }
 
-      this.logger.log(`Successfully seeded ${SURAH_DATA.length} Surahs`);
+      this.logger.log(`Successfully seeded ${SURAH_DATA.length} Surahs with page ranges`);
     } catch (error) {
       this.logger.error("Failed to seed Surahs", error);
     }

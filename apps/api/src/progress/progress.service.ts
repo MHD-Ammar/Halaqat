@@ -4,6 +4,7 @@
  * Business logic for tracking student progress (recitations).
  * Integrates with PointsService for automatic point awards.
  * Uses Madinah Mushaf pages (1-604) for tracking.
+ * Auto-links pages to their corresponding Surahs.
  */
 
 import { Injectable, NotFoundException } from "@nestjs/common";
@@ -15,6 +16,7 @@ import { Recitation } from "./entities/recitation.entity";
 import { RecordRecitationDto } from "./dto/record-recitation.dto";
 import { BulkRecitationDto } from "./dto/bulk-recitation.dto";
 import { PointsService } from "../points/points.service";
+import { CurriculumService } from "../curriculum/curriculum.service";
 
 /**
  * Mapping from RecitationQuality to PointRule key
@@ -42,13 +44,18 @@ export class ProgressService {
     @InjectRepository(Recitation)
     private recitationRepository: Repository<Recitation>,
     private pointsService: PointsService,
+    private curriculumService: CurriculumService,
   ) {}
 
   /**
-   * Record a single page recitation and award points automatically
+   * Record a single page recitation and award points automatically.
+   * Auto-links the page to its corresponding Surah.
    */
   async recordRecitation(dto: RecordRecitationDto): Promise<Recitation> {
-    // Create recitation record
+    // Auto-link: Get surahId from pageNumber using cached lookup
+    const surahId = this.curriculumService.getSurahIdByPage(dto.pageNumber);
+
+    // Create recitation record with auto-linked surahId
     const recitation = this.recitationRepository.create({
       studentId: dto.studentId,
       sessionId: dto.sessionId,
@@ -57,7 +64,7 @@ export class ProgressService {
       quality: dto.quality,
       mistakesCount: dto.mistakesCount || 0,
       notes: dto.notes || null,
-      surahId: null, // Optional, not used in page-based tracking
+      surahId: surahId, // Auto-linked from page number
     });
 
     await this.recitationRepository.save(recitation);
@@ -76,7 +83,7 @@ export class ProgressService {
 
   /**
    * Record multiple pages in bulk with individual quality per page.
-   * Each page gets its own point transaction for clear history.
+   * Each page gets its own point transaction and auto-linked surahId.
    */
   async recordBulkRecitation(dto: BulkRecitationDto): Promise<BulkRecitationResult> {
     const recitations: Recitation[] = [];
@@ -84,7 +91,10 @@ export class ProgressService {
 
     // Process each page individually
     for (const detail of dto.details) {
-      // Create recitation record for this page
+      // Auto-link: Get surahId from pageNumber using cached lookup
+      const surahId = this.curriculumService.getSurahIdByPage(detail.pageNumber);
+
+      // Create recitation record for this page with auto-linked surahId
       const recitation = this.recitationRepository.create({
         studentId: dto.studentId,
         sessionId: dto.sessionId,
@@ -93,7 +103,7 @@ export class ProgressService {
         quality: detail.quality,
         mistakesCount: 0,
         notes: null,
-        surahId: null,
+        surahId: surahId, // Auto-linked from page number
       });
 
       await this.recitationRepository.save(recitation);

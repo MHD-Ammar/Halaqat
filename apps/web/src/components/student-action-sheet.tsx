@@ -6,6 +6,8 @@
  * A 2-step wizard for recording page recitations:
  * Step 1: Range Input - Enter page range and global quality
  * Step 2: Review List - Adjust individual page qualities before saving
+ *
+ * Shows Surah names next to page numbers in the review list.
  */
 
 import { useState, useMemo } from "react";
@@ -35,6 +37,10 @@ import {
   useRecordRecitation,
   type PageDetail,
 } from "@/hooks/use-record-recitation";
+import {
+  useSurahsWithPages,
+  findSurahForPage,
+} from "@/hooks/use-surahs-with-pages";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface StudentActionSheetProps {
@@ -102,6 +108,7 @@ export function StudentActionSheet({
 }: StudentActionSheetProps) {
   const { toast } = useToast();
   const recordRecitation = useRecordRecitation();
+  const { data: surahs } = useSurahsWithPages();
 
   // Wizard state
   const [step, setStep] = useState<WizardStep>("INPUT");
@@ -204,6 +211,14 @@ export function StudentActionSheet({
         variant: "destructive",
       });
     }
+  };
+
+  /**
+   * Get surah name for a page number
+   */
+  const getSurahName = (pageNumber: number): string => {
+    const surah = findSurahForPage(surahs, pageNumber);
+    return surah?.nameEnglish || "";
   };
 
   return (
@@ -323,17 +338,26 @@ export function StudentActionSheet({
           </div>
         )}
 
-        {/* Step 2: Review List */}
+        {/* Step 2: Review List with Surah Names */}
         {step === "REVIEW" && (
           <ScrollArea className="flex-1 py-4">
             <div className="space-y-3 pr-4">
               {pageDetails.map((page) => {
+                const surahName = getSurahName(page.pageNumber);
+
                 return (
                   <div
                     key={page.pageNumber}
                     className="flex items-center justify-between p-3 rounded-lg border bg-card"
                   >
-                    <div className="font-medium">Page {page.pageNumber}</div>
+                    <div>
+                      <div className="font-medium">Page {page.pageNumber}</div>
+                      {surahName && (
+                        <div className="text-sm text-muted-foreground">
+                          {surahName}
+                        </div>
+                      )}
+                    </div>
                     <div className="flex gap-1">
                       {QUALITY_OPTIONS.map((option) => (
                         <Button

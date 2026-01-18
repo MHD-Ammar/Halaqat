@@ -225,7 +225,7 @@ export class StudentsService {
         .where("a.student_id = :studentId", { studentId: id })
         .getRawOne(),
 
-      // Recent recitations (last 10)
+      // Recent recitations (last 10) with surah names
       this.studentsRepository.manager
         .createQueryBuilder()
         .select([
@@ -233,9 +233,12 @@ export class StudentsService {
           'r.type as "type"',
           'r.quality as "quality"',
           'r.page_number as "pageNumber"',
+          's.name_english as "surahName"',
+          's.name_arabic as "surahNameArabic"',
           'r.created_at as "createdAt"',
         ])
         .from("recitation", "r")
+        .leftJoin("surah", "s", "s.id = r.surah_id")
         .where("r.student_id = :studentId", { studentId: id })
         .orderBy("r.created_at", "DESC")
         .limit(10)

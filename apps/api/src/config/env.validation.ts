@@ -19,7 +19,7 @@ export const envValidationSchema = Joi.object({
   NODE_ENV: Joi.string()
     .valid("development", "production", "test")
     .default("development"),
-  PORT: Joi.number().port().default(3000),
+  PORT: Joi.number().port().default(3001),
 
   // JWT Authentication (Required)
   JWT_SECRET: Joi.string().required().min(32).description("JWT signing secret"),
