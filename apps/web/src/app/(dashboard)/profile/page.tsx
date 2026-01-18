@@ -3,15 +3,21 @@
 /**
  * Profile Page
  *
- * User account settings with actual data from API.
+ * User account settings with profile update and password change.
  */
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,13 +33,31 @@ import {
 } from "@/components/ui/form";
 import { useAuth } from "@/hooks";
 import { useToast } from "@/hooks/use-toast";
+import { useUpdateProfile } from "@/hooks/use-update-profile";
+import { useChangePassword } from "@/hooks/use-change-password";
 
-// Validation schema
+// Profile update validation schema
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
+
+// Password change validation schema
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: z
+      .string()
+      .min(6, "New password must be at least 6 characters"),
+    confirmPassword: z.string().min(1, "Please confirm your new password"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+type PasswordFormData = z.infer<typeof passwordSchema>;
 
 /**
  * Get initials from name
@@ -51,8 +75,11 @@ function getInitials(name?: string): string {
 export default function ProfilePage() {
   const { user, isLoading, logout } = useAuth();
   const { toast } = useToast();
+  const updateProfile = useUpdateProfile();
+  const changePassword = useChangePassword();
 
-  const form = useForm<ProfileFormData>({
+  // Profile form
+  const profileForm = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: user?.name || "",
@@ -62,12 +89,56 @@ export default function ProfilePage() {
     },
   });
 
-  const onSubmit = async (_data: ProfileFormData) => {
-    // TODO: Implement profile update API
-    toast({
-      title: "Profile update",
-      description: "Profile update is not implemented yet.",
-    });
+  // Password form
+  const passwordForm = useForm<PasswordFormData>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  // Handle profile update
+  const onProfileSubmit = async (data: ProfileFormData) => {
+    try {
+      await updateProfile.mutateAsync({ fullName: data.name });
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been updated successfully.",
+      });
+      profileForm.reset({ name: data.name });
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle password change
+  const onPasswordSubmit = async (data: PasswordFormData) => {
+    try {
+      await changePassword.mutateAsync({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      });
+      toast({
+        title: "Password Changed",
+        description: "Your password has been changed successfully.",
+      });
+      passwordForm.reset();
+    } catch (error: unknown) {
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || "Failed to change password. Please try again.";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
   };
 
   // Loading state
@@ -122,10 +193,8 @@ export default function ProfilePage() {
               </AvatarFallback>
             </Avatar>
             <div className="space-y-1">
-              <Button variant="outline">Change Photo</Button>
-              <p className="text-xs text-muted-foreground">
-                JPG, GIF or PNG. Max 2MB
-              </p>
+              <p className="font-medium">{user?.name}</p>
+              <p className="text-sm text-muted-foreground">{user?.email}</p>
             </div>
           </div>
 
@@ -137,11 +206,14 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* Form */}
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {/* Profile Form */}
+          <Form {...profileForm}>
+            <form
+              onSubmit={profileForm.handleSubmit(onProfileSubmit)}
+              className="space-y-4"
+            >
               <FormField
-                control={form.control}
+                control={profileForm.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
@@ -167,14 +239,105 @@ export default function ProfilePage() {
                 </p>
               </div>
 
-              <Button type="submit" disabled={!form.formState.isDirty}>
-                {form.formState.isSubmitting ? (
+              <Button
+                type="submit"
+                disabled={
+                  !profileForm.formState.isDirty || updateProfile.isPending
+                }
+              >
+                {updateProfile.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Saving...
                   </>
                 ) : (
                   "Save Changes"
+                )}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+
+      {/* Password Change Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="h-5 w-5" />
+            Change Password
+          </CardTitle>
+          <CardDescription>
+            Update your password to keep your account secure
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...passwordForm}>
+            <form
+              onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
+              className="space-y-4"
+            >
+              <FormField
+                control={passwordForm.control}
+                name="currentPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Current Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Enter current password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={passwordForm.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Enter new password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={passwordForm.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm New Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Confirm new password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button type="submit" disabled={changePassword.isPending}>
+                {changePassword.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Changing...
+                  </>
+                ) : (
+                  "Change Password"
                 )}
               </Button>
             </form>

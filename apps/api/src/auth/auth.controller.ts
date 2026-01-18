@@ -8,9 +8,11 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
   Body,
   UseGuards,
   UnauthorizedException,
+  BadRequestException,
   HttpCode,
   HttpStatus,
 } from "@nestjs/common";
@@ -25,6 +27,8 @@ import { Roles } from "./decorators/roles.decorator";
 import { CurrentUser } from "./decorators/current-user.decorator";
 
 import { UsersService } from "../users/users.service";
+import { UpdateProfileDto } from "../users/dto/update-profile.dto";
+import { ChangePasswordDto } from "../users/dto/change-password.dto";
 
 @Controller("auth")
 export class AuthController {
@@ -79,6 +83,56 @@ export class AuthController {
       message: "Profile retrieved successfully",
       user,
     };
+  }
+
+  /**
+   * Update current user profile (name, phone)
+   * PATCH /auth/profile
+   */
+  @Patch("profile")
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(
+    @CurrentUser() currentUser: any,
+    @Body() dto: UpdateProfileDto,
+  ) {
+    const user = await this.usersService.updateProfile(currentUser.id, dto);
+    return {
+      message: "Profile updated successfully",
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+      },
+    };
+  }
+
+  /**
+   * Change password (requires current password)
+   * POST /auth/change-password
+   */
+  @Post("change-password")
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async changePassword(
+    @CurrentUser() currentUser: any,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    try {
+      await this.usersService.changePassword(
+        currentUser.id,
+        dto.currentPassword,
+        dto.newPassword,
+      );
+      return {
+        message: "Password changed successfully",
+      };
+    } catch (error) {
+      if (error instanceof Error && error.message === "Current password is incorrect") {
+        throw new BadRequestException("Current password is incorrect");
+      }
+      throw error;
+    }
   }
 
   /**

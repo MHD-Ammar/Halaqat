@@ -90,4 +90,51 @@ export class UsersService {
 
     return query.getMany();
   }
+
+  /**
+   * Update user profile (name, phone)
+   */
+  async updateProfile(
+    userId: string,
+    updates: { fullName?: string; phoneNumber?: string },
+  ): Promise<User> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    if (updates.fullName) {
+      user.fullName = updates.fullName;
+    }
+    if (updates.phoneNumber) {
+      user.phoneNumber = updates.phoneNumber;
+    }
+
+    return this.userRepository.save(user);
+  }
+
+  /**
+   * Change user password
+   * @throws BadRequestException if current password is incorrect
+   */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isCurrentPasswordValid) {
+      throw new Error("Current password is incorrect");
+    }
+
+    // Hash new password and save
+    user.password = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await this.userRepository.save(user);
+  }
 }
