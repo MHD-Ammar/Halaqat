@@ -98,8 +98,7 @@ export function CreateStudentDialog({
       setOpen(false);
       form.reset();
     } catch (error: any) {
-      const message =
-        error.response?.data?.message || "Failed to add student";
+      const message = error.response?.data?.message || "Failed to add student";
       toast({
         variant: "destructive",
         title: "Error",
@@ -146,68 +145,72 @@ export function CreateStudentDialog({
               )}
             />
 
-            {/* Circle Selection */}
-            <FormField
-              control={form.control}
-              name="circleId"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Circle</FormLabel>
-                  <Popover open={circleOpen} onOpenChange={setCircleOpen}>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={circleOpen}
-                          className={cn(
-                            "w-full justify-between",
-                            !field.value && "text-muted-foreground"
-                          )}
-                          disabled={circlesLoading || createMutation.isPending}
-                        >
-                          {circlesLoading
-                            ? "Loading circles..."
-                            : selectedCircle?.name || "Select a circle..."}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search circles..." />
-                        <CommandList>
-                          <CommandEmpty>No circles found.</CommandEmpty>
-                          <CommandGroup>
-                            {circles.map((circle) => (
-                              <CommandItem
-                                key={circle.id}
-                                value={circle.name}
-                                onSelect={() => {
-                                  field.onChange(circle.id);
-                                  setCircleOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    field.value === circle.id
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                                {circle.name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Circle Selection - only show if no defaultCircleId */}
+            {!defaultCircleId && (
+              <FormField
+                control={form.control}
+                name="circleId"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Circle</FormLabel>
+                    <Popover open={circleOpen} onOpenChange={setCircleOpen}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={circleOpen}
+                            className={cn(
+                              "w-full justify-between",
+                              !field.value && "text-muted-foreground",
+                            )}
+                            disabled={
+                              circlesLoading || createMutation.isPending
+                            }
+                          >
+                            {circlesLoading
+                              ? "Loading circles..."
+                              : selectedCircle?.name || "Select a circle..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search circles..." />
+                          <CommandList>
+                            <CommandEmpty>No circles found.</CommandEmpty>
+                            <CommandGroup>
+                              {circles.map((circle) => (
+                                <CommandItem
+                                  key={circle.id}
+                                  value={circle.name}
+                                  onSelect={() => {
+                                    field.onChange(circle.id);
+                                    setCircleOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      field.value === circle.id
+                                        ? "opacity-100"
+                                        : "opacity-0",
+                                    )}
+                                  />
+                                  {circle.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Guardian Name */}
             <FormField
