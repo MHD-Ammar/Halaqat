@@ -5,19 +5,23 @@
  */
 
 import { IsString, MinLength, IsOptional } from "class-validator";
+import { ApiPropertyOptional } from "@nestjs/swagger";
 
 export class UpdateProfileDto {
-  /**
-   * User's full name
-   */
+  @ApiPropertyOptional({
+    description: "User's full name (minimum 2 characters)",
+    example: "Ahmed Mohammed",
+    minLength: 2,
+  })
   @IsString()
   @MinLength(2, { message: "Name must be at least 2 characters" })
   @IsOptional()
   fullName?: string;
 
-  /**
-   * User's phone number
-   */
+  @ApiPropertyOptional({
+    description: "User's phone number",
+    example: "+966501234567",
+  })
   @IsString()
   @IsOptional()
   phoneNumber?: string;

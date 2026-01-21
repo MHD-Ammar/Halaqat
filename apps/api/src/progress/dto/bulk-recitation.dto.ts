@@ -15,29 +15,37 @@ import {
   ArrayMinSize,
 } from "class-validator";
 import { Type } from "class-transformer";
+import { ApiProperty } from "@nestjs/swagger";
 import { RecitationType, RecitationQuality } from "@halaqat/types";
 
 /**
  * Single page recitation detail
  */
 export class PageRecitationDetail {
-  /**
-   * Madinah Mushaf page number (1-604)
-   */
+  @ApiProperty({
+    description: "Madinah Mushaf page number (1-604)",
+    example: 100,
+    minimum: 1,
+    maximum: 604,
+  })
   @IsInt()
   @Min(1)
   @Max(604)
   pageNumber!: number;
 
-  /**
-   * Quality rating for this specific page
-   */
+  @ApiProperty({
+    description: "Quality rating for this page",
+    enum: RecitationQuality,
+    example: "GOOD",
+  })
   @IsEnum(RecitationQuality)
   quality!: RecitationQuality;
 
-  /**
-   * Type of recitation
-   */
+  @ApiProperty({
+    description: "Type of recitation",
+    enum: RecitationType,
+    example: "REVIEW",
+  })
   @IsEnum(RecitationType)
   type!: RecitationType;
 }
@@ -46,21 +54,25 @@ export class PageRecitationDetail {
  * Bulk recitation request for multiple pages
  */
 export class BulkRecitationDto {
-  /**
-   * ID of the student who recited
-   */
+  @ApiProperty({
+    description: "UUID of the student who recited",
+    example: "123e4567-e89b-12d3-a456-426614174000",
+  })
   @IsUUID()
   studentId!: string;
 
-  /**
-   * ID of the session
-   */
+  @ApiProperty({
+    description: "UUID of the session",
+    example: "123e4567-e89b-12d3-a456-426614174001",
+  })
   @IsUUID()
   sessionId!: string;
 
-  /**
-   * Array of page recitation details
-   */
+  @ApiProperty({
+    description: "Array of page recitation details",
+    type: [PageRecitationDetail],
+    minItems: 1,
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PageRecitationDetail)

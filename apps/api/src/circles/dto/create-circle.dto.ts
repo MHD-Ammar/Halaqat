@@ -4,41 +4,54 @@
  * Data transfer object for creating a new circle.
  */
 
-import { IsString, IsNotEmpty, IsOptional, IsUUID, IsEnum } from "class-validator";
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsUUID,
+  IsEnum,
+} from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Gender } from "@halaqat/types";
 
 export class CreateCircleDto {
-  /**
-   * Circle name (required)
-   */
+  @ApiProperty({
+    description: "Name of the Quran circle",
+    example: "Morning Circle - Beginners",
+  })
   @IsString()
   @IsNotEmpty()
   name!: string;
 
-  /**
-   * Optional description
-   */
+  @ApiPropertyOptional({
+    description: "Optional description of the circle",
+    example: "A circle for new students learning Juz Amma",
+  })
   @IsString()
   @IsOptional()
   description?: string;
 
-  /**
-   * Optional location within the mosque
-   */
+  @ApiPropertyOptional({
+    description: "Physical location within the mosque",
+    example: "Main Hall - Section A",
+  })
   @IsString()
   @IsOptional()
   location?: string;
 
-  /**
-   * Gender for the circle (required)
-   */
+  @ApiProperty({
+    description: "Gender of students in this circle",
+    enum: Gender,
+    example: Gender.MALE,
+  })
   @IsEnum(Gender)
   @IsNotEmpty()
   gender!: Gender;
 
-  /**
-   * ID of the teacher to assign (required)
-   */
+  @ApiProperty({
+    description: "UUID of the teacher assigned to this circle",
+    example: "123e4567-e89b-12d3-a456-426614174000",
+  })
   @IsUUID()
   @IsNotEmpty()
   teacherId!: string;

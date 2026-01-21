@@ -12,60 +12,69 @@ import {
   IsUUID,
   IsDateString,
 } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class CreateStudentDto {
-  /**
-   * Student's full name (required)
-   */
+  @ApiProperty({
+    description: "Student's full name",
+    example: "Omar Abdullah",
+  })
   @IsString()
   @IsNotEmpty()
   name!: string;
 
-  /**
-   * Circle ID to assign the student to (required)
-   */
+  @ApiProperty({
+    description: "UUID of the circle to assign the student to",
+    example: "123e4567-e89b-12d3-a456-426614174000",
+  })
   @IsUUID()
   @IsNotEmpty()
   circleId!: string;
 
-  /**
-   * Parent's phone number (optional)
-   */
+  @ApiPropertyOptional({
+    description: "Parent's phone number",
+    example: "+966501234567",
+  })
   @IsString()
   @IsOptional()
   phone?: string;
 
-  /**
-   * Date of birth (optional)
-   */
+  @ApiPropertyOptional({
+    description: "Date of birth in ISO 8601 format",
+    example: "2015-03-15",
+  })
   @IsDateString()
   @IsOptional()
   dob?: string;
 
-  /**
-   * Address (optional)
-   */
+  @ApiPropertyOptional({
+    description: "Home address",
+    example: "123 Main Street, Riyadh",
+  })
   @IsString()
   @IsOptional()
   address?: string;
 
-  /**
-   * Medical or behavioral notes (optional)
-   */
+  @ApiPropertyOptional({
+    description: "Medical or behavioral notes about the student",
+    example: "Has difficulty with long vowels",
+  })
   @IsString()
   @IsOptional()
   notes?: string;
 
-  /**
-   * Guardian/Parent name (optional)
-   */
+  @ApiPropertyOptional({
+    description: "Name of the guardian/parent",
+    example: "Abdullah Mohammed",
+  })
   @IsString()
   @IsOptional()
   guardianName?: string;
 
-  /**
-   * Guardian/Parent phone number (optional)
-   */
+  @ApiPropertyOptional({
+    description: "Guardian/parent phone number",
+    example: "+966509876543",
+  })
   @IsString()
   @IsOptional()
   guardianPhone?: string;

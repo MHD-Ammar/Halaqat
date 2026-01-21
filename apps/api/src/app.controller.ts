@@ -5,6 +5,7 @@
  */
 
 import { Controller, Get } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 
 import { UserRole } from "@halaqat/types";
 
@@ -20,6 +21,7 @@ interface HealthCheckResponse {
   availableRoles: UserRole[];
 }
 
+@ApiTags("Health")
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
@@ -29,6 +31,11 @@ export class AppController {
    * @returns Health status and available user roles
    */
   @Get()
+  @ApiOperation({
+    summary: "Health check",
+    description: "Returns API health status and available user roles",
+  })
+  @ApiResponse({ status: 200, description: "API is healthy" })
   getHealth(): HealthCheckResponse {
     return this.appService.getHealth();
   }

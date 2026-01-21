@@ -16,11 +16,21 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
 } from "@nestjs/common";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiQuery,
+} from "@nestjs/swagger";
 
 import { SessionsService } from "./sessions.service";
 import { BulkAttendanceDto } from "./dto/bulk-attendance.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
+@ApiTags("Sessions")
+@ApiBearerAuth("JWT-auth")
 @Controller("sessions")
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -35,6 +45,14 @@ export class SessionsController {
    * Smart initialization: creates session + attendance records if needed.
    */
   @Get("today")
+  @ApiOperation({
+    summary: "Get today's session",
+    description:
+      "Get or create today's session for a circle. Creates attendance records for all students automatically.",
+  })
+  @ApiQuery({ name: "circleId", description: "Circle UUID", required: true })
+  @ApiResponse({ status: 200, description: "Session with attendance records" })
+  @ApiResponse({ status: 404, description: "Circle not found" })
   findOrCreateToday(@Query("circleId", ParseUUIDPipe) circleId: string) {
     return this.sessionsService.findOrCreateTodaySession(circleId);
   }
@@ -44,6 +62,17 @@ export class SessionsController {
    * GET /api/sessions/history?circleId=...
    */
   @Get("history")
+  @ApiOperation({
+    summary: "Get session history",
+    description: "Get past sessions for a circle",
+  })
+  @ApiQuery({ name: "circleId", description: "Circle UUID", required: true })
+  @ApiQuery({
+    name: "limit",
+    description: "Number of sessions to return",
+    required: false,
+  })
+  @ApiResponse({ status: 200, description: "List of past sessions" })
   getHistory(
     @Query("circleId", ParseUUIDPipe) circleId: string,
     @Query("limit") limit?: string,
@@ -59,6 +88,13 @@ export class SessionsController {
    * GET /api/sessions/:id
    */
   @Get(":id")
+  @ApiOperation({
+    summary: "Get session by ID",
+    description: "Get a single session with attendance",
+  })
+  @ApiParam({ name: "id", description: "Session UUID" })
+  @ApiResponse({ status: 200, description: "Session details" })
+  @ApiResponse({ status: 404, description: "Session not found" })
   findOne(@Param("id", ParseUUIDPipe) id: string) {
     return this.sessionsService.findOne(id);
   }
@@ -68,6 +104,13 @@ export class SessionsController {
    * PATCH /api/sessions/:id/attendance
    */
   @Patch(":id/attendance")
+  @ApiOperation({
+    summary: "Update attendance",
+    description: "Bulk update attendance status for students in a session",
+  })
+  @ApiParam({ name: "id", description: "Session UUID" })
+  @ApiResponse({ status: 200, description: "Attendance updated successfully" })
+  @ApiResponse({ status: 404, description: "Session not found" })
   updateAttendance(
     @Param("id", ParseUUIDPipe) id: string,
     @Body() bulkDto: BulkAttendanceDto,
@@ -80,6 +123,13 @@ export class SessionsController {
    * PATCH /api/sessions/:id/close
    */
   @Patch(":id/close")
+  @ApiOperation({
+    summary: "Close session",
+    description: "Mark a session as closed",
+  })
+  @ApiParam({ name: "id", description: "Session UUID" })
+  @ApiResponse({ status: 200, description: "Session closed successfully" })
+  @ApiResponse({ status: 404, description: "Session not found" })
   closeSession(@Param("id", ParseUUIDPipe) id: string) {
     return this.sessionsService.closeSession(id);
   }
