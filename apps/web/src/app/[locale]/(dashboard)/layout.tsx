@@ -10,12 +10,12 @@
  */
 
 import { ReactNode, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { TOKEN_COOKIE_NAME } from "@/lib/api";
 import { MainNav } from "@/components/main-nav";
 import { MobileHeader } from "@/components/mobile-header";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from "@/i18n/routing";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -24,7 +24,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   // Check authentication on mount
   useEffect(() => {
     const token = Cookies.get(TOKEN_COOKIE_NAME);
-    
+
     if (!token) {
       // No token, redirect to login
       router.replace("/login");
@@ -39,7 +39,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="space-y-4 text-center">
           <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mx-auto">
-            <span className="text-primary-foreground font-bold text-2xl">ح</span>
+            <span className="text-primary-foreground font-bold text-2xl">
+              ح
+            </span>
           </div>
           <div className="space-y-2">
             <Skeleton className="h-4 w-32 mx-auto" />
@@ -59,10 +61,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <MobileHeader />
 
       {/* Main Content Area */}
-      <main className="md:pl-64">
-        <div className="min-h-screen pb-20 md:pb-0">
-          {children}
-        </div>
+      <main className="md:ps-64">
+        <div className="min-h-screen pb-20 md:pb-0">{children}</div>
       </main>
     </div>
   );

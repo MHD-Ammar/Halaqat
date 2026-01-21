@@ -1,66 +1,12 @@
-import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-
-import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
-import { QueryProvider } from "@/providers/query-provider";
-
 /**
- * Font configurations using Next.js font optimization
+ * Minimal root layout that redirects to locale-specific routes
+ * This file is kept minimal as the main layout is in [locale]/layout.tsx
  */
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-/**
- * Metadata for SEO and social sharing
- */
-export const metadata: Metadata = {
-  title: "Halaqat - Mosque Management System",
-  description:
-    "A comprehensive system for managing mosque Halaqat (study circles), teachers, students, and attendance.",
-  keywords: ["mosque", "halaqat", "islamic", "education", "quran", "management"],
-  authors: [{ name: "Halaqat Team" }],
-};
-
-/**
- * Viewport configuration for mobile-first design
- */
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-  themeColor: "#16a34a",
-};
-
-/**
- * Root Layout Component
- *
- * This is the root layout for the entire application.
- * It provides the HTML structure and global styles.
- */
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <QueryProvider>
-          {children}
-        </QueryProvider>
-        <Toaster />
-      </body>
-    </html>
-  );
+}) {
+  return children;
 }
-

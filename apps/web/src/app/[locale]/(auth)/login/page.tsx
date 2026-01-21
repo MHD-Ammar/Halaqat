@@ -1,39 +1,47 @@
 /**
  * Login Page
- * 
+ *
  * Authentication page with react-hook-form and zod validation.
  */
 
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Cookies from "js-cookie";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useRouter, Link } from "@/i18n/routing";
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/services/auth.service";
 import { TOKEN_COOKIE_NAME } from "@/lib/api";
 
-// Validation schema
-const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
-
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const t = useTranslations("Auth");
+
+  // Create validation schema with translated messages
+  const loginSchema = z.object({
+    email: z.string().email(t("validEmail")),
+    password: z.string().min(6, t("passwordMinLength")),
+  });
+
+  type LoginFormData = z.infer<typeof loginSchema>;
 
   const {
     register,
@@ -61,19 +69,21 @@ export default function LoginPage() {
       });
 
       toast({
-        title: "Welcome back!",
-        description: "You have been logged in successfully.",
+        title: t("loginSuccess"),
+        description: t("loginSuccessDescription"),
       });
 
-      // Redirect to home (role-based redirect will forward appropriately)
-      router.push("/");
+      // Redirect to overview (works for both admin and teacher)
+      router.push("/overview");
       router.refresh();
-    } catch (error: any) {
-      const message = error.response?.data?.message || "Invalid email or password";
-      
+    } catch (error: unknown) {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || t("invalidCredentials");
+
       toast({
         variant: "destructive",
-        title: "Login failed",
+        title: t("loginFailed"),
         description: message,
       });
     } finally {
@@ -84,9 +94,11 @@ export default function LoginPage() {
   return (
     <Card className="shadow-xl">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
+        <CardTitle className="text-2xl text-center">
+          {t("welcomeBack")}
+        </CardTitle>
         <CardDescription className="text-center">
-          Sign in to your account to continue
+          {t("signInDescription")}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -94,14 +106,14 @@ export default function LoginPage() {
           {/* Email Field */}
           <div className="space-y-2">
             <label htmlFor="email" className="text-sm font-medium">
-              Email
+              {t("email")}
             </label>
             <Input
               id="email"
               type="email"
               inputMode="email"
               autoComplete="email"
-              placeholder="teacher@mosque.com"
+              placeholder={t("emailPlaceholder")}
               disabled={isLoading}
               {...register("email")}
             />
@@ -113,33 +125,43 @@ export default function LoginPage() {
           {/* Password Field */}
           <div className="space-y-2">
             <label htmlFor="password" className="text-sm font-medium">
-              Password
+              {t("password")}
             </label>
             <Input
               id="password"
               type="password"
               autoComplete="current-password"
-              placeholder="••••••••"
+              placeholder={t("passwordPlaceholder")}
               disabled={isLoading}
               {...register("password")}
             />
             {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.password.message}
+              </p>
             )}
           </div>
 
           {/* Submit Button */}
-          <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isLoading ? "Signing in..." : "Sign In"}
+          <Button
+            type="submit"
+            className="w-full"
+            size="lg"
+            disabled={isLoading}
+          >
+            {isLoading && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+            {isLoading ? t("signingIn") : t("signIn")}
           </Button>
         </CardContent>
       </form>
       <CardFooter className="flex flex-col gap-4">
         <div className="text-sm text-center text-muted-foreground">
-          Don&apos;t have an account?{" "}
-          <Link href="/register" className="text-primary hover:underline font-medium">
-            Sign up
+          {t("noAccount")}{" "}
+          <Link
+            href="/register"
+            className="text-primary hover:underline font-medium"
+          >
+            {t("signUp")}
           </Link>
         </div>
       </CardFooter>

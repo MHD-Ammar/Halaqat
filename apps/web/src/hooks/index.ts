@@ -2,12 +2,23 @@
  * Hooks - Barrel Export
  */
 
-export { useTodaySession, useUpdateAttendance, useSessionHistory } from "./use-today-session";
+export {
+  useTodaySession,
+  useUpdateAttendance,
+  useSessionHistory,
+} from "./use-today-session";
 export { useUserProfile } from "./use-user-profile";
 export { useSurahs, type Surah } from "./use-surahs";
-export { useRecordRecitation, type RecordRecitationDto } from "./use-record-recitation";
+export {
+  useRecordRecitation,
+  type BulkRecitationDto,
+  type PageDetail,
+} from "./use-record-recitation";
 export { useAdminStats, type DailyOverview } from "./use-admin-stats";
-export { useTeacherPerformance, type TeacherPerformance } from "./use-teacher-performance";
+export {
+  useTeacherPerformance,
+  type TeacherPerformance,
+} from "./use-teacher-performance";
 export {
   useStudentProfile,
   type StudentProfile,
@@ -34,9 +45,15 @@ export {
 } from "./use-students";
 export { useAuth, type AuthUser, type UserRole } from "./use-auth";
 export { useTeachers, type Teacher } from "./use-teachers";
-export { useCircle, type CircleDetails, type CircleStudent } from "./use-circle";
+export {
+  useCircle,
+  type CircleDetails,
+  type CircleStudent,
+} from "./use-circle";
 export { useCreateTeacher } from "./use-create-teacher";
-export { useUnassignedStudents, type UnassignedStudent } from "./use-unassigned-students";
+export {
+  useUnassignedStudents,
+  type UnassignedStudent,
+} from "./use-unassigned-students";
 export { useAssignStudentToCircle } from "./use-assign-student-to-circle";
 export { useTeacherStats, type TeacherStats } from "./use-teacher-stats";
-

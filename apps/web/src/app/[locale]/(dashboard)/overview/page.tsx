@@ -7,7 +7,6 @@
  * For Teacher: Displays personal stats and student list.
  */
 
-import Link from "next/link";
 import {
   Users,
   Percent,
@@ -17,6 +16,8 @@ import {
   UserPlus,
   ChevronRight,
 } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
+import { Link } from "@/i18n/routing";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -45,10 +46,10 @@ import { useUserProfile } from "@/hooks/use-user-profile";
 /**
  * Format date for display
  */
-function formatDate(dateString: string | null): string {
-  if (!dateString) return "Never";
+function formatDate(dateString: string | null, locale: string): string {
+  if (!dateString) return locale === "ar" ? "أبداً" : "Never";
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
     month: "short",
     day: "numeric",
   });
@@ -82,6 +83,9 @@ export default function AdminDashboardPage() {
   const { user } = useAuth();
   const { data: profile } = useUserProfile();
   const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERVISOR";
+  const t = useTranslations("Dashboard");
+  const tCommon = useTranslations("Common");
+  const locale = useLocale();
 
   // Get teacher's first circle ID (for fetching students)
   const teacherCircleId = !isAdmin && profile?.circles?.[0]?.id;
@@ -108,40 +112,38 @@ export default function AdminDashboardPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">
-          {isAdmin ? "Dashboard Overview" : "My Performance"}
+          {isAdmin ? t("dashboardOverview") : t("myPerformance")}
         </h1>
         <p className="text-muted-foreground">
-          {isAdmin
-            ? "Monitor mosque performance and teacher activity"
-            : "View your circle's statistics and students"}
+          {isAdmin ? t("adminDescription") : t("teacherDescription")}
         </p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatsCard
-          title={isAdmin ? "Total Students" : "My Students"}
+          title={isAdmin ? t("totalStudents") : t("myStudents")}
           value={stats?.totalStudents ?? 0}
           icon={Users}
           iconColor="text-blue-500"
           isLoading={statsLoading}
         />
         <StatsCard
-          title="Attendance Rate"
+          title={t("attendanceRate")}
           value={`${stats?.attendanceRate ?? 0}%`}
           icon={Percent}
           iconColor="text-green-500"
           isLoading={statsLoading}
         />
         <StatsCard
-          title="Points Today"
+          title={t("pointsToday")}
           value={stats?.pointsAwardedToday ?? 0}
           icon={Star}
           iconColor="text-yellow-500"
           isLoading={statsLoading}
         />
         <StatsCard
-          title={isAdmin ? "Active Circles" : "My Circles"}
+          title={isAdmin ? t("activeCircles") : t("myCircles")}
           value={
             isAdmin
               ? (stats?.activeCircles ?? 0)
@@ -159,13 +161,13 @@ export default function AdminDashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              My Students
+              {t("myStudents")}
             </CardTitle>
             {teacherCircleId && (
               <CreateStudentDialog defaultCircleId={teacherCircleId}>
                 <button className="flex items-center gap-2 text-sm font-medium text-primary hover:underline">
                   <UserPlus className="h-4 w-4" />
-                  Add Student
+                  {t("addStudent")}
                 </button>
               </CreateStudentDialog>
             )}
@@ -180,11 +182,11 @@ export default function AdminDashboardPage() {
             ) : students.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>No students in your circle yet</p>
+                <p>{t("noStudents")}</p>
                 {teacherCircleId && (
                   <CreateStudentDialog defaultCircleId={teacherCircleId}>
                     <button className="mt-3 text-primary hover:underline text-sm">
-                      Add your first student
+                      {t("addFirstStudent")}
                     </button>
                   </CreateStudentDialog>
                 )}
@@ -206,7 +208,7 @@ export default function AdminDashboardPage() {
                       <div>
                         <p className="font-medium">{student.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {student.totalPoints ?? 0} points
+                          {student.totalPoints ?? 0} {tCommon("points")}
                         </p>
                       </div>
                     </div>
@@ -225,7 +227,7 @@ export default function AdminDashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Teacher Performance
+              {t("teacherPerformance")}
             </CardTitle>
             <CreateTeacherDialog />
           </CardHeader>
@@ -238,18 +240,22 @@ export default function AdminDashboardPage() {
               </div>
             ) : teachers.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                No teachers found
+                {t("noTeachers")}
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Teacher</TableHead>
-                      <TableHead>Circle</TableHead>
-                      <TableHead className="text-center">Students</TableHead>
-                      <TableHead>Last Session</TableHead>
-                      <TableHead className="text-center">Status</TableHead>
+                      <TableHead>{t("teacher")}</TableHead>
+                      <TableHead>{t("circle")}</TableHead>
+                      <TableHead className="text-center">
+                        {t("myStudents")}
+                      </TableHead>
+                      <TableHead>{t("lastSession")}</TableHead>
+                      <TableHead className="text-center">
+                        {t("status")}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -273,21 +279,21 @@ export default function AdminDashboardPage() {
                           </TableCell>
                           <TableCell>
                             <span className={isInactive ? "text-red-600" : ""}>
-                              {formatDate(teacher.lastSessionDate)}
+                              {formatDate(teacher.lastSessionDate, locale)}
                             </span>
                           </TableCell>
                           <TableCell className="text-center">
                             {isInactive ? (
                               <Badge variant="destructive" className="gap-1">
                                 <AlertTriangle className="h-3 w-3" />
-                                Inactive
+                                {t("inactive")}
                               </Badge>
                             ) : (
                               <Badge
                                 variant="secondary"
                                 className="bg-green-100 text-green-700"
                               >
-                                Active
+                                {t("active")}
                               </Badge>
                             )}
                           </TableCell>

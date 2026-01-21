@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Plus, Loader2, Check, ChevronsUpDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   Dialog,
@@ -48,16 +49,6 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useCircles, useCreateStudent } from "@/hooks";
 
-// Validation schema
-const createStudentSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  circleId: z.string().min(1, "Please select a circle"),
-  guardianName: z.string().optional(),
-  guardianPhone: z.string().optional(),
-});
-
-type CreateStudentFormData = z.infer<typeof createStudentSchema>;
-
 interface CreateStudentDialogProps {
   children?: React.ReactNode;
   defaultCircleId?: string;
@@ -70,6 +61,18 @@ export function CreateStudentDialog({
   const [open, setOpen] = useState(false);
   const [circleOpen, setCircleOpen] = useState(false);
   const { toast } = useToast();
+  const t = useTranslations("Students");
+  const tCommon = useTranslations("Common");
+
+  // Validation schema defined in component for translations
+  const createStudentSchema = z.object({
+    name: z.string().min(2, tCommon("error")),
+    circleId: z.string().min(1, tCommon("error")),
+    guardianName: z.string().optional(),
+    guardianPhone: z.string().optional(),
+  });
+
+  type CreateStudentFormData = z.infer<typeof createStudentSchema>;
 
   const { data: circles = [], isLoading: circlesLoading } = useCircles();
   const createMutation = useCreateStudent();
@@ -91,17 +94,17 @@ export function CreateStudentDialog({
       await createMutation.mutateAsync(data);
 
       toast({
-        title: "Student added!",
-        description: `${data.name} has been added successfully.`,
+        title: tCommon("success"),
+        description: tCommon("success"),
       });
 
       setOpen(false);
       form.reset();
     } catch (error: any) {
-      const message = error.response?.data?.message || "Failed to add student";
+      const message = error.response?.data?.message || tCommon("error");
       toast({
         variant: "destructive",
-        title: "Error",
+        title: tCommon("error"),
         description: message,
       });
     }
@@ -112,17 +115,15 @@ export function CreateStudentDialog({
       <DialogTrigger asChild>
         {children || (
           <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Student
+            <Plus className="h-4 w-4 me-2" />
+            {t("addStudent")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New Student</DialogTitle>
-          <DialogDescription>
-            Add a new student to a study circle.
-          </DialogDescription>
+          <DialogTitle>{t("addStudent")}</DialogTitle>
+          <DialogDescription>{tCommon("add")}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -132,10 +133,10 @@ export function CreateStudentDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Student Name</FormLabel>
+                  <FormLabel>{tCommon("name")}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter student name"
+                      placeholder={tCommon("name")}
                       disabled={createMutation.isPending}
                       {...field}
                     />
@@ -152,7 +153,7 @@ export function CreateStudentDialog({
                 name="circleId"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Circle</FormLabel>
+                    <FormLabel>{t("selectCircle")}</FormLabel>
                     <Popover open={circleOpen} onOpenChange={setCircleOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -169,17 +170,17 @@ export function CreateStudentDialog({
                             }
                           >
                             {circlesLoading
-                              ? "Loading circles..."
-                              : selectedCircle?.name || "Select a circle..."}
+                              ? tCommon("loading")
+                              : selectedCircle?.name || t("selectCircle")}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-full p-0" align="start">
                         <Command>
-                          <CommandInput placeholder="Search circles..." />
+                          <CommandInput placeholder={tCommon("search")} />
                           <CommandList>
-                            <CommandEmpty>No circles found.</CommandEmpty>
+                            <CommandEmpty>{tCommon("noData")}</CommandEmpty>
                             <CommandGroup>
                               {circles.map((circle) => (
                                 <CommandItem
@@ -218,10 +219,10 @@ export function CreateStudentDialog({
               name="guardianName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Guardian Name (Optional)</FormLabel>
+                  <FormLabel>{t("guardianName")}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Parent/guardian name"
+                      placeholder={t("guardianName")}
                       disabled={createMutation.isPending}
                       {...field}
                     />
@@ -237,10 +238,10 @@ export function CreateStudentDialog({
               name="guardianPhone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Guardian Phone (Optional)</FormLabel>
+                  <FormLabel>{t("guardianPhone")}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="e.g., +1234567890"
+                      placeholder="+123..."
                       disabled={createMutation.isPending}
                       {...field}
                     />
@@ -257,16 +258,16 @@ export function CreateStudentDialog({
                 onClick={() => setOpen(false)}
                 disabled={createMutation.isPending}
               >
-                Cancel
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={createMutation.isPending}>
                 {createMutation.isPending ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Adding...
+                    <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                    {tCommon("loading")}
                   </>
                 ) : (
-                  "Add Student"
+                  tCommon("add")
                 )}
               </Button>
             </DialogFooter>

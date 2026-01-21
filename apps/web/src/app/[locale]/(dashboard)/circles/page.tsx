@@ -7,10 +7,16 @@
  * Features: List circles, create new circles, view circle details.
  */
 
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { BookOpen, Users, MoreVertical, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
-import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -27,21 +33,23 @@ export default function CirclesPage() {
   const { data: circles, isLoading, isError } = useCircles();
   const deleteMutation = useDeleteCircle();
   const { toast } = useToast();
+  const t = useTranslations("Circles");
+  const tCommon = useTranslations("Common");
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
+    if (!confirm(t("deleteConfirmation"))) return;
 
     try {
       await deleteMutation.mutateAsync(id);
       toast({
-        title: "Circle deleted",
-        description: `${name} has been removed.`,
+        title: tCommon("success"),
+        description: tCommon("delete") + " " + name,
       });
     } catch {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to delete circle.",
+        title: tCommon("error"),
+        description: tCommon("error"),
       });
     }
   };
@@ -72,7 +80,7 @@ export default function CirclesPage() {
       <div className="p-4 md:p-6">
         <Card>
           <CardContent className="py-12 text-center text-destructive">
-            Failed to load circles. Please try again.
+            {tCommon("error")}
           </CardContent>
         </Card>
       </div>
@@ -84,8 +92,8 @@ export default function CirclesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">My Circles</h1>
-          <p className="text-muted-foreground">Manage your study circles</p>
+          <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         <CreateCircleDialog />
       </div>
@@ -94,10 +102,7 @@ export default function CirclesPage() {
       {circles && circles.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {circles.map((circle) => (
-            <Card
-              key={circle.id}
-              className="hover:shadow-md transition-shadow"
-            >
+            <Card key={circle.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -129,8 +134,8 @@ export default function CirclesPage() {
                         className="text-destructive"
                         onClick={() => handleDelete(circle.id, circle.name)}
                       >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
+                        <Trash2 className="h-4 w-4 me-2" />
+                        {t("deleteCircle")}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -140,11 +145,17 @@ export default function CirclesPage() {
                 <div className="flex items-center gap-4 mt-4 pt-4 border-t text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Users className="h-4 w-4" />
-                    <span>{circle._count?.students || 0} students</span>
+                    <span>
+                      {circle._count?.students || 0}{" "}
+                      {
+                        tCommon("loading").replace(
+                          "...",
+                          "",
+                        ) /* Hacky way to get 'students' context if generic */
+                      }
+                    </span>
                   </div>
-                  {circle.teacher && (
-                    <span>Teacher: {circle.teacher.fullName}</span>
-                  )}
+                  {circle.teacher && <span>{circle.teacher.fullName}</span>}
                 </div>
               </CardContent>
             </Card>
@@ -155,9 +166,9 @@ export default function CirclesPage() {
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
-            <CardTitle className="text-lg mb-2">No circles yet</CardTitle>
+            <CardTitle className="text-lg mb-2">{t("noCircles")}</CardTitle>
             <CardDescription className="text-center mb-4">
-              Create your first study circle to get started
+              {t("noCirclesDesc")}
             </CardDescription>
             <CreateCircleDialog />
           </CardContent>

@@ -3,6 +3,7 @@
  *
  * Centralized navigation items for both mobile bottom nav and desktop sidebar.
  * Includes role-based access control with FLATTENED route structure.
+ * Uses titleKey for i18n support.
  */
 
 import {
@@ -16,7 +17,7 @@ import {
 export type UserRole = "ADMIN" | "TEACHER" | "SUPERVISOR";
 
 export interface NavItem {
-  title: string;
+  titleKey: string;
   href: string;
   icon: LucideIcon;
   description?: string;
@@ -31,35 +32,35 @@ export interface NavItem {
  */
 export const NAV_ITEMS: NavItem[] = [
   {
-    title: "Overview",
+    titleKey: "overview",
     href: "/overview",
     icon: LayoutDashboard,
     description: "Dashboard and analytics",
     roles: ["ADMIN", "SUPERVISOR", "TEACHER"],
   },
   {
-    title: "Circles",
+    titleKey: "circles",
     href: "/circles",
     icon: BookOpen,
     description: "Manage study circles",
     roles: ["ADMIN"],
   },
   {
-    title: "Students",
+    titleKey: "students",
     href: "/students",
     icon: Users,
     description: "View and manage students",
     roles: ["ADMIN"],
   },
   {
-    title: "My Circle",
+    titleKey: "myCircle",
     href: "/my-circle",
     icon: BookOpen,
     description: "Today's session and attendance",
     roles: ["TEACHER"],
   },
   {
-    title: "Profile",
+    titleKey: "profile",
     href: "/profile",
     icon: User,
     description: "Your account settings",

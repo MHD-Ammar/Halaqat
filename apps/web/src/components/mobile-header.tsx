@@ -3,10 +3,11 @@
 /**
  * Mobile Header Component
  *
- * Simple top bar for mobile view with logo, user avatar, and logout.
+ * Simple top bar for mobile view with logo, language switcher, user avatar, and logout.
  */
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
+import { useTranslations } from "next-intl";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LogOut, Settings, User } from "lucide-react";
 import { useAuth } from "@/hooks";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 /**
  * Get initials from name
@@ -35,13 +37,14 @@ function getInitials(name?: string): string {
 export function MobileHeader() {
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
+  const t = useTranslations("Common");
 
   const handleLogout = () => {
     logout();
   };
 
   const handleSettings = () => {
-    router.push("/dashboard/profile");
+    router.push("/profile");
   };
 
   return (
@@ -55,43 +58,51 @@ export function MobileHeader() {
           <span className="text-lg font-semibold text-foreground">Halaqat</span>
         </div>
 
-        {/* User Avatar */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="" alt={user?.name || "User"} />
-                <AvatarFallback className="bg-primary/10 text-primary">
-                  {getInitials(user?.name)}
-                </AvatarFallback>
-              </Avatar>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              {isLoading ? "Loading..." : user?.name || "My Account"}
-              {user?.email && (
-                <p className="text-xs font-normal text-muted-foreground truncate">
-                  {user.email}
-                </p>
-              )}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSettings}>
-              <User className="mr-2 h-4 w-4" />
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleSettings}>
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-              <LogOut className="mr-2 h-4 w-4" />
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Right side: Language Switcher + User Avatar */}
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
+
+          {/* User Avatar */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="" alt={user?.name || "User"} />
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {getInitials(user?.name)}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                {isLoading ? t("loading") : user?.name || t("myAccount")}
+                {user?.email && (
+                  <p className="text-xs font-normal text-muted-foreground truncate">
+                    {user.email}
+                  </p>
+                )}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSettings}>
+                <User className="mr-2 h-4 w-4" />
+                {t("profile")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSettings}>
+                <Settings className="mr-2 h-4 w-4" />
+                {t("settings")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="text-destructive"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                {t("logout")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   );

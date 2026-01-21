@@ -8,7 +8,7 @@
  */
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import {
   Users,
   Search,
@@ -16,8 +16,14 @@ import {
   ChevronRight,
   BookOpen,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
-import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,6 +48,9 @@ export default function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const limit = 10;
 
+  const t = useTranslations("Students");
+  const tCommon = useTranslations("Common");
+
   const { data, isLoading, isError } = useStudents({ page, limit });
 
   const students = data?.data || [];
@@ -51,7 +60,7 @@ export default function StudentsPage() {
   // Filter by search (client-side for now)
   const filteredStudents = searchTerm
     ? students.filter((s) =>
-        s.name.toLowerCase().includes(searchTerm.toLowerCase())
+        s.name.toLowerCase().includes(searchTerm.toLowerCase()),
       )
     : students;
 
@@ -82,7 +91,7 @@ export default function StudentsPage() {
       <div className="p-4 md:p-6">
         <Card>
           <CardContent className="py-12 text-center text-destructive">
-            Failed to load students. Please try again.
+            {tCommon("error")}
           </CardContent>
         </Card>
       </div>
@@ -94,9 +103,9 @@ export default function StudentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Students</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
           <p className="text-muted-foreground">
-            {total} student{total !== 1 ? "s" : ""} total
+            {t("totalStudents", { count: total })}
           </p>
         </div>
         <CreateStudentDialog />
@@ -106,10 +115,10 @@ export default function StudentsPage() {
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search students..."
+          placeholder={tCommon("search")}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
+          className="pl-10 text-start"
         />
       </div>
 
@@ -117,7 +126,10 @@ export default function StudentsPage() {
       {filteredStudents.length > 0 ? (
         <div className="space-y-3">
           {filteredStudents.map((student) => (
-            <Card key={student.id} className="hover:shadow-md transition-shadow">
+            <Card
+              key={student.id}
+              className="hover:shadow-md transition-shadow"
+            >
               <CardContent className="p-4">
                 <div className="flex items-center gap-4">
                   {/* Avatar */}
@@ -147,7 +159,8 @@ export default function StudentsPage() {
                           <Users className="h-3 w-3" />
                           <span>
                             {student.guardianName}
-                            {student.guardianPhone && ` (${student.guardianPhone})`}
+                            {student.guardianPhone &&
+                              ` (${student.guardianPhone})`}
                           </span>
                         </div>
                       )}
@@ -157,7 +170,7 @@ export default function StudentsPage() {
                   {/* Points Badge */}
                   {student.totalPoints !== undefined && (
                     <Badge variant="secondary" className="font-mono">
-                      {student.totalPoints} pts
+                      {student.totalPoints} {tCommon("points")}
                     </Badge>
                   )}
                 </div>
@@ -170,9 +183,9 @@ export default function StudentsPage() {
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
-            <CardTitle className="text-lg mb-2">No students yet</CardTitle>
+            <CardTitle className="text-lg mb-2">{t("noStudents")}</CardTitle>
             <CardDescription className="text-center mb-4">
-              Add students to your circles to track their progress
+              {t("noStudentsDesc")}
             </CardDescription>
             <CreateStudentDialog />
           </CardContent>
@@ -188,11 +201,11 @@ export default function StudentsPage() {
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
           >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
+            <ChevronLeft className="h-4 w-4 me-2" />
+            {tCommon("back")}
           </Button>
           <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
+            {tCommon("page")} {page} / {totalPages}
           </span>
           <Button
             variant="outline"
@@ -200,8 +213,8 @@ export default function StudentsPage() {
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
           >
-            Next
-            <ChevronRight className="h-4 w-4" />
+            {tCommon("next")}
+            <ChevronRight className="h-4 w-4 ms-2" />
           </Button>
         </div>
       )}

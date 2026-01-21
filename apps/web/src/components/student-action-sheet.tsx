@@ -19,6 +19,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { RecitationType, RecitationQuality } from "@halaqat/types";
+import { useTranslations } from "next-intl";
 
 import {
   Sheet,
@@ -53,52 +54,6 @@ interface StudentActionSheetProps {
   children: React.ReactNode;
 }
 
-/**
- * Quality configuration with colors
- */
-const QUALITY_OPTIONS = [
-  {
-    value: RecitationQuality.EXCELLENT,
-    label: "Excellent",
-    shortLabel: "Exc",
-    color: "bg-emerald-500 hover:bg-emerald-600 text-white",
-    selectedColor: "ring-2 ring-emerald-500 ring-offset-2",
-    badgeColor: "bg-emerald-100 text-emerald-700",
-  },
-  {
-    value: RecitationQuality.VERY_GOOD,
-    label: "Very Good",
-    shortLabel: "V.Good",
-    color: "bg-green-500 hover:bg-green-600 text-white",
-    selectedColor: "ring-2 ring-green-500 ring-offset-2",
-    badgeColor: "bg-green-100 text-green-700",
-  },
-  {
-    value: RecitationQuality.GOOD,
-    label: "Good",
-    shortLabel: "Good",
-    color: "bg-blue-500 hover:bg-blue-600 text-white",
-    selectedColor: "ring-2 ring-blue-500 ring-offset-2",
-    badgeColor: "bg-blue-100 text-blue-700",
-  },
-  {
-    value: RecitationQuality.ACCEPTABLE,
-    label: "Acceptable",
-    shortLabel: "Acc",
-    color: "bg-yellow-500 hover:bg-yellow-600 text-white",
-    selectedColor: "ring-2 ring-yellow-500 ring-offset-2",
-    badgeColor: "bg-yellow-100 text-yellow-700",
-  },
-  {
-    value: RecitationQuality.POOR,
-    label: "Poor",
-    shortLabel: "Poor",
-    color: "bg-red-500 hover:bg-red-600 text-white",
-    selectedColor: "ring-2 ring-red-500 ring-offset-2",
-    badgeColor: "bg-red-100 text-red-700",
-  },
-];
-
 type WizardStep = "INPUT" | "REVIEW";
 
 export function StudentActionSheet({
@@ -109,6 +64,57 @@ export function StudentActionSheet({
   const { toast } = useToast();
   const recordRecitation = useRecordRecitation();
   const { data: surahs } = useSurahsWithPages();
+  const t = useTranslations("StudentAction");
+  const tCommon = useTranslations("Common");
+
+  /**
+   * Quality configuration with colors
+   */
+  const QUALITY_OPTIONS = useMemo(
+    () => [
+      {
+        value: RecitationQuality.EXCELLENT,
+        label: t("excellent"),
+        shortLabel: t("excellentShort"),
+        color: "bg-emerald-500 hover:bg-emerald-600 text-white",
+        selectedColor: "ring-2 ring-emerald-500 ring-offset-2",
+        badgeColor: "bg-emerald-100 text-emerald-700",
+      },
+      {
+        value: RecitationQuality.VERY_GOOD,
+        label: t("veryGood"),
+        shortLabel: t("veryGoodShort"),
+        color: "bg-green-500 hover:bg-green-600 text-white",
+        selectedColor: "ring-2 ring-green-500 ring-offset-2",
+        badgeColor: "bg-green-100 text-green-700",
+      },
+      {
+        value: RecitationQuality.GOOD,
+        label: t("good"),
+        shortLabel: t("goodShort"),
+        color: "bg-blue-500 hover:bg-blue-600 text-white",
+        selectedColor: "ring-2 ring-blue-500 ring-offset-2",
+        badgeColor: "bg-blue-100 text-blue-700",
+      },
+      {
+        value: RecitationQuality.ACCEPTABLE,
+        label: t("acceptable"),
+        shortLabel: t("acceptableShort"),
+        color: "bg-yellow-500 hover:bg-yellow-600 text-white",
+        selectedColor: "ring-2 ring-yellow-500 ring-offset-2",
+        badgeColor: "bg-yellow-100 text-yellow-700",
+      },
+      {
+        value: RecitationQuality.POOR,
+        label: t("poor"),
+        shortLabel: t("poorShort"),
+        color: "bg-red-500 hover:bg-red-600 text-white",
+        selectedColor: "ring-2 ring-red-500 ring-offset-2",
+        badgeColor: "bg-red-100 text-red-700",
+      },
+    ],
+    [t],
+  );
 
   // Wizard state
   const [step, setStep] = useState<WizardStep>("INPUT");
@@ -199,15 +205,18 @@ export function StudentActionSheet({
       });
 
       toast({
-        title: "Recitation Recorded!",
-        description: `${result.pageCount} pages saved. +${result.totalPointsAwarded} points awarded.`,
+        title: t("recitationRecorded"),
+        description: t("recitationSavedDescription", {
+          pageCount: result.pageCount,
+          points: result.totalPointsAwarded,
+        }),
       });
 
       handleOpenChange(false);
     } catch {
       toast({
-        title: "Error",
-        description: "Failed to save recitation. Please try again.",
+        title: tCommon("error"),
+        description: t("saveFailed"),
         variant: "destructive",
       });
     }
@@ -228,12 +237,12 @@ export function StudentActionSheet({
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
-            Record Recitation - {student.name}
+            {t("recordRecitation")} - {student.name}
           </SheetTitle>
           <SheetDescription>
             {step === "INPUT"
-              ? "Enter page range and select quality"
-              : `Review ${pageDetails.length} pages before saving`}
+              ? t("enterPageRange")
+              : t("reviewPages", { count: pageDetails.length })}
           </SheetDescription>
         </SheetHeader>
 
@@ -243,7 +252,7 @@ export function StudentActionSheet({
             {/* Page Range */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startPage">Start Page</Label>
+                <Label htmlFor="startPage">{t("startPage")}</Label>
                 <Input
                   id="startPage"
                   type="number"
@@ -260,7 +269,7 @@ export function StudentActionSheet({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endPage">End Page</Label>
+                <Label htmlFor="endPage">{t("endPage")}</Label>
                 <Input
                   id="endPage"
                   type="number"
@@ -281,14 +290,15 @@ export function StudentActionSheet({
             {/* Page count indicator */}
             {isStep1Valid && (
               <div className="text-center text-sm text-muted-foreground">
-                {(endPage as number) - (startPage as number) + 1} page(s)
-                selected
+                {t("pagesSelected", {
+                  count: (endPage as number) - (startPage as number) + 1,
+                })}
               </div>
             )}
 
             {/* Quality Selection */}
             <div className="space-y-2">
-              <Label>Quality</Label>
+              <Label>{t("quality")}</Label>
               <div className="grid grid-cols-5 gap-2">
                 {QUALITY_OPTIONS.map((option) => (
                   <Button
@@ -309,7 +319,7 @@ export function StudentActionSheet({
 
             {/* Lesson Type Toggle */}
             <div className="space-y-2">
-              <Label>Lesson Type</Label>
+              <Label>{t("lessonType")}</Label>
               <div className="flex gap-2">
                 <Button
                   type="button"
@@ -321,7 +331,7 @@ export function StudentActionSheet({
                   className="flex-1 h-12"
                   onClick={() => setLessonType(RecitationType.NEW_LESSON)}
                 >
-                  New Lesson
+                  {t("newLesson")}
                 </Button>
                 <Button
                   type="button"
@@ -331,7 +341,7 @@ export function StudentActionSheet({
                   className="flex-1 h-12"
                   onClick={() => setLessonType(RecitationType.REVIEW)}
                 >
-                  Review
+                  {t("review")}
                 </Button>
               </div>
             </div>
@@ -341,7 +351,7 @@ export function StudentActionSheet({
         {/* Step 2: Review List with Surah Names */}
         {step === "REVIEW" && (
           <ScrollArea className="flex-1 py-4">
-            <div className="space-y-3 pr-4">
+            <div className="space-y-3 pe-4">
               {pageDetails.map((page) => {
                 const surahName = getSurahName(page.pageNumber);
 
@@ -351,7 +361,9 @@ export function StudentActionSheet({
                     className="flex items-center justify-between p-3 rounded-lg border bg-card"
                   >
                     <div>
-                      <div className="font-medium">Page {page.pageNumber}</div>
+                      <div className="font-medium">
+                        {tCommon("page")} {page.pageNumber}
+                      </div>
                       {surahName && (
                         <div className="text-sm text-muted-foreground">
                           {surahName}
@@ -393,14 +405,14 @@ export function StudentActionSheet({
               disabled={!isStep1Valid}
               onClick={handleNext}
             >
-              Next
-              <ChevronRight className="ml-2 h-4 w-4" />
+              {tCommon("next")}
+              <ChevronRight className="ms-2 h-4 w-4" />
             </Button>
           ) : (
             <>
               <Button variant="outline" className="h-12" onClick={handleBack}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
+                <ArrowLeft className="me-2 h-4 w-4" />
+                {tCommon("back")}
               </Button>
               <Button
                 className="flex-1 h-12"
@@ -409,13 +421,13 @@ export function StudentActionSheet({
               >
                 {recordRecitation.isPending ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    {tCommon("saving")}
                   </>
                 ) : (
                   <>
-                    <Check className="mr-2 h-4 w-4" />
-                    Save All ({pageDetails.length} pages)
+                    <Check className="me-2 h-4 w-4" />
+                    {t("saveAll", { count: pageDetails.length })}
                   </>
                 )}
               </Button>

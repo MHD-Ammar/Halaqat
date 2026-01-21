@@ -7,7 +7,7 @@
  */
 
 import { useState, useMemo, useCallback } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import {
   Check,
   X,
@@ -18,6 +18,7 @@ import {
   Users,
 } from "lucide-react";
 import { AttendanceStatus } from "@halaqat/types";
+import { useTranslations, useFormatter } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,51 +42,6 @@ const STATUS_CYCLE: AttendanceStatus[] = [
 ];
 
 /**
- * Status display configuration
- */
-const STATUS_CONFIG: Record<
-  AttendanceStatus,
-  { label: string; color: string; bgColor: string; icon: React.ReactNode }
-> = {
-  [AttendanceStatus.PRESENT]: {
-    label: "Present",
-    color: "text-green-700",
-    bgColor: "bg-green-100 hover:bg-green-200",
-    icon: <Check className="w-4 h-4" />,
-  },
-  [AttendanceStatus.ABSENT]: {
-    label: "Absent",
-    color: "text-red-700",
-    bgColor: "bg-red-100 hover:bg-red-200",
-    icon: <X className="w-4 h-4" />,
-  },
-  [AttendanceStatus.LATE]: {
-    label: "Late",
-    color: "text-yellow-700",
-    bgColor: "bg-yellow-100 hover:bg-yellow-200",
-    icon: <Clock className="w-4 h-4" />,
-  },
-  [AttendanceStatus.EXCUSED]: {
-    label: "Excused",
-    color: "text-gray-700",
-    bgColor: "bg-gray-200 hover:bg-gray-300",
-    icon: <AlertCircle className="w-4 h-4" />,
-  },
-};
-
-/**
- * Format date for display
- */
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    weekday: "long",
-    day: "numeric",
-    month: "short",
-  });
-}
-
-/**
  * Get initials from name
  */
 function getInitials(name: string): string {
@@ -99,6 +55,9 @@ function getInitials(name: string): string {
 
 export default function DashboardPage() {
   const { toast } = useToast();
+  const t = useTranslations("MyCircle");
+  const tCommon = useTranslations("Common");
+  const format = useFormatter();
 
   // Get user profile to find their circle
   const { data: profile, isLoading: profileLoading } = useUserProfile();
@@ -128,6 +87,44 @@ export default function DashboardPage() {
     () => Object.keys(localChanges).length > 0,
     [localChanges],
   );
+
+  /**
+   * Status display configuration
+   * Moved inside component to use translations
+   */
+  const getStatusConfig = (status: AttendanceStatus) => {
+    switch (status) {
+      case AttendanceStatus.PRESENT:
+        return {
+          label: t("present"),
+          color: "text-green-700",
+          bgColor: "bg-green-100 hover:bg-green-200",
+          icon: <Check className="w-4 h-4" />,
+        };
+      case AttendanceStatus.ABSENT:
+        return {
+          label: t("absent"),
+          color: "text-red-700",
+          bgColor: "bg-red-100 hover:bg-red-200",
+          icon: <X className="w-4 h-4" />,
+        };
+      case AttendanceStatus.LATE:
+        return {
+          label: t("late"),
+          color: "text-yellow-700",
+          bgColor: "bg-yellow-100 hover:bg-yellow-200",
+          icon: <Clock className="w-4 h-4" />,
+        };
+      case AttendanceStatus.EXCUSED:
+      default:
+        return {
+          label: t("excused"),
+          color: "text-gray-700",
+          bgColor: "bg-gray-200 hover:bg-gray-300",
+          icon: <AlertCircle className="w-4 h-4" />,
+        };
+    }
+  };
 
   // Toggle attendance status for a student
   const toggleStatus = useCallback(
@@ -177,17 +174,17 @@ export default function DashboardPage() {
       await updateMutation.mutateAsync(updates);
       setLocalChanges({});
       toast({
-        title: "Attendance saved!",
-        description: `Updated ${updates.length} student(s) attendance.`,
+        title: tCommon("success"),
+        description: tCommon("success"),
       });
     } catch {
       toast({
-        title: "Error saving attendance",
-        description: "Please try again.",
+        title: tCommon("error"),
+        description: tCommon("error"),
         variant: "destructive",
       });
     }
-  }, [localChanges, updateMutation, toast]);
+  }, [localChanges, updateMutation, toast, tCommon]);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -235,11 +232,10 @@ export default function DashboardPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <Users className="w-12 h-12 text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold mb-2">No Circle Assigned</h2>
-            <p className="text-muted-foreground">
-              You don&apos;t have any circles assigned yet. Please contact an
-              admin.
-            </p>
+            <h2 className="text-xl font-semibold mb-2">
+              {t("noCircleAssigned")}
+            </h2>
+            <p className="text-muted-foreground">{t("noCircleAssignedDesc")}</p>
           </CardContent>
         </Card>
       </div>
@@ -253,15 +249,11 @@ export default function DashboardPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <AlertCircle className="w-12 h-12 text-destructive mb-4" />
-            <h2 className="text-xl font-semibold mb-2">
-              Failed to Load Session
-            </h2>
-            <p className="text-muted-foreground mb-4">
-              Something went wrong while loading today&apos;s session.
-            </p>
+            <h2 className="text-xl font-semibold mb-2">{tCommon("error")}</h2>
+            <p className="text-muted-foreground mb-4">{tCommon("error")}</p>
             <Button onClick={() => refetch()} variant="outline">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Try Again
+              <RefreshCw className="w-4 h-4 me-2" />
+              {tCommon("add")}
             </Button>
           </CardContent>
         </Card>
@@ -274,7 +266,13 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">
-          {session ? formatDate(session.date) : "Today"}
+          {session
+            ? format.dateTime(new Date(session.date), {
+                weekday: "long",
+                day: "numeric",
+                month: "short",
+              })
+            : t("todaySession")}
         </h1>
         <p className="text-muted-foreground">{session?.circle?.name}</p>
       </div>
@@ -284,7 +282,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Students
+              {tCommon("name")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -294,7 +292,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Present
+              {t("present")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -312,7 +310,7 @@ export default function DashboardPage() {
             attendance.studentId,
             attendance.status,
           );
-          const config = STATUS_CONFIG[effectiveStatus];
+          const config = getStatusConfig(effectiveStatus);
           const hasChange = localChanges[attendance.studentId] !== undefined;
 
           return (
@@ -359,7 +357,7 @@ export default function DashboardPage() {
                     }}
                   >
                     {config.icon}
-                    <span className="ml-2">{config.label}</span>
+                    <span className="ms-2">{config.label}</span>
                   </Button>
                 </CardContent>
               </Card>
@@ -373,9 +371,7 @@ export default function DashboardPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">
-              No students in this circle yet.
-            </p>
+            <p className="text-muted-foreground">{tCommon("noData")}</p>
           </CardContent>
         </Card>
       )}
@@ -391,13 +387,13 @@ export default function DashboardPage() {
           >
             {updateMutation.isPending ? (
               <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Saving...
+                <RefreshCw className="w-4 h-4 me-2 animate-spin" />
+                {tCommon("saving")}
               </>
             ) : (
               <>
-                <Save className="w-4 h-4 mr-2" />
-                Save Changes ({Object.keys(localChanges).length})
+                <Save className="w-4 h-4 me-2" />
+                {t("saveChanges")} ({Object.keys(localChanges).length})
               </>
             )}
           </Button>

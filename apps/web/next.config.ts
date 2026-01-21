@@ -1,4 +1,10 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+/**
+ * Create the next-intl plugin
+ */
+const withNextIntl = createNextIntlPlugin("./src/i18n.ts");
 
 /**
  * Next.js configuration for Halaqat Web
@@ -14,8 +20,9 @@ const nextConfig: NextConfig = {
 
   // Environment variables exposed to the browser
   env: {
-    API_URL: process.env.API_URL || "http://localhost:3001/api",
+    NEXT_PUBLIC_API_URL:
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api",
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

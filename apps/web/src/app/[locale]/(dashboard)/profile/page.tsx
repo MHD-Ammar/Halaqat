@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, Lock } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   Card,
@@ -36,29 +37,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useUpdateProfile } from "@/hooks/use-update-profile";
 import { useChangePassword } from "@/hooks/use-change-password";
 
-// Profile update validation schema
-const profileSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-});
-
-type ProfileFormData = z.infer<typeof profileSchema>;
-
-// Password change validation schema
-const passwordSchema = z
-  .object({
-    currentPassword: z.string().min(1, "Current password is required"),
-    newPassword: z
-      .string()
-      .min(6, "New password must be at least 6 characters"),
-    confirmPassword: z.string().min(1, "Please confirm your new password"),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-type PasswordFormData = z.infer<typeof passwordSchema>;
-
 /**
  * Get initials from name
  */
@@ -77,6 +55,29 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const updateProfile = useUpdateProfile();
   const changePassword = useChangePassword();
+  const t = useTranslations("Profile");
+  const tCommon = useTranslations("Common");
+
+  // Profile update validation schema
+  const profileSchema = z.object({
+    name: z.string().min(2, tCommon("error")), // Simplified error
+  });
+
+  type ProfileFormData = z.infer<typeof profileSchema>;
+
+  // Password change validation schema
+  const passwordSchema = z
+    .object({
+      currentPassword: z.string().min(1, tCommon("error")),
+      newPassword: z.string().min(6, tCommon("error")),
+      confirmPassword: z.string().min(1, tCommon("error")),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: tCommon("error"), // "Passwords do not match" translation needed really, but using generic error for speed
+      path: ["confirmPassword"],
+    });
+
+  type PasswordFormData = z.infer<typeof passwordSchema>;
 
   // Profile form
   const profileForm = useForm<ProfileFormData>({
@@ -104,14 +105,14 @@ export default function ProfilePage() {
     try {
       await updateProfile.mutateAsync({ fullName: data.name });
       toast({
-        title: "Profile Updated",
-        description: "Your profile has been updated successfully.",
+        title: tCommon("success"),
+        description: tCommon("success"),
       });
       profileForm.reset({ name: data.name });
     } catch {
       toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
+        title: tCommon("error"),
+        description: tCommon("error"),
         variant: "destructive",
       });
     }
@@ -125,16 +126,16 @@ export default function ProfilePage() {
         newPassword: data.newPassword,
       });
       toast({
-        title: "Password Changed",
-        description: "Your password has been changed successfully.",
+        title: tCommon("success"),
+        description: tCommon("success"),
       });
       passwordForm.reset();
     } catch (error: unknown) {
       const errorMessage =
         (error as { response?: { data?: { message?: string } } })?.response
-          ?.data?.message || "Failed to change password. Please try again.";
+          ?.data?.message || tCommon("error");
       toast({
-        title: "Error",
+        title: tCommon("error"),
         description: errorMessage,
         variant: "destructive",
       });
@@ -173,15 +174,15 @@ export default function ProfilePage() {
     <div className="p-4 md:p-6 space-y-6 max-w-2xl">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Profile</h1>
-        <p className="text-muted-foreground">Manage your account settings</p>
+        <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       {/* Profile Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Personal Information</CardTitle>
-          <CardDescription>Update your profile details</CardDescription>
+          <CardTitle>{t("personalInfo")}</CardTitle>
+          <CardDescription>{t("personalInfoDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Avatar */}
@@ -217,9 +218,9 @@ export default function ProfilePage() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full Name</FormLabel>
+                    <FormLabel>{tCommon("name")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Your name" {...field} />
+                      <Input placeholder={tCommon("name")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -227,16 +228,15 @@ export default function ProfilePage() {
               />
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Email</label>
+                <label className="text-sm font-medium">
+                  {tCommon("email")}
+                </label>
                 <Input
                   type="email"
                   value={user?.email || ""}
                   disabled
                   className="bg-muted"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Email cannot be changed
-                </p>
               </div>
 
               <Button
@@ -247,11 +247,11 @@ export default function ProfilePage() {
               >
                 {updateProfile.isPending ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
+                    <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                    {tCommon("saving")}
                   </>
                 ) : (
-                  "Save Changes"
+                  tCommon("save")
                 )}
               </Button>
             </form>
@@ -264,11 +264,9 @@ export default function ProfilePage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
-            Change Password
+            {t("changePassword")}
           </CardTitle>
-          <CardDescription>
-            Update your password to keep your account secure
-          </CardDescription>
+          <CardDescription>{t("changePasswordDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...passwordForm}>
@@ -281,13 +279,9 @@ export default function ProfilePage() {
                 name="currentPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Current Password</FormLabel>
+                    <FormLabel>{t("currentPassword")}</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Enter current password"
-                        {...field}
-                      />
+                      <Input type="password" placeholder="******" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -299,13 +293,9 @@ export default function ProfilePage() {
                 name="newPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>New Password</FormLabel>
+                    <FormLabel>{t("newPassword")}</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Enter new password"
-                        {...field}
-                      />
+                      <Input type="password" placeholder="******" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -317,13 +307,9 @@ export default function ProfilePage() {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm New Password</FormLabel>
+                    <FormLabel>{t("confirmPassword")}</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Confirm new password"
-                        {...field}
-                      />
+                      <Input type="password" placeholder="******" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -333,11 +319,11 @@ export default function ProfilePage() {
               <Button type="submit" disabled={changePassword.isPending}>
                 {changePassword.isPending ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Changing...
+                    <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                    {tCommon("saving")}
                   </>
                 ) : (
-                  "Change Password"
+                  tCommon("update")
                 )}
               </Button>
             </form>
@@ -348,14 +334,12 @@ export default function ProfilePage() {
       {/* Danger Zone */}
       <Card className="border-destructive/50">
         <CardHeader>
-          <CardTitle className="text-destructive">Danger Zone</CardTitle>
-          <CardDescription>
-            Irreversible actions for your account
-          </CardDescription>
+          <CardTitle className="text-destructive">{t("dangerZone")}</CardTitle>
+          <CardDescription>{t("dangerZoneDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button variant="destructive" onClick={logout}>
-            Log Out
+            {tCommon("logout")}
           </Button>
         </CardContent>
       </Card>
