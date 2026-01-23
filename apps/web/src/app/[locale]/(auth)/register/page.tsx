@@ -12,7 +12,7 @@ import { Link } from "@/i18n/routing"; // Use locale-aware Link
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Ticket } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import {
@@ -42,6 +42,7 @@ export default function RegisterPage() {
     email: z.string().email(tAuth("validEmail")),
     phoneNumber: z.string().min(10, tCommon("phone") + " invalid"), // simplified for now
     password: z.string().min(6, tAuth("passwordMinLength")),
+    inviteCode: z.string().length(6, t("inviteCodeRequired")),
   });
 
   type RegisterFormData = z.infer<typeof registerSchema>;
@@ -57,6 +58,7 @@ export default function RegisterPage() {
       email: "",
       phoneNumber: "",
       password: "",
+      inviteCode: "",
     },
   });
 
@@ -175,6 +177,35 @@ export default function RegisterPage() {
                 {errors.password.message}
               </p>
             )}
+          </div>
+
+          {/* Invite Code Field */}
+          <div className="space-y-2">
+            <label
+              htmlFor="inviteCode"
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <Ticket className="h-4 w-4" />
+              {t("inviteCode")}
+            </label>
+            <Input
+              id="inviteCode"
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="111111"
+              className="font-mono text-center tracking-widest text-lg"
+              disabled={isLoading}
+              {...register("inviteCode")}
+            />
+            {errors.inviteCode && (
+              <p className="text-sm text-destructive">
+                {errors.inviteCode.message}
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {t("inviteCodeHint")}
+            </p>
           </div>
 
           {/* Submit Button */}

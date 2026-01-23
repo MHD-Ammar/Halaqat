@@ -73,8 +73,30 @@ export default function LoginPage() {
         description: t("loginSuccessDescription"),
       });
 
-      // Redirect to overview (works for both admin and teacher)
-      router.push("/overview");
+      // Decode token to get role for smart redirect
+      const tokenParts = response.accessToken.split(".");
+      const tokenPayload = JSON.parse(atob(tokenParts[1] as string));
+      const userRole = tokenPayload.role;
+
+      // Smart redirect based on role
+      let redirectPath = "/overview";
+      switch (userRole) {
+        case "ADMIN":
+        case "SUPERVISOR":
+          redirectPath = "/overview";
+          break;
+        case "TEACHER":
+          redirectPath = "/my-circle";
+          break;
+        case "EXAMINER":
+          redirectPath = "/exams";
+          break;
+        case "STUDENT":
+          redirectPath = "/student-portal";
+          break;
+      }
+
+      router.push(redirectPath);
       router.refresh();
     } catch (error: unknown) {
       const message =

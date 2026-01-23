@@ -136,7 +136,10 @@
   "Register": {
     "title": "إنشاء حساب",
     "subtitle": "انضم إلى حلقات لإدارة حلقاتك",
-    "alreadyHaveAccount": "لديك حساب بالفعل؟"
+    "alreadyHaveAccount": "لديك حساب بالفعل؟",
+    "inviteCode": "كود دعوة المسجد",
+    "inviteCodeHint": "احصل على هذا الكود من مدير المسجد",
+    "inviteCodeRequired": "كود الدعوة يجب أن يكون 6 أحرف"
   },
   "Circles": {
     "title": "حلقاتي",

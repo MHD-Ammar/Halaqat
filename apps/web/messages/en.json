@@ -136,7 +136,10 @@
   "Register": {
     "title": "Create account",
     "subtitle": "Join Halaqat to manage your study circles",
-    "alreadyHaveAccount": "Already have an account?"
+    "alreadyHaveAccount": "Already have an account?",
+    "inviteCode": "Mosque Invite Code",
+    "inviteCodeHint": "Get this code from your mosque administrator",
+    "inviteCodeRequired": "Invite code must be 6 characters"
   },
   "Circles": {
     "title": "My Circles",

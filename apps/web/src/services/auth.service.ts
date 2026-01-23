@@ -1,6 +1,6 @@
 /**
  * Auth Service
- * 
+ *
  * Handles authentication API calls.
  */
 
@@ -16,6 +16,7 @@ export interface RegisterCredentials {
   password: string;
   fullName: string;
   phoneNumber: string;
+  inviteCode: string;
 }
 
 export interface AuthResponse {
@@ -33,7 +34,9 @@ export interface UserProfile {
 /**
  * Login user with email and password
  */
-export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
+export async function login(
+  credentials: LoginCredentials,
+): Promise<AuthResponse> {
   const response = await api.post<AuthResponse>("/auth/login", credentials);
   return response.data;
 }
@@ -41,16 +44,26 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
 /**
  * Register a new user
  */
-export async function register(credentials: RegisterCredentials): Promise<{ message: string; user: UserProfile }> {
-  const response = await api.post<{ message: string; user: UserProfile }>("/auth/register", credentials);
+export async function register(
+  credentials: RegisterCredentials,
+): Promise<{ message: string; user: UserProfile }> {
+  const response = await api.post<{ message: string; user: UserProfile }>(
+    "/auth/register",
+    credentials,
+  );
   return response.data;
 }
 
 /**
  * Get current user profile
  */
-export async function getProfile(): Promise<{ message: string; user: UserProfile }> {
-  const response = await api.get<{ message: string; user: UserProfile }>("/auth/profile");
+export async function getProfile(): Promise<{
+  message: string;
+  user: UserProfile;
+}> {
+  const response = await api.get<{ message: string; user: UserProfile }>(
+    "/auth/profile",
+  );
   return response.data;
 }
 
