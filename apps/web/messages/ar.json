@@ -40,7 +40,9 @@
     "students": "الطلاب",
     "myCircle": "حلقتي",
     "profile": "الملف الشخصي",
-    "studentPortal": "بوابتي"
+    "studentPortal": "بوابتي",
+    "exams": "الاختبارات",
+    "usersManagement": "المستخدمين"
   },
   "Auth": {
     "welcomeBack": "مرحباً بعودتك",
@@ -209,5 +211,17 @@
     "completed": "مكتمل",
     "noExamsYet": "لا توجد اختبارات بعد",
     "noExamsYetDesc": "ابدأ اختباراً جديداً لفحص هذا الطالب"
+  },
+  "Admin": {
+    "usersManagement": "إدارة المستخدمين",
+    "usersDesc": "إدارة حسابات المستخدمين والأدوار",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "role": "الدور",
+    "actions": "الإجراءات",
+    "noUsers": "لم يتم العثور على مستخدمين",
+    "roleUpdated": "تم تحديث الدور بنجاح",
+    "selectRole": "اختر الدور",
+    "updateRole": "تحديث الدور"
   }
 }

@@ -9,11 +9,14 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
+  Param,
   Body,
   Query,
   UseGuards,
   UseInterceptors,
   ClassSerializerInterceptor,
+  ParseUUIDPipe,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -26,6 +29,7 @@ import { UserRole } from "@halaqat/types";
 
 import { UsersService } from "./users.service";
 import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateRoleDto } from "./dto/update-role.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
@@ -79,6 +83,36 @@ export class UsersController {
     return {
       message: "User created successfully",
       data: user,
+    };
+  }
+
+  /**
+   * Update user role (Admin only)
+   * PATCH /api/users/:id/role
+   */
+  @Patch(":id/role")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Update user role",
+    description: "Change a user's role (Admin only)",
+  })
+  @ApiResponse({ status: 200, description: "Role updated successfully" })
+  @ApiResponse({ status: 404, description: "User not found" })
+  @ApiResponse({ status: 403, description: "Forbidden - requires ADMIN role" })
+  async updateRole(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: UpdateRoleDto,
+  ) {
+    const user = await this.usersService.updateRole(id, dto.role);
+    return {
+      message: "Role updated successfully",
+      data: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+      },
     };
   }
 }

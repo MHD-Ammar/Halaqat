@@ -8,6 +8,7 @@ import { Injectable, ConflictException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import * as bcrypt from "bcrypt";
+import { UserRole } from "@halaqat/types";
 
 import { User } from "./entities/user.entity";
 import { CreateUserDto } from "./dto/create-user.dto";
@@ -94,6 +95,22 @@ export class UsersService {
     }
 
     return query.getMany();
+  }
+
+  /**
+   * Update user role (Admin only)
+   * @param userId - User ID
+   * @param role - New role
+   * @returns Updated user
+   */
+  async updateRole(userId: string, role: UserRole): Promise<User> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    user.role = role;
+    return this.userRepository.save(user);
   }
 
   /**

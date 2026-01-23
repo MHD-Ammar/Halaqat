@@ -12,10 +12,17 @@ import {
   User,
   LayoutDashboard,
   GraduationCap,
+  ClipboardCheck,
+  UserCog,
   type LucideIcon,
 } from "lucide-react";
 
-export type UserRole = "ADMIN" | "TEACHER" | "SUPERVISOR" | "STUDENT";
+export type UserRole =
+  | "ADMIN"
+  | "TEACHER"
+  | "SUPERVISOR"
+  | "STUDENT"
+  | "EXAMINER";
 
 export interface NavItem {
   titleKey: string;
@@ -66,6 +73,20 @@ export const NAV_ITEMS: NavItem[] = [
     icon: GraduationCap,
     description: "View your progress and QR code",
     roles: ["STUDENT"],
+  },
+  {
+    titleKey: "exams",
+    href: "/exams",
+    icon: ClipboardCheck,
+    description: "Student testing and exams",
+    roles: ["EXAMINER"],
+  },
+  {
+    titleKey: "usersManagement",
+    href: "/admin/users",
+    icon: UserCog,
+    description: "Manage users and roles",
+    roles: ["ADMIN"],
   },
   {
     titleKey: "profile",

@@ -15,6 +15,8 @@ import {
   AlertTriangle,
   UserPlus,
   ChevronRight,
+  Ticket,
+  Copy,
 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
@@ -42,6 +44,8 @@ import {
   useCircle,
 } from "@/hooks";
 import { useUserProfile } from "@/hooks/use-user-profile";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * Format date for display
@@ -86,6 +90,7 @@ export default function AdminDashboardPage() {
   const t = useTranslations("Dashboard");
   const tCommon = useTranslations("Common");
   const locale = useLocale();
+  const { toast } = useToast();
 
   // Get teacher's first circle ID (for fetching students)
   const teacherCircleId = !isAdmin && profile?.circles?.[0]?.id;
@@ -154,6 +159,49 @@ export default function AdminDashboardPage() {
           isLoading={statsLoading}
         />
       </div>
+
+      {/* Admin: Invite Code Card */}
+      {isAdmin && (
+        <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Ticket className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    {locale === "ar"
+                      ? "كود الدعوة للمسجد"
+                      : "Mosque Invite Code"}
+                  </p>
+                  <p className="text-2xl font-bold font-mono tracking-wider text-primary">
+                    111111
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => {
+                  navigator.clipboard.writeText("111111");
+                  toast({
+                    title: locale === "ar" ? "تم النسخ!" : "Copied!",
+                    description:
+                      locale === "ar"
+                        ? "تم نسخ كود الدعوة"
+                        : "Invite code copied to clipboard",
+                  });
+                }}
+              >
+                <Copy className="h-4 w-4" />
+                {locale === "ar" ? "نسخ" : "Copy"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Teacher: Students List */}
       {!isAdmin && (

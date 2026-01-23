@@ -65,3 +65,4 @@ export {
   type ExamQuestion,
   type StudentWithLastExam,
 } from "./use-exams";
+export { useUsers, useUpdateUserRole, type User } from "./use-users";

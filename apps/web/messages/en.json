@@ -40,7 +40,9 @@
     "students": "Students",
     "myCircle": "My Circle",
     "profile": "Profile",
-    "studentPortal": "My Portal"
+    "studentPortal": "My Portal",
+    "exams": "Exams",
+    "usersManagement": "Users"
   },
   "Auth": {
     "welcomeBack": "Welcome back",
@@ -209,5 +211,17 @@
     "completed": "Completed",
     "noExamsYet": "No exams recorded yet",
     "noExamsYetDesc": "Start a new exam to test this student"
+  },
+  "Admin": {
+    "usersManagement": "Users Management",
+    "usersDesc": "Manage user accounts and roles",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "actions": "Actions",
+    "noUsers": "No users found",
+    "roleUpdated": "Role updated successfully",
+    "selectRole": "Select role",
+    "updateRole": "Update Role"
   }
 }

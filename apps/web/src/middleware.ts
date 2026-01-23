@@ -25,6 +25,7 @@ const protectedRoutes = [
   "/profile",
   "/student-portal",
   "/exams",
+  "/admin",
 ];
 
 // Auth routes (login/register)
