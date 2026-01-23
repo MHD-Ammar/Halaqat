@@ -21,6 +21,7 @@ import { SessionsModule } from "./sessions/sessions.module";
 import { PointsModule } from "./points/points.module";
 import { ProgressModule } from "./progress/progress.module";
 import { AnalyticsModule } from "./analytics/analytics.module";
+import { ExamsModule } from "./exams/exams.module";
 
 @Module({
   imports: [
@@ -48,9 +49,9 @@ import { AnalyticsModule } from "./analytics/analytics.module";
     PointsModule,
     ProgressModule,
     AnalyticsModule,
+    ExamsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
-

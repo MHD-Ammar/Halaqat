@@ -1,22 +1,19 @@
-/**
- * Students Service
- *
- * Business logic for managing students in study circles.
- */
-
 import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  ConflictException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, ILike } from "typeorm";
+import { UserRole } from "@halaqat/types";
 
 import { Student } from "./entities/student.entity";
 import { CreateStudentDto } from "./dto/create-student.dto";
 import { UpdateStudentDto } from "./dto/update-student.dto";
 import { StudentQueryDto } from "./dto/student-query.dto";
 import { CirclesService } from "../circles/circles.service";
+import { UsersService } from "../users/users.service";
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -28,12 +25,19 @@ export interface PaginatedResult<T> {
   };
 }
 
+export interface GeneratedCredentials {
+  username: string;
+  password: string;
+  userId: string;
+}
+
 @Injectable()
 export class StudentsService {
   constructor(
     @InjectRepository(Student)
     private studentsRepository: Repository<Student>,
     private circlesService: CirclesService,
+    private usersService: UsersService,
   ) {}
 
   /**
@@ -166,7 +170,10 @@ export class StudentsService {
   /**
    * Update a student
    */
-  async update(id: string, updateStudentDto: UpdateStudentDto): Promise<Student> {
+  async update(
+    id: string,
+    updateStudentDto: UpdateStudentDto,
+  ): Promise<Student> {
     const student = await this.findOne(id);
 
     // If circleId is being updated, verify the new circle exists
@@ -219,7 +226,7 @@ export class StudentsService {
         .select("COUNT(*)", "total")
         .addSelect(
           "SUM(CASE WHEN a.status = 'PRESENT' THEN 1 ELSE 0 END)",
-          "present"
+          "present",
         )
         .from("attendance", "a")
         .where("a.student_id = :studentId", { studentId: id })
@@ -297,5 +304,55 @@ export class StudentsService {
       attendanceHistory,
     };
   }
-}
 
+  /**
+   * Generate login credentials for a student
+   * Creates a User account linked to the student for portal access
+   */
+  async generateCredentials(studentId: string): Promise<GeneratedCredentials> {
+    const student = await this.findOne(studentId);
+
+    // Check if student already has credentials
+    if (student.userId) {
+      throw new ConflictException("Student already has login credentials");
+    }
+
+    // Generate unique username: student_{first8CharsOfId}
+    const username = `student_${studentId.slice(0, 8)}`;
+
+    // Generate random 8-character password
+    const password = this.generateRandomPassword(8);
+
+    // Create user account with STUDENT role
+    const user = await this.usersService.create({
+      email: `${username}@student.halaqat.local`, // Internal email for system use
+      password,
+      fullName: student.name,
+      phoneNumber: student.phone || "",
+      role: UserRole.STUDENT,
+    });
+
+    // Link user to student
+    student.userId = user.id;
+    student.username = username;
+    await this.studentsRepository.save(student);
+
+    return {
+      username,
+      password,
+      userId: user.id,
+    };
+  }
+
+  /**
+   * Generate a random password with letters and numbers
+   */
+  private generateRandomPassword(length: number): string {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  }
+}

@@ -13,7 +13,7 @@ import Cookies from "js-cookie";
 import { TOKEN_COOKIE_NAME } from "@/lib/api";
 import { useUserProfile } from "./use-user-profile";
 
-export type UserRole = "ADMIN" | "TEACHER" | "SUPERVISOR";
+export type UserRole = "ADMIN" | "TEACHER" | "SUPERVISOR" | "STUDENT";
 
 export interface AuthUser {
   id: string;
@@ -37,10 +37,10 @@ export function useAuth() {
   const logout = useCallback(() => {
     // Remove the auth token cookie
     Cookies.remove(TOKEN_COOKIE_NAME);
-    
+
     // Clear all cached queries
     queryClient.clear();
-    
+
     // Redirect to login
     router.push("/login");
     router.refresh();
@@ -57,7 +57,7 @@ export function useAuth() {
       }
       return profile.role === role;
     },
-    [profile?.role]
+    [profile?.role],
   );
 
   /**
@@ -70,6 +70,11 @@ export function useAuth() {
    */
   const isTeacher = profile?.role === "TEACHER";
 
+  /**
+   * Check if user is Student
+   */
+  const isStudent = profile?.role === "STUDENT";
+
   return {
     user: profile as AuthUser | undefined,
     isLoading,
@@ -77,6 +82,7 @@ export function useAuth() {
     isAuthenticated: !!profile && !isError,
     isAdmin,
     isTeacher,
+    isStudent,
     hasRole,
     logout,
   };

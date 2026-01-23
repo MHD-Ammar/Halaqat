@@ -11,10 +11,11 @@ import {
   BookOpen,
   User,
   LayoutDashboard,
+  GraduationCap,
   type LucideIcon,
 } from "lucide-react";
 
-export type UserRole = "ADMIN" | "TEACHER" | "SUPERVISOR";
+export type UserRole = "ADMIN" | "TEACHER" | "SUPERVISOR" | "STUDENT";
 
 export interface NavItem {
   titleKey: string;
@@ -58,6 +59,13 @@ export const NAV_ITEMS: NavItem[] = [
     icon: BookOpen,
     description: "Today's session and attendance",
     roles: ["TEACHER"],
+  },
+  {
+    titleKey: "studentPortal",
+    href: "/student-portal",
+    icon: GraduationCap,
+    description: "View your progress and QR code",
+    roles: ["STUDENT"],
   },
   {
     titleKey: "profile",

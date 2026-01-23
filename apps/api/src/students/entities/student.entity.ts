@@ -5,10 +5,18 @@
  * Students belong to one circle and can be quickly added with minimal info.
  */
 
-import { Entity, Column, ManyToOne, JoinColumn, Index } from "typeorm";
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  OneToOne,
+  JoinColumn,
+  Index,
+} from "typeorm";
 
 import { BaseEntity } from "../../common/entities/base.entity";
 import { Circle } from "../../circles/entities/circle.entity";
+import { User } from "../../users/entities/user.entity";
 
 @Entity("student")
 export class Student extends BaseEntity {
@@ -78,4 +86,26 @@ export class Student extends BaseEntity {
    */
   @Column({ name: "total_points", type: "int", default: 0 })
   totalPoints!: number;
+
+  /**
+   * Linked user account for portal access (optional)
+   * Relationship: One Student -> One User
+   */
+  @OneToOne(() => User, { nullable: true, onDelete: "SET NULL" })
+  @JoinColumn({ name: "user_id" })
+  user!: User | null;
+
+  /**
+   * Foreign key for the linked user account
+   */
+  @Column({ name: "user_id", type: "uuid", nullable: true })
+  @Index()
+  userId!: string | null;
+
+  /**
+   * Username for student login (auto-generated)
+   */
+  @Column({ type: "varchar", nullable: true, unique: true })
+  @Index()
+  username!: string | null;
 }

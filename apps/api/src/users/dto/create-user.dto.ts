@@ -54,7 +54,7 @@ export class CreateUserDto {
   })
   @IsOptional()
   @IsEnum(UserRole, {
-    message: "Invalid role. Must be ADMIN, TEACHER, or SUPERVISOR",
+    message: "Invalid role. Must be ADMIN, TEACHER, SUPERVISOR, or STUDENT",
   })
   role?: UserRole;
 }

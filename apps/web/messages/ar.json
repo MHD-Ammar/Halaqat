@@ -39,7 +39,8 @@
     "circles": "الحلقات",
     "students": "الطلاب",
     "myCircle": "حلقتي",
-    "profile": "الملف الشخصي"
+    "profile": "الملف الشخصي",
+    "studentPortal": "بوابتي"
   },
   "Auth": {
     "welcomeBack": "مرحباً بعودتك",
@@ -176,5 +177,37 @@
     "late": "متأخر",
     "excused": "معذور",
     "saveChanges": "حفظ التغييرات"
+  },
+  "StudentPortal": {
+    "title": "بوابتي",
+    "subtitle": "عرض تقدمك ومعلوماتك",
+    "progress": "التقدم",
+    "myQr": "رمز QR",
+    "pagesMemorized": "الصفحات المحفوظة",
+    "attendanceRate": "نسبة الحضور",
+    "totalPoints": "إجمالي النقاط",
+    "circle": "الحلقة",
+    "scanQrDescription": "اعرض رمز QR لتسجيل الحضور السريع",
+    "noData": "لا توجد بيانات متاحة بعد"
+  },
+  "Exams": {
+    "title": "الاختبارات",
+    "subtitle": "ابحث عن طالب لبدء الاختبار",
+    "searchPlaceholder": "البحث بالاسم أو رقم الهاتف...",
+    "noStudentsFound": "لم يتم العثور على طلاب",
+    "noStudentsFoundDesc": "جرب البحث بمصطلح مختلف",
+    "lastScore": "آخر درجة",
+    "noExams": "لا توجد اختبارات",
+    "studentHistory": "سجل الاختبارات",
+    "startNewExam": "بدء اختبار جديد",
+    "date": "التاريخ",
+    "examiner": "الممتحن",
+    "score": "الدرجة",
+    "notes": "ملاحظات",
+    "status": "الحالة",
+    "pending": "قيد التنفيذ",
+    "completed": "مكتمل",
+    "noExamsYet": "لا توجد اختبارات بعد",
+    "noExamsYetDesc": "ابدأ اختباراً جديداً لفحص هذا الطالب"
   }
 }

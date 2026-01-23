@@ -23,6 +23,8 @@ const protectedRoutes = [
   "/circles",
   "/students",
   "/profile",
+  "/student-portal",
+  "/exams",
 ];
 
 // Auth routes (login/register)

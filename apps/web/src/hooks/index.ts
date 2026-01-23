@@ -57,3 +57,11 @@ export {
 } from "./use-unassigned-students";
 export { useAssignStudentToCircle } from "./use-assign-student-to-circle";
 export { useTeacherStats, type TeacherStats } from "./use-teacher-stats";
+export { useStudentPortal, type StudentPortalData } from "./use-student-portal";
+export {
+  useStudentExams,
+  useExam,
+  type Exam,
+  type ExamQuestion,
+  type StudentWithLastExam,
+} from "./use-exams";

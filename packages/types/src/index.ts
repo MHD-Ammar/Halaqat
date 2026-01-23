@@ -14,3 +14,5 @@ export { SessionStatus, isSessionStatus } from "./SessionStatus";
 export { RecitationType, isRecitationType } from "./RecitationType";
 export { RecitationQuality, isRecitationQuality } from "./RecitationQuality";
 export { PointSourceType, isPointSourceType } from "./PointSourceType";
+export { ExamStatus, isExamStatus } from "./ExamStatus";
+export { ExamQuestionType, isExamQuestionType } from "./ExamQuestionType";

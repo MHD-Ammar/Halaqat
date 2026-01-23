@@ -39,7 +39,8 @@
     "circles": "Circles",
     "students": "Students",
     "myCircle": "My Circle",
-    "profile": "Profile"
+    "profile": "Profile",
+    "studentPortal": "My Portal"
   },
   "Auth": {
     "welcomeBack": "Welcome back",
@@ -176,5 +177,37 @@
     "late": "Late",
     "excused": "Excused",
     "saveChanges": "Save Changes"
+  },
+  "StudentPortal": {
+    "title": "My Portal",
+    "subtitle": "View your progress and information",
+    "progress": "Progress",
+    "myQr": "My QR",
+    "pagesMemorized": "Pages Memorized",
+    "attendanceRate": "Attendance Rate",
+    "totalPoints": "Total Points",
+    "circle": "Circle",
+    "scanQrDescription": "Show this QR code for quick attendance",
+    "noData": "No data available yet"
+  },
+  "Exams": {
+    "title": "Exams",
+    "subtitle": "Search for a student to start an exam",
+    "searchPlaceholder": "Search by name or phone...",
+    "noStudentsFound": "No students found",
+    "noStudentsFoundDesc": "Try searching with a different term",
+    "lastScore": "Last Score",
+    "noExams": "No exams yet",
+    "studentHistory": "Exam History",
+    "startNewExam": "Start New Exam",
+    "date": "Date",
+    "examiner": "Examiner",
+    "score": "Score",
+    "notes": "Notes",
+    "status": "Status",
+    "pending": "Pending",
+    "completed": "Completed",
+    "noExamsYet": "No exams recorded yet",
+    "noExamsYetDesc": "Start a new exam to test this student"
   }
 }

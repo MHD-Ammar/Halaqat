@@ -17,6 +17,12 @@ export enum UserRole {
 
   /** Supervisor role for overseeing teachers and their Halaqat */
   SUPERVISOR = "SUPERVISOR",
+
+  /** Student role for viewing their own progress and portal */
+  STUDENT = "STUDENT",
+
+  /** Examiner role for testing students on their Quran recitation */
+  EXAMINER = "EXAMINER",
 }
 
 /**

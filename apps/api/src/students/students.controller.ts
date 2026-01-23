@@ -208,4 +208,38 @@ export class StudentsController {
   remove(@Param("id", ParseUUIDPipe) id: string) {
     return this.studentsService.remove(id);
   }
+
+  /**
+   * Generate login credentials for a student
+   * POST /api/students/:id/credentials
+   */
+  @Post(":id/credentials")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
+  @ApiOperation({
+    summary: "Generate student credentials",
+    description:
+      "Create login credentials for a student to access their portal (Admin/Teacher only)",
+  })
+  @ApiParam({ name: "id", description: "Student UUID" })
+  @ApiResponse({
+    status: 201,
+    description: "Credentials generated successfully",
+    schema: {
+      properties: {
+        username: { type: "string", example: "student_abc12345" },
+        password: { type: "string", example: "Xk7mP2nQ" },
+        userId: { type: "string", format: "uuid" },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: "Student not found" })
+  @ApiResponse({ status: 409, description: "Student already has credentials" })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - requires ADMIN or TEACHER role",
+  })
+  generateCredentials(@Param("id", ParseUUIDPipe) id: string) {
+    return this.studentsService.generateCredentials(id);
+  }
 }
