@@ -64,6 +64,7 @@ export class AuthController {
       dto.password,
       dto.fullName,
       dto.phoneNumber,
+      dto.inviteCode,
     );
     return {
       message: "User registered successfully",

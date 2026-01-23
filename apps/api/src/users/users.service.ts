@@ -4,10 +4,7 @@
  * Handles user CRUD operations with secure password hashing.
  */
 
-import {
-  Injectable,
-  ConflictException,
-} from "@nestjs/common";
+import { Injectable, ConflictException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import * as bcrypt from "bcrypt";
@@ -69,6 +66,7 @@ export class UsersService {
       fullName: dto.fullName,
       phoneNumber: dto.phoneNumber,
       role: dto.role, // Defaults to TEACHER via entity
+      mosqueId: dto.mosqueId ?? null,
     });
 
     return this.userRepository.save(user);
@@ -80,10 +78,17 @@ export class UsersService {
    * @returns Array of users (without password)
    */
   async findAll(role?: string): Promise<User[]> {
-    const query = this.userRepository.createQueryBuilder("user")
-      .select(["user.id", "user.email", "user.fullName", "user.role", "user.createdAt"])
+    const query = this.userRepository
+      .createQueryBuilder("user")
+      .select([
+        "user.id",
+        "user.email",
+        "user.fullName",
+        "user.role",
+        "user.createdAt",
+      ])
       .orderBy("user.fullName", "ASC");
-    
+
     if (role) {
       query.where("user.role = :role", { role });
     }
@@ -128,7 +133,10 @@ export class UsersService {
     }
 
     // Verify current password
-    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    const isCurrentPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password,
+    );
     if (!isCurrentPasswordValid) {
       throw new Error("Current password is incorrect");
     }

@@ -22,6 +22,7 @@ import { PointsModule } from "./points/points.module";
 import { ProgressModule } from "./progress/progress.module";
 import { AnalyticsModule } from "./analytics/analytics.module";
 import { ExamsModule } from "./exams/exams.module";
+import { MosquesModule } from "./mosques/mosques.module";
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { ExamsModule } from "./exams/exams.module";
     ProgressModule,
     AnalyticsModule,
     ExamsModule,
+    MosquesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

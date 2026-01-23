@@ -38,4 +38,12 @@ export class RegisterDto {
   @IsString()
   @Matches(/^[0-9+\-\s()]+$/, { message: "Please enter a valid phone number" })
   phoneNumber!: string;
+
+  @ApiProperty({
+    description: "Mosque invite code (6 characters)",
+    example: "111111",
+  })
+  @IsString()
+  @MinLength(6, { message: "Invite code must be 6 characters" })
+  inviteCode!: string;
 }
