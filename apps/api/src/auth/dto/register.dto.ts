@@ -2,7 +2,14 @@
  * Register DTO
  */
 
-import { IsEmail, IsString, MinLength, Matches } from "class-validator";
+import {
+  IsEmail,
+  IsString,
+  MinLength,
+  Matches,
+  IsNotEmpty,
+  Length,
+} from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 
 export class RegisterDto {
@@ -40,10 +47,11 @@ export class RegisterDto {
   phoneNumber!: string;
 
   @ApiProperty({
-    description: "Mosque invite code (6 characters)",
+    description: "Mosque invite code (exactly 6 characters)",
     example: "111111",
   })
   @IsString()
-  @MinLength(6, { message: "Invite code must be 6 characters" })
+  @IsNotEmpty({ message: "Invite code is required" })
+  @Length(6, 6, { message: "Invite code must be exactly 6 characters" })
   inviteCode!: string;
 }

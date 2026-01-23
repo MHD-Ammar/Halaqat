@@ -10,6 +10,7 @@ import { Logger, ValidationPipe } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 
 import { AppModule } from "./app.module";
+import { GlobalExceptionFilter } from "./common/filters";
 
 /**
  * Bootstrap the NestJS application
@@ -20,6 +21,9 @@ async function bootstrap(): Promise<void> {
 
   // Configure port (3001 to avoid conflict with Next.js on 3000)
   const port = process.env.PORT || 3001;
+
+  // Global exception filter for consistent error responses
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   // Global validation pipe for DTO validation
   app.useGlobalPipes(

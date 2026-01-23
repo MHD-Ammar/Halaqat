@@ -14,6 +14,7 @@ import { Session } from "./entities/session.entity";
 import { Attendance } from "./entities/attendance.entity";
 import { BulkAttendanceDto } from "./dto/bulk-attendance.dto";
 import { StudentsService } from "../students/students.service";
+import { CirclesService } from "../circles/circles.service";
 
 @Injectable()
 export class SessionsService {
@@ -23,6 +24,7 @@ export class SessionsService {
     @InjectRepository(Attendance)
     private attendanceRepository: Repository<Attendance>,
     private studentsService: StudentsService,
+    private circlesService: CirclesService,
   ) {}
 
   /**
@@ -31,6 +33,16 @@ export class SessionsService {
    * - If not: create session + auto-populate attendance for all students
    */
   async findOrCreateTodaySession(circleId: string): Promise<Session> {
+    // Validate circle exists first
+    const circle = await this.circlesService
+      .findOne(circleId)
+      .catch(() => null);
+    if (!circle) {
+      throw new NotFoundException(
+        `Circle with ID "${circleId}" not found. Please verify the circle exists.`,
+      );
+    }
+
     const today = this.getTodayDate();
 
     // Check for existing session

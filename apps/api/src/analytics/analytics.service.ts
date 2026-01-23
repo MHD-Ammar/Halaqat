@@ -50,10 +50,8 @@ export class AnalyticsService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Total active students
-    const totalStudents = await this.studentRepository.count({
-      where: { deletedAt: undefined },
-    });
+    // Total active students (not soft-deleted)
+    const totalStudents = await this.studentRepository.count();
 
     // Today's sessions
     const todaySessions = await this.sessionRepository.find({
@@ -82,13 +80,18 @@ export class AnalyticsService {
         : 0;
 
     // Points awarded today
-    const pointsResult = await this.pointTransactionRepository
-      .createQueryBuilder("pt")
-      .select("COALESCE(SUM(pt.amount), 0)", "total")
-      .where("pt.createdAt >= :today", { today })
-      .getRawOne();
-
-    const pointsAwardedToday = parseInt(pointsResult?.total || "0", 10);
+    let pointsAwardedToday = 0;
+    try {
+      const pointsResult = await this.pointTransactionRepository
+        .createQueryBuilder("pt")
+        .select("COALESCE(SUM(pt.amount), 0)", "total")
+        .where("pt.createdAt >= :today", { today })
+        .getRawOne();
+      pointsAwardedToday = parseInt(pointsResult?.total || "0", 10);
+    } catch {
+      // If points table doesn't exist yet, default to 0
+      pointsAwardedToday = 0;
+    }
 
     // Active circles (have session today)
     const activeCircles = new Set(todaySessions.map((s) => s.circleId)).size;
@@ -128,7 +131,7 @@ export class AnalyticsService {
     // Total students in teacher's circles
     const totalStudents = teacherCircles.reduce(
       (sum, circle) => sum + (circle.students?.length || 0),
-      0
+      0,
     );
 
     // Today's sessions for teacher's circles
@@ -160,7 +163,7 @@ export class AnalyticsService {
 
     // Points awarded today for students in teacher's circles
     const studentIds = teacherCircles.flatMap(
-      (c) => c.students?.map((s) => s.id) || []
+      (c) => c.students?.map((s) => s.id) || [],
     );
 
     let pointsAwardedToday = 0;
@@ -201,23 +204,31 @@ export class AnalyticsService {
     const result: TeacherPerformance[] = [];
 
     for (const circle of circles) {
+      // Skip circles without a teacher assigned
       if (!circle.teacher) continue;
 
       // Get the most recent session for this circle
-      const lastSession = await this.sessionRepository.findOne({
-        where: { circleId: circle.id },
-        order: { date: "DESC" },
-      });
+      let lastSessionDate: Date | null = null;
+      let isActive = false;
 
-      const lastSessionDate = lastSession?.date || null;
-      const isActive = lastSessionDate
-        ? new Date(lastSessionDate) >= threeDaysAgo
-        : false;
+      try {
+        const lastSession = await this.sessionRepository.findOne({
+          where: { circleId: circle.id },
+          order: { date: "DESC" },
+        });
+
+        lastSessionDate = lastSession?.date || null;
+        isActive = lastSessionDate
+          ? new Date(lastSessionDate) >= threeDaysAgo
+          : false;
+      } catch {
+        // If there's an issue fetching sessions, continue with defaults
+      }
 
       result.push({
         teacherId: circle.teacher.id,
-        teacherName: circle.teacher.fullName,
-        circleName: circle.name,
+        teacherName: circle.teacher.fullName || "Unknown",
+        circleName: circle.name || "Unnamed Circle",
         studentCount: circle.students?.length || 0,
         lastSessionDate,
         isActive,
