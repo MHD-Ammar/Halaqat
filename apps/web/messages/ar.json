@@ -158,7 +158,11 @@
     "noStudentsDesc": "أضف طلاباً لتتبع تقدمهم",
     "guardianName": "اسم ولي الأمر",
     "guardianPhone": "جوال ولي الأمر",
-    "selectCircle": "اختر الحلقة"
+    "selectCircle": "اختر الحلقة",
+    "nameRequired": "يرجى إدخال اسم الطالب",
+    "circleRequired": "يرجى اختيار الحلقة",
+    "studentAdded": "تم إضافة الطالب بنجاح",
+    "studentAddedDesc": "تمت إضافة {name} إلى الحلقة."
   },
   "Profile": {
     "title": "الملف الشخصي",
@@ -226,5 +230,37 @@
     "roleUpdated": "تم تحديث الدور بنجاح",
     "selectRole": "اختر الدور",
     "updateRole": "تحديث الدور"
+  },
+  "Teachers": {
+    "addTeacher": "إضافة معلم",
+    "addNewTeacher": "إضافة معلم جديد",
+    "createTeacherDescription": "إنشاء حساب معلم جديد لمسجدك.",
+    "teacherCreated": "تم إنشاء المعلم!",
+    "teacherCreatedDescription": "تمت إضافة {name} بنجاح.",
+    "createFailed": "فشل إنشاء المعلم. يرجى المحاولة مرة أخرى.",
+    "fullName": "الاسم الكامل",
+    "email": "البريد الإلكتروني",
+    "phoneNumber": "رقم الهاتف",
+    "password": "كلمة المرور",
+    "creating": "جاري الإنشاء...",
+    "namePlaceholder": "مثال: أحمد حسن",
+    "emailPlaceholder": "teacher@example.com",
+    "phonePlaceholder": "+966 50 123 4567",
+    "passwordPlaceholder": "6 أحرف كحد أدنى",
+    "nameLimit": "الاسم يجب أن يكون حرفين على الأقل",
+    "phoneLimit": "رقم الهاتف يجب أن يكون 10 أرقام على الأقل"
+  },
+  "Mosque": {
+    "inviteCode": "كود الدعوة للمسجد",
+    "copied": "تم النسخ!",
+    "copiedDescription": "تم نسخ كود الدعوة",
+    "copy": "نسخ"
+  },
+  "Roles": {
+    "ADMIN": "مدير",
+    "SUPERVISOR": "مشرف",
+    "TEACHER": "معلم",
+    "EXAMINER": "مختبر",
+    "STUDENT": "طالب"
   }
 }

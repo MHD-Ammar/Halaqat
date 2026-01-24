@@ -19,6 +19,12 @@ interface UserProfile {
   email: string;
   name: string;
   role: string;
+  mosqueId?: string;
+  mosque?: {
+    id: string;
+    name: string;
+    code: string;
+  };
   circles?: Circle[];
 }
 

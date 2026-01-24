@@ -196,6 +196,22 @@ export function StudentActionSheet({
   // Handle Save All
   const handleSaveAll = async () => {
     if (pageDetails.length === 0) return;
+    if (!student.id || student.id === "undefined") {
+      toast({
+        variant: "destructive",
+        title: tCommon("error"),
+        description: "Invalid Student ID",
+      });
+      return;
+    }
+    if (!sessionId || sessionId === "undefined") {
+      toast({
+        variant: "destructive",
+        title: tCommon("error"),
+        description: "Invalid Session ID",
+      });
+      return;
+    }
 
     try {
       const result = await recordRecitation.mutateAsync({

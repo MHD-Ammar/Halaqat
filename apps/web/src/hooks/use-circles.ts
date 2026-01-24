@@ -34,26 +34,29 @@ export interface CreateCircleDto {
 /**
  * Fetch all circles (Admin)
  */
-export function useCircles() {
+export function useCircles(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ["circles"],
     queryFn: async () => {
       const response = await api.get<Circle[]>("/circles");
       return response.data;
     },
+    staleTime: 5 * 60 * 1000,
+    ...options,
   });
 }
 
 /**
  * Fetch teacher's assigned circles
  */
-export function useMyCircles() {
+export function useMyCircles(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ["circles", "my-list"],
     queryFn: async () => {
       const response = await api.get<Circle[]>("/circles/my-list");
       return response.data;
     },
+    ...options,
   });
 }
 

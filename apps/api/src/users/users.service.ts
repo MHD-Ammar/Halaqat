@@ -42,7 +42,7 @@ export class UsersService {
   async findProfile(id: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { id },
-      relations: ["circles"],
+      relations: ["circles", "mosque"],
     });
   }
 

@@ -14,6 +14,7 @@ interface CreateTeacherData {
   email: string;
   phoneNumber: string;
   password: string;
+  mosqueId?: string;
 }
 
 interface CreateTeacherResponse {
@@ -24,6 +25,7 @@ interface CreateTeacherResponse {
     fullName: string;
     phoneNumber: string;
     role: string;
+    mosqueId?: string;
   };
 }
 

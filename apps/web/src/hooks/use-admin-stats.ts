@@ -24,7 +24,7 @@ interface OverviewResponse {
 /**
  * Fetch daily overview statistics
  */
-export function useAdminStats() {
+export function useAdminStats(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ["analytics", "overview"],
     queryFn: async () => {
@@ -32,6 +32,7 @@ export function useAdminStats() {
       return response.data.data;
     },
     staleTime: 30 * 1000, // 30 seconds
+    ...options,
   });
 }
 

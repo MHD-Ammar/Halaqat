@@ -12,6 +12,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { UserPlus, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   Dialog,
@@ -33,22 +34,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useCreateTeacher } from "@/hooks";
+import { useCreateTeacher, useUserProfile } from "@/hooks";
 
-/**
- * Validation schema for teacher creation
- */
-const createTeacherSchema = z.object({
-  fullName: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
-  phoneNumber: z
-    .string()
-    .min(10, "Phone number must be at least 10 digits")
-    .regex(/^[0-9+\-\s()]+$/, "Please enter a valid phone number"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
-
-type CreateTeacherFormData = z.infer<typeof createTeacherSchema>;
+// Validation schema defined in component for translations
 
 interface CreateTeacherDialogProps {
   /** Optional custom trigger button */
@@ -68,9 +56,36 @@ interface CreateTeacherDialogProps {
  * ```
  */
 export function CreateTeacherDialog({ children }: CreateTeacherDialogProps) {
+  const t = useTranslations("Teachers");
+  const tCommon = useTranslations("Common");
+  const tAuth = useTranslations("Auth");
+
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const createMutation = useCreateTeacher();
+  const { data: profile } = useUserProfile();
+
+  /**
+   * Validation schema for teacher creation
+   */
+  const createTeacherSchema = z.object({
+    fullName: z
+      .string()
+      .min(
+        2,
+        t("nameLimit", { defaultValue: "Name must be at least 2 characters" }),
+      ),
+    email: z.string().email(tAuth("validEmail")),
+    phoneNumber: z.string().min(
+      10,
+      t("phoneLimit", {
+        defaultValue: "Phone number must be at least 10 digits",
+      }),
+    ),
+    password: z.string().min(6, tAuth("passwordMinLength")),
+  });
+
+  type CreateTeacherFormData = z.infer<typeof createTeacherSchema>;
 
   const form = useForm<CreateTeacherFormData>({
     resolver: zodResolver(createTeacherSchema),
@@ -93,11 +108,12 @@ export function CreateTeacherDialog({ children }: CreateTeacherDialogProps) {
         email: data.email,
         phoneNumber: data.phoneNumber,
         password: data.password,
+        mosqueId: (profile as any)?.mosqueId || undefined,
       });
 
       toast({
-        title: "Teacher created!",
-        description: `${data.fullName} has been added successfully.`,
+        title: t("teacherCreated"),
+        description: t("teacherCreatedDescription", { name: data.fullName }),
       });
 
       setOpen(false);
@@ -110,7 +126,7 @@ export function CreateTeacherDialog({ children }: CreateTeacherDialogProps) {
 
       toast({
         variant: "destructive",
-        title: "Error",
+        title: t("createFailed"),
         description: errorMessage,
       });
     }
@@ -122,16 +138,14 @@ export function CreateTeacherDialog({ children }: CreateTeacherDialogProps) {
         {children || (
           <Button>
             <UserPlus className="h-4 w-4 mr-2" />
-            Add Teacher
+            {t("addTeacher")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New Teacher</DialogTitle>
-          <DialogDescription>
-            Create a new teacher account for your mosque.
-          </DialogDescription>
+          <DialogTitle>{t("addNewTeacher")}</DialogTitle>
+          <DialogDescription>{t("createTeacherDescription")}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -141,10 +155,10 @@ export function CreateTeacherDialog({ children }: CreateTeacherDialogProps) {
               name="fullName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>{t("fullName")}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="e.g., Ahmed Hassan"
+                      placeholder={t("namePlaceholder")}
                       disabled={createMutation.isPending}
                       {...field}
                     />
@@ -160,11 +174,11 @@ export function CreateTeacherDialog({ children }: CreateTeacherDialogProps) {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t("email")}</FormLabel>
                   <FormControl>
                     <Input
                       type="email"
-                      placeholder="teacher@example.com"
+                      placeholder={t("emailPlaceholder")}
                       disabled={createMutation.isPending}
                       {...field}
                     />
@@ -180,11 +194,11 @@ export function CreateTeacherDialog({ children }: CreateTeacherDialogProps) {
               name="phoneNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
+                  <FormLabel>{t("phoneNumber")}</FormLabel>
                   <FormControl>
                     <Input
                       type="tel"
-                      placeholder="+966 50 123 4567"
+                      placeholder={t("phonePlaceholder")}
                       disabled={createMutation.isPending}
                       {...field}
                     />
@@ -200,11 +214,11 @@ export function CreateTeacherDialog({ children }: CreateTeacherDialogProps) {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>{t("password")}</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
-                      placeholder="Min. 6 characters"
+                      placeholder={t("passwordPlaceholder")}
                       disabled={createMutation.isPending}
                       {...field}
                     />
@@ -221,16 +235,16 @@ export function CreateTeacherDialog({ children }: CreateTeacherDialogProps) {
                 onClick={() => setOpen(false)}
                 disabled={createMutation.isPending}
               >
-                Cancel
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={createMutation.isPending}>
                 {createMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creating...
+                    {t("creating")}
                   </>
                 ) : (
-                  "Add Teacher"
+                  t("addTeacher")
                 )}
               </Button>
             </DialogFooter>

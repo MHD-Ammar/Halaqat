@@ -37,14 +37,18 @@ export interface CircleDetails {
 /**
  * Fetch a single circle's details by ID
  */
-export function useCircle(id?: string) {
+export function useCircle(id?: string, options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ["circles", id],
     queryFn: async () => {
+      if (!id || id === "undefined") {
+        throw new Error("Invalid circle ID");
+      }
       const response = await api.get<CircleDetails>(`/circles/${id}`);
       return response.data;
     },
-    enabled: !!id, // Only fetch if id is provided
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    ...options,
+    enabled: (options.enabled ?? true) && !!id && id !== "undefined",
   });
 }

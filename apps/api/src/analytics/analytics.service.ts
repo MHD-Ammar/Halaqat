@@ -237,6 +237,79 @@ export class AnalyticsService {
 
     return result;
   }
+
+  /**
+   * Get role-based overview statistics
+   * - Admin: Mosque-wide stats (totalStudents, totalCircles)
+   * - Teacher: Circle-specific stats (students in my circles)
+   * - Examiner: Exam stats (students tested today, exams conducted)
+   */
+  async getRoleBasedOverview(
+    userId: string,
+    role: string,
+    mosqueId?: string | null,
+  ): Promise<DailyOverview & { totalCircles?: number; examsToday?: number }> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Base case: Teacher stats (existing logic)
+    if (role === "TEACHER") {
+      return this.getTeacherStats(userId);
+    }
+
+    // Admin: Mosque-wide stats
+    if (role === "ADMIN" || role === "SUPERVISOR") {
+      const whereClause: any = {};
+      if (mosqueId) {
+        whereClause.mosqueId = mosqueId;
+      }
+
+      const [totalStudents, totalCircles] = await Promise.all([
+        this.studentRepository.count({ where: whereClause }),
+        this.circleRepository.count({ where: whereClause }),
+      ]);
+
+      // Get base overview and add mosque-specific counts
+      const baseOverview = await this.getDailyOverview();
+      return {
+        ...baseOverview,
+        totalStudents,
+        totalCircles,
+      };
+    }
+
+    // Examiner: Exam-focused stats
+    if (role === "EXAMINER") {
+      // Count exams conducted today by this examiner
+      const examsToday = await this.sessionRepository.manager
+        .createQueryBuilder()
+        .select("COUNT(*)", "count")
+        .from("exam", "e")
+        .where("e.examiner_id = :userId", { userId })
+        .andWhere("e.date >= :today", { today })
+        .getRawOne();
+
+      // Count unique students tested today
+      const studentsTested = await this.sessionRepository.manager
+        .createQueryBuilder()
+        .select("COUNT(DISTINCT e.student_id)", "count")
+        .from("exam", "e")
+        .where("e.examiner_id = :userId", { userId })
+        .andWhere("e.date >= :today", { today })
+        .getRawOne();
+
+      return {
+        totalStudents: parseInt(studentsTested?.count || "0", 10),
+        attendanceRate: 0,
+        pointsAwardedToday: 0,
+        activeCircles: 0,
+        examsToday: parseInt(examsToday?.count || "0", 10),
+      };
+    }
+
+    // Fallback to basic overview
+    return this.getDailyOverview();
+  }
 }
 
 export type { DailyOverview, TeacherPerformance };

@@ -88,6 +88,7 @@ export default function AdminDashboardPage() {
   const { data: profile } = useUserProfile();
   const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERVISOR";
   const t = useTranslations("Dashboard");
+  const tMosque = useTranslations("Mosque");
   const tCommon = useTranslations("Common");
   const locale = useLocale();
   const { toast } = useToast();
@@ -96,13 +97,20 @@ export default function AdminDashboardPage() {
   const teacherCircleId = !isAdmin && profile?.circles?.[0]?.id;
 
   // Use different stats hooks based on role
-  const { data: adminStats, isLoading: adminStatsLoading } = useAdminStats();
+  const { data: adminStats, isLoading: adminStatsLoading } = useAdminStats({
+    enabled: isAdmin,
+  });
   const { data: teacherStatistics, isLoading: teacherStatsLoading } =
-    useTeacherStats();
+    useTeacherStats({
+      enabled: !isAdmin,
+    });
   const { data: teachers = [], isLoading: teachersLoading } =
-    useTeacherPerformance();
+    useTeacherPerformance({
+      enabled: isAdmin,
+    });
   const { data: circleDetails, isLoading: circleLoading } = useCircle(
     teacherCircleId || undefined,
+    { enabled: !!teacherCircleId },
   );
 
   // For teachers, use their specific stats; for admins, use admin stats
@@ -171,12 +179,10 @@ export default function AdminDashboardPage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    {locale === "ar"
-                      ? "كود الدعوة للمسجد"
-                      : "Mosque Invite Code"}
+                    {tMosque("inviteCode")}
                   </p>
                   <p className="text-2xl font-bold font-mono tracking-wider text-primary">
-                    111111
+                    {profile?.mosque?.code || "..."}
                   </p>
                 </div>
               </div>
@@ -185,18 +191,18 @@ export default function AdminDashboardPage() {
                 size="sm"
                 className="gap-2"
                 onClick={() => {
-                  navigator.clipboard.writeText("111111");
-                  toast({
-                    title: locale === "ar" ? "تم النسخ!" : "Copied!",
-                    description:
-                      locale === "ar"
-                        ? "تم نسخ كود الدعوة"
-                        : "Invite code copied to clipboard",
-                  });
+                  const code = profile?.mosque?.code;
+                  if (code) {
+                    navigator.clipboard.writeText(code);
+                    toast({
+                      title: tMosque("copied"),
+                      description: tMosque("copiedDescription"),
+                    });
+                  }
                 }}
               >
                 <Copy className="h-4 w-4" />
-                {locale === "ar" ? "نسخ" : "Copy"}
+                {tMosque("copy")}
               </Button>
             </div>
           </CardContent>

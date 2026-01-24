@@ -19,6 +19,7 @@ import { ExamStatus } from "@halaqat/types";
 import { BaseEntity } from "../../common/entities/base.entity";
 import { Student } from "../../students/entities/student.entity";
 import { User } from "../../users/entities/user.entity";
+import { Mosque } from "../../mosques/entities/mosque.entity";
 
 // Forward reference to avoid circular dependency
 import type { ExamQuestion } from "./exam-question.entity";
@@ -96,4 +97,22 @@ export class Exam extends BaseEntity {
    */
   @OneToMany("ExamQuestion", "exam", { cascade: true })
   questions!: ExamQuestion[];
+
+  /**
+   * The mosque where this exam was conducted
+   * Relationship: Many Exams -> One Mosque
+   */
+  @ManyToOne(() => Mosque, (mosque) => mosque.exams, {
+    onDelete: "CASCADE",
+    nullable: false,
+  })
+  @JoinColumn({ name: "mosque_id" })
+  mosque!: Mosque;
+
+  /**
+   * Foreign key for the mosque
+   */
+  @Column({ name: "mosque_id", type: "uuid" })
+  @Index()
+  mosqueId!: string;
 }

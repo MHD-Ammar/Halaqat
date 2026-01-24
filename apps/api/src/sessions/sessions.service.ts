@@ -54,40 +54,51 @@ export class SessionsService {
       relations: ["attendances", "attendances.student", "circle"],
     });
 
-    if (session) {
-      return session;
+    // If session doesn't exist, create it
+    if (!session) {
+      const newSession = new Session();
+      newSession.circleId = circle.id;
+      newSession.date = today;
+      newSession.status = SessionStatus.OPEN;
+      newSession.mosqueId = circle.mosqueId;
+
+      session = await this.sessionRepository.save(newSession);
+      // Initialize attendances collection
+      session.attendances = [];
     }
-
-    // Create new session
-    session = this.sessionRepository.create({
-      circleId,
-      date: today,
-      status: SessionStatus.OPEN,
-    });
-
-    session = await this.sessionRepository.save(session);
 
     // Fetch all active students in this circle
     const students = await this.studentsService.findByCircle(circleId);
 
-    // Create attendance records for each student
-    const attendanceRecords = students.map((student) =>
-      this.attendanceRepository.create({
-        sessionId: session!.id,
-        studentId: student.id,
-        status: AttendanceStatus.PRESENT, // Default to PRESENT
-      }),
+    // Filter students who don't have attendance records yet for this session
+    const existingStudentIds = new Set(
+      session.attendances?.map((a) => a.studentId) || [],
+    );
+    const missingStudents = students.filter(
+      (s) => !existingStudentIds.has(s.id),
     );
 
-    if (attendanceRecords.length > 0) {
+    if (missingStudents.length > 0) {
+      // Create attendance records for missing students
+      const attendanceRecords = missingStudents.map((student) =>
+        this.attendanceRepository.create({
+          sessionId: session!.id,
+          studentId: student.id,
+          status: AttendanceStatus.PRESENT, // Default to PRESENT
+        }),
+      );
+
       await this.attendanceRepository.save(attendanceRecords);
+
+      // Reload session with all relations to include new records
+      return this.findOne(session.id);
     }
 
-    // Reload session with all relations
-    return this.sessionRepository.findOne({
-      where: { id: session.id },
-      relations: ["attendances", "attendances.student", "circle"],
-    }) as Promise<Session>;
+    if (!session) {
+      throw new Error("Failed to create or find session");
+    }
+
+    return session;
   }
 
   /**

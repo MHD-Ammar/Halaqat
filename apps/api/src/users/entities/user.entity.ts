@@ -5,11 +5,19 @@
  * Uses the shared UserRole enum from @halaqat/types.
  */
 
-import { Entity, Column, Index, OneToMany } from "typeorm";
+import {
+  Entity,
+  Column,
+  Index,
+  OneToMany,
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
 import { UserRole } from "@halaqat/types";
 import { Exclude } from "class-transformer";
 
 import { BaseEntity } from "../../common/entities/base.entity";
+import { Mosque } from "../../mosques/entities/mosque.entity";
 
 // Forward reference to avoid circular dependency
 import type { Circle } from "../../circles/entities/circle.entity";
@@ -55,10 +63,20 @@ export class User extends BaseEntity {
   role!: UserRole;
 
   /**
-   * Multi-tenancy support: Links user to a specific mosque
-   * Nullable for now to prepare for future SaaS capabilities
+   * The mosque this user belongs to
+   * Relationship: Many Users -> One Mosque
    */
-  @Column({ type: "uuid", nullable: true })
+  @ManyToOne(() => Mosque, (mosque) => mosque.users, {
+    onDelete: "CASCADE",
+    nullable: true, // Nullable briefly for super-admin or system users
+  })
+  @JoinColumn({ name: "mosque_id" })
+  mosque!: Mosque | null;
+
+  /**
+   * Foreign key for the mosque
+   */
+  @Column({ name: "mosque_id", type: "uuid", nullable: true })
   @Index()
   mosqueId!: string | null;
 

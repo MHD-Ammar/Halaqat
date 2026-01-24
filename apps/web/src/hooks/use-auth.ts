@@ -61,9 +61,9 @@ export function useAuth() {
   );
 
   /**
-   * Check if user is Admin
+   * Check if user is Admin or Supervisor
    */
-  const isAdmin = profile?.role === "ADMIN";
+  const isAdmin = profile?.role === "ADMIN" || profile?.role === "SUPERVISOR";
 
   /**
    * Check if user is Teacher

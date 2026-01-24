@@ -5,11 +5,19 @@
  * Each circle belongs to a teacher and can contain multiple students.
  */
 
-import { Entity, Column, ManyToOne, OneToMany, JoinColumn, Index } from "typeorm";
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  Index,
+} from "typeorm";
 import { Gender } from "@halaqat/types";
 
 import { BaseEntity } from "../../common/entities/base.entity";
 import { User } from "../../users/entities/user.entity";
+import { Mosque } from "../../mosques/entities/mosque.entity";
 
 // Forward reference to avoid circular dependency
 import type { Student } from "../../students/entities/student.entity";
@@ -69,5 +77,22 @@ export class Circle extends BaseEntity {
    */
   @OneToMany("Student", "circle")
   students!: Student[];
-}
 
+  /**
+   * The mosque this circle belongs to
+   * Relationship: Many Circles -> One Mosque
+   */
+  @ManyToOne(() => Mosque, (mosque) => mosque.circles, {
+    onDelete: "CASCADE",
+    nullable: false,
+  })
+  @JoinColumn({ name: "mosque_id" })
+  mosque!: Mosque;
+
+  /**
+   * Foreign key for the mosque
+   */
+  @Column({ name: "mosque_id", type: "uuid" })
+  @Index()
+  mosqueId!: string;
+}

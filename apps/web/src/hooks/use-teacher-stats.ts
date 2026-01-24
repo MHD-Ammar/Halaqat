@@ -24,14 +24,17 @@ interface OverviewResponse {
 /**
  * Fetch teacher-specific overview statistics
  */
-export function useTeacherStats() {
+export function useTeacherStats(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ["analytics", "my-overview"],
     queryFn: async () => {
-      const response = await api.get<OverviewResponse>("/analytics/my-overview");
+      const response = await api.get<OverviewResponse>(
+        "/analytics/my-overview",
+      );
       return response.data.data;
     },
     staleTime: 30 * 1000, // 30 seconds
+    ...options,
   });
 }
 

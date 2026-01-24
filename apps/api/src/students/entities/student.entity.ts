@@ -17,6 +17,7 @@ import {
 import { BaseEntity } from "../../common/entities/base.entity";
 import { Circle } from "../../circles/entities/circle.entity";
 import { User } from "../../users/entities/user.entity";
+import { Mosque } from "../../mosques/entities/mosque.entity";
 
 @Entity("student")
 export class Student extends BaseEntity {
@@ -108,4 +109,23 @@ export class Student extends BaseEntity {
   @Column({ type: "varchar", nullable: true, unique: true })
   @Index()
   username!: string | null;
+
+  /**
+   * The mosque this student belongs to (Multi-tenancy)
+   * Relationship: Many Students -> One Mosque
+   */
+  @ManyToOne(() => Mosque, (mosque) => mosque.students, {
+    onDelete: "CASCADE",
+    nullable: false, // Every student must belong to a mosque
+  })
+  @JoinColumn({ name: "mosque_id" })
+  mosque!: Mosque;
+
+  /**
+   * Foreign key for the mosque
+   * Explicitly defined for easy querying and serialization
+   */
+  @Column({ name: "mosque_id", type: "uuid" })
+  @Index()
+  mosqueId!: string;
 }

@@ -45,15 +45,23 @@ export function useRecordRecitation() {
 
   return useMutation({
     mutationFn: async (dto: BulkRecitationDto) => {
+      // Guard against invalid IDs
+      if (!dto.studentId || dto.studentId === "undefined")
+        throw new Error("Invalid studentId");
+      if (!dto.sessionId || dto.sessionId === "undefined")
+        throw new Error("Invalid sessionId");
+
       const response = await api.post<BulkRecitationResponse>(
         "/progress/recitations/bulk",
-        dto
+        dto,
       );
       return response.data;
     },
     onSuccess: (_, variables) => {
       // Invalidate student-related queries
-      queryClient.invalidateQueries({ queryKey: ["student", "profile", variables.studentId] });
+      queryClient.invalidateQueries({
+        queryKey: ["student", "profile", variables.studentId],
+      });
       queryClient.invalidateQueries({ queryKey: ["session"] });
       queryClient.invalidateQueries({ queryKey: ["recitations"] });
     },

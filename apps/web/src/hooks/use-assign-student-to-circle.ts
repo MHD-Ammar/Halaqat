@@ -31,7 +31,9 @@ export function useAssignStudentToCircle() {
     onSuccess: (_data, variables) => {
       // Invalidate related queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["students", "unassigned"] });
-      queryClient.invalidateQueries({ queryKey: ["circle", variables.circleId] });
+      queryClient.invalidateQueries({
+        queryKey: ["circles", variables.circleId],
+      });
       queryClient.invalidateQueries({ queryKey: ["students"] });
     },
   });

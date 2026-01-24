@@ -58,12 +58,15 @@ export function useTodaySession(circleId: string | undefined) {
   return useQuery({
     queryKey: ["session", "today", circleId],
     queryFn: async () => {
+      if (!circleId || circleId === "undefined") {
+        throw new Error("Invalid circle ID");
+      }
       const response = await api.get<Session>(
-        `/sessions/today?circleId=${circleId}`
+        `/sessions/today?circleId=${circleId}`,
       );
       return response.data;
     },
-    enabled: !!circleId,
+    enabled: !!circleId && circleId !== "undefined",
   });
 }
 
@@ -75,18 +78,22 @@ export function useUpdateAttendance(sessionId: string | undefined) {
 
   return useMutation({
     mutationFn: async (updates: AttendanceUpdate[]) => {
+      if (!sessionId || sessionId === "undefined") {
+        throw new Error("Invalid session ID");
+      }
       const response = await api.patch<Session>(
         `/sessions/${sessionId}/attendance`,
-        { updates } as BulkAttendanceDto
+        {
+          updates: updates.filter(
+            (u) => u.studentId && u.studentId !== "undefined",
+          ),
+        } as BulkAttendanceDto,
       );
       return response.data;
     },
     onSuccess: (data) => {
       // Update the cache with new data
-      queryClient.setQueryData(
-        ["session", "today", data.circleId],
-        data
-      );
+      queryClient.setQueryData(["session", "today", data.circleId], data);
     },
   });
 }
@@ -98,11 +105,14 @@ export function useSessionHistory(circleId: string | undefined, limit = 30) {
   return useQuery({
     queryKey: ["sessions", "history", circleId, limit],
     queryFn: async () => {
+      if (!circleId || circleId === "undefined") {
+        throw new Error("Invalid circle ID");
+      }
       const response = await api.get<Session[]>(
-        `/sessions/history?circleId=${circleId}&limit=${limit}`
+        `/sessions/history?circleId=${circleId}&limit=${limit}`,
       );
       return response.data;
     },
-    enabled: !!circleId,
+    enabled: !!circleId && circleId !== "undefined",
   });
 }

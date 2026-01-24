@@ -57,8 +57,11 @@ export class CirclesController {
   @ApiResponse({ status: 201, description: "Circle created successfully" })
   @ApiResponse({ status: 400, description: "Validation error" })
   @ApiResponse({ status: 403, description: "Forbidden - requires ADMIN role" })
-  create(@Body() createCircleDto: CreateCircleDto) {
-    return this.circlesService.create(createCircleDto);
+  create(
+    @Body() createCircleDto: CreateCircleDto,
+    @CurrentUser() user: { sub: string; mosqueId?: string },
+  ) {
+    return this.circlesService.create(createCircleDto, user.mosqueId);
   }
 
   /**
@@ -67,15 +70,15 @@ export class CirclesController {
    */
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "List all circles",
     description: "Get all circles with their teachers (Admin only)",
   })
   @ApiResponse({ status: 200, description: "List of all circles" })
   @ApiResponse({ status: 403, description: "Forbidden - requires ADMIN role" })
-  findAll() {
-    return this.circlesService.findAll();
+  findAll(@CurrentUser() user: { sub: string; mosqueId?: string }) {
+    return this.circlesService.findAll(user.mosqueId);
   }
 
   /**

@@ -4,11 +4,19 @@
  * Represents a daily session/meeting of a study circle.
  */
 
-import { Entity, Column, ManyToOne, OneToMany, JoinColumn, Index } from "typeorm";
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  Index,
+} from "typeorm";
 import { SessionStatus } from "@halaqat/types";
 
 import { BaseEntity } from "../../common/entities/base.entity";
 import { Circle } from "../../circles/entities/circle.entity";
+import { Mosque } from "../../mosques/entities/mosque.entity";
 
 // Forward reference to avoid circular dependency
 import type { Attendance } from "./attendance.entity";
@@ -59,4 +67,22 @@ export class Session extends BaseEntity {
    */
   @OneToMany("Attendance", "session", { cascade: true })
   attendances!: Attendance[];
+
+  /**
+   * The mosque where this session took place
+   * Relationship: Many Sessions -> One Mosque
+   */
+  @ManyToOne(() => Mosque, (mosque) => mosque.sessions, {
+    onDelete: "CASCADE",
+    nullable: false,
+  })
+  @JoinColumn({ name: "mosque_id" })
+  mosque!: Mosque;
+
+  /**
+   * Foreign key for the mosque
+   */
+  @Column({ name: "mosque_id", type: "uuid" })
+  @Index()
+  mosqueId!: string;
 }

@@ -57,6 +57,7 @@ function getRoleBadgeVariant(
 
 export default function AdminUsersPage() {
   const t = useTranslations("Admin");
+  const tRoles = useTranslations("Roles");
   const { data: users = [], isLoading } = useUsers();
   const updateRoleMutation = useUpdateUserRole();
   const { toast } = useToast();
@@ -129,7 +130,7 @@ export default function AdminUsersPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={getRoleBadgeVariant(user.role)}>
-                          {user.role}
+                          {tRoles(user.role as any)}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -146,7 +147,7 @@ export default function AdminUsersPage() {
                           <SelectContent>
                             {ROLES.map((role) => (
                               <SelectItem key={role} value={role}>
-                                {role}
+                                {tRoles(role)}
                               </SelectItem>
                             ))}
                           </SelectContent>

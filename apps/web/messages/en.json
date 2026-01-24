@@ -158,7 +158,11 @@
     "noStudentsDesc": "Add students to your circles to track their progress",
     "guardianName": "Guardian Name",
     "guardianPhone": "Guardian Phone",
-    "selectCircle": "Select Circle"
+    "selectCircle": "Select Circle",
+    "nameRequired": "Student name is required",
+    "circleRequired": "Please select a circle",
+    "studentAdded": "Student added successfully",
+    "studentAddedDesc": "{name} has been added to the circle."
   },
   "Profile": {
     "title": "Profile",
@@ -226,5 +230,37 @@
     "roleUpdated": "Role updated successfully",
     "selectRole": "Select role",
     "updateRole": "Update Role"
+  },
+  "Teachers": {
+    "addTeacher": "Add Teacher",
+    "addNewTeacher": "Add New Teacher",
+    "createTeacherDescription": "Create a new teacher account for your mosque.",
+    "teacherCreated": "Teacher created!",
+    "teacherCreatedDescription": "{name} has been added successfully.",
+    "createFailed": "Failed to create teacher. Please try again.",
+    "fullName": "Full Name",
+    "email": "Email",
+    "phoneNumber": "Phone Number",
+    "password": "Password",
+    "creating": "Creating...",
+    "namePlaceholder": "e.g., Ahmed Hassan",
+    "emailPlaceholder": "teacher@example.com",
+    "phonePlaceholder": "+966 50 123 4567",
+    "passwordPlaceholder": "Min. 6 characters",
+    "nameLimit": "Name must be at least 2 characters",
+    "phoneLimit": "Phone number must be at least 10 digits"
+  },
+  "Mosque": {
+    "inviteCode": "Mosque Invite Code",
+    "copied": "Copied!",
+    "copiedDescription": "Invite code copied to clipboard",
+    "copy": "Copy"
+  },
+  "Roles": {
+    "ADMIN": "Admin",
+    "SUPERVISOR": "Supervisor",
+    "TEACHER": "Teacher",
+    "EXAMINER": "Examiner",
+    "STUDENT": "Student"
   }
 }

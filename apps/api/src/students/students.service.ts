@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  BadRequestException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, ILike } from "typeorm";
@@ -41,13 +42,21 @@ export class StudentsService {
   ) {}
 
   /**
-   * Create a new student
+   * Create a new student with mosqueId (Admin flow)
    */
-  async create(createStudentDto: CreateStudentDto): Promise<Student> {
+  async create(
+    createStudentDto: CreateStudentDto,
+    mosqueId?: string | null,
+  ): Promise<Student> {
     // Verify circle exists
     await this.circlesService.findOne(createStudentDto.circleId);
 
-    const student = this.studentsRepository.create(createStudentDto);
+    const student = new Student();
+    Object.assign(student, createStudentDto);
+    if (mosqueId) {
+      student.mosqueId = mosqueId;
+    }
+
     return this.studentsRepository.save(student);
   }
 
@@ -57,6 +66,7 @@ export class StudentsService {
   async createForTeacher(
     createStudentDto: CreateStudentDto,
     teacherId: string,
+    mosqueId?: string | null,
   ): Promise<Student> {
     // Verify teacher owns the circle
     const isOwner = await this.circlesService.validateCircleOwnership(
@@ -70,43 +80,57 @@ export class StudentsService {
       );
     }
 
-    return this.create(createStudentDto);
+    return this.create(createStudentDto, mosqueId);
   }
 
   /**
-   * Get all students with pagination and filtering
+   * Get all students with pagination and filtering (tenancy-aware)
    */
-  async findAll(query: StudentQueryDto): Promise<PaginatedResult<Student>> {
+  async findAll(
+    query: StudentQueryDto,
+    mosqueId?: string | null,
+  ): Promise<PaginatedResult<Student>> {
     const { page = 1, limit = 20, search, circleId } = query;
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    try {
+      const where: any = {};
 
-    if (search) {
-      where.name = ILike(`%${search}%`);
+      // Apply tenancy filter if mosqueId provided
+      if (mosqueId) {
+        where.mosqueId = mosqueId;
+      }
+
+      if (search) {
+        where.name = ILike(`%${search}%`);
+      }
+
+      if (circleId) {
+        where.circleId = circleId;
+      }
+
+      const [data, total] = await this.studentsRepository.findAndCount({
+        where,
+        relations: ["circle"],
+        order: { name: "ASC" },
+        skip,
+        take: limit,
+      });
+
+      return {
+        data,
+        meta: {
+          total,
+          page,
+          lastPage: Math.ceil(total / limit),
+          limit,
+        },
+      };
+    } catch (error) {
+      throw new BadRequestException(
+        "Failed to fetch students. Please try again.",
+      );
     }
-
-    if (circleId) {
-      where.circleId = circleId;
-    }
-
-    const [data, total] = await this.studentsRepository.findAndCount({
-      where,
-      relations: ["circle"],
-      order: { name: "ASC" },
-      skip,
-      take: limit,
-    });
-
-    return {
-      data,
-      meta: {
-        total,
-        page,
-        lastPage: Math.ceil(total / limit),
-        limit,
-      },
-    };
   }
 
   /**

@@ -15,7 +15,9 @@
     "typeorm": "ts-node --project tsconfig.json -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d typeorm-cli.config.ts",
     "migration:generate": "pnpm typeorm migration:generate",
     "migration:run": "pnpm typeorm migration:run",
-    "migration:revert": "pnpm typeorm migration:revert"
+    "migration:revert": "pnpm typeorm migration:revert",
+    "seed": "ts-node --project tsconfig.json -r tsconfig-paths/register src/seed.ts",
+    "db:reset": "ts-node --project tsconfig.json -r tsconfig-paths/register src/db-reset.ts"
   },
   "dependencies": {
     "@halaqat/types": "workspace:*",

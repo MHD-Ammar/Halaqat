@@ -33,6 +33,7 @@ import { UpdateRoleDto } from "./dto/update-role.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
 
 @ApiTags("Users")
 @ApiBearerAuth("JWT-auth")
@@ -47,7 +48,7 @@ export class UsersController {
    */
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "List users",
     description: "Get all users with optional role filter (Admin only)",
@@ -78,7 +79,15 @@ export class UsersController {
   @ApiResponse({ status: 201, description: "User created successfully" })
   @ApiResponse({ status: 400, description: "Validation error or email exists" })
   @ApiResponse({ status: 403, description: "Forbidden - requires ADMIN role" })
-  async create(@Body() createUserDto: CreateUserDto) {
+  async create(
+    @Body() createUserDto: CreateUserDto,
+    @CurrentUser() admin: any,
+  ) {
+    // Force mosqueId to admin's mosqueId if not provided or if admin is not super-admin
+    if (admin.mosqueId) {
+      createUserDto.mosqueId = admin.mosqueId;
+    }
+
     const user = await this.usersService.create(createUserDto);
     return {
       message: "User created successfully",

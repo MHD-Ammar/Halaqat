@@ -26,13 +26,30 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CreateCircleDialog } from "@/components/create-circle-dialog";
-import { useCircles, useDeleteCircle } from "@/hooks";
+import { useCircles, useDeleteCircle, useAuth } from "@/hooks";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function CirclesPage() {
-  const { data: circles, isLoading, isError } = useCircles();
+  const { isAdmin, isLoading: authLoading } = useAuth();
+  const {
+    data: circles,
+    isLoading,
+    isError,
+  } = useCircles({ enabled: isAdmin });
   const deleteMutation = useDeleteCircle();
   const { toast } = useToast();
+  const router = useRouter();
+
+  // Protect the page - redirect non-admins
+  useEffect(() => {
+    if (!authLoading && !isAdmin) {
+      router.push("/overview");
+    }
+  }, [isAdmin, authLoading, router]);
+
+  if (authLoading) return null;
   const t = useTranslations("Circles");
   const tCommon = useTranslations("Common");
 

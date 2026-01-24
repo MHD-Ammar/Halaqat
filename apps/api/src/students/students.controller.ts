@@ -64,13 +64,17 @@ export class StudentsController {
   })
   create(
     @Body() createStudentDto: CreateStudentDto,
-    @CurrentUser() user: { sub: string; role: UserRole },
+    @CurrentUser() user: { sub: string; role: UserRole; mosqueId?: string },
   ) {
     // Admins can create for any circle, teachers only for their own
     if (user.role === UserRole.ADMIN) {
-      return this.studentsService.create(createStudentDto);
+      return this.studentsService.create(createStudentDto, user.mosqueId);
     }
-    return this.studentsService.createForTeacher(createStudentDto, user.sub);
+    return this.studentsService.createForTeacher(
+      createStudentDto,
+      user.sub,
+      user.mosqueId,
+    );
   }
 
   /**
@@ -79,15 +83,18 @@ export class StudentsController {
    */
   @Get()
   @UseGuards(RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.EXAMINER)
   @ApiOperation({
     summary: "List all students",
-    description: "Get paginated list of all students (Admin only)",
+    description: "Get paginated list of all students (scoped to mosque)",
   })
   @ApiResponse({ status: 200, description: "Paginated list of students" })
   @ApiResponse({ status: 403, description: "Forbidden - requires ADMIN role" })
-  findAll(@Query() query: StudentQueryDto) {
-    return this.studentsService.findAll(query);
+  findAll(
+    @Query() query: StudentQueryDto,
+    @CurrentUser() user: { sub: string; mosqueId?: string },
+  ) {
+    return this.studentsService.findAll(query, user.mosqueId);
   }
 
   /**

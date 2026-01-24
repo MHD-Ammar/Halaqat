@@ -32,16 +32,23 @@ export class ExamsService {
    *
    * @param examinerId - ID of the examiner creating the exam
    * @param dto - CreateExamDto with student ID and optional date/notes
+   * @param mosqueId - Optional mosque ID for tenancy
    * @returns The created exam
    */
-  async createExam(examinerId: string, dto: CreateExamDto): Promise<Exam> {
-    const exam = this.examRepository.create({
-      studentId: dto.studentId,
-      examinerId,
-      date: dto.date ? new Date(dto.date) : new Date(),
-      notes: dto.notes ?? null,
-      status: ExamStatus.PENDING,
-    });
+  async createExam(
+    examinerId: string,
+    dto: CreateExamDto,
+    mosqueId?: string | null,
+  ): Promise<Exam> {
+    const exam = new Exam();
+    exam.studentId = dto.studentId;
+    exam.examinerId = examinerId;
+    exam.date = dto.date ? new Date(dto.date) : new Date();
+    exam.notes = dto.notes ?? null;
+    exam.status = ExamStatus.PENDING;
+    if (mosqueId) {
+      exam.mosqueId = mosqueId;
+    }
 
     return this.examRepository.save(exam);
   }

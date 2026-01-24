@@ -4,7 +4,11 @@
  * Business logic for managing study circles.
  */
 
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { UserRole } from "@halaqat/types";
@@ -13,6 +17,7 @@ import { Circle } from "./entities/circle.entity";
 import { CreateCircleDto } from "./dto/create-circle.dto";
 import { UpdateCircleDto } from "./dto/update-circle.dto";
 import { User } from "../users/entities/user.entity";
+import { Student } from "../students/entities/student.entity";
 
 @Injectable()
 export class CirclesService {
@@ -21,12 +26,17 @@ export class CirclesService {
     private circlesRepository: Repository<Circle>,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(Student)
+    private studentsRepository: Repository<Student>,
   ) {}
 
   /**
    * Create a new circle and assign it to a teacher
    */
-  async create(createCircleDto: CreateCircleDto): Promise<Circle> {
+  async create(
+    createCircleDto: CreateCircleDto,
+    mosqueId?: string | null,
+  ): Promise<Circle> {
     const { teacherId, ...circleData } = createCircleDto;
 
     // Verify teacher exists and has TEACHER role
@@ -44,19 +54,30 @@ export class CirclesService {
       );
     }
 
-    const circle = this.circlesRepository.create({
-      ...circleData,
-      teacherId,
-    });
+    const circle = new Circle();
+    Object.assign(circle, circleData);
+    circle.teacherId = teacherId;
+    circle.mosqueId = (mosqueId || teacher.mosqueId) as string;
+
+    if (!circle.mosqueId) {
+      throw new BadRequestException(
+        "Mosque ID is required for circle creation",
+      );
+    }
 
     return this.circlesRepository.save(circle);
   }
 
   /**
-   * Get all circles with teacher information
+   * Get all circles with teacher information (tenancy-aware)
    */
-  async findAll(): Promise<Circle[]> {
+  async findAll(mosqueId?: string | null): Promise<Circle[]> {
+    const where: any = {};
+    if (mosqueId) {
+      where.mosqueId = mosqueId;
+    }
     return this.circlesRepository.find({
+      where,
       relations: ["teacher"],
       order: { createdAt: "DESC" },
     });
@@ -120,9 +141,19 @@ export class CirclesService {
 
   /**
    * Soft delete a circle
+   * Prevents deletion if circle has dependent students
    */
   async remove(id: string): Promise<void> {
-    const circle = await this.findOne(id);
+    // 1. Unassign all students belonging to this circle first
+    await this.studentsRepository.update({ circleId: id }, { circleId: null });
+
+    // 2. Fetch the circle without any relations for soft removal
+    const circle = await this.circlesRepository.findOne({ where: { id } });
+
+    if (!circle) {
+      throw new NotFoundException(`Circle with ID ${id} not found`);
+    }
+
     await this.circlesRepository.softRemove(circle);
   }
 

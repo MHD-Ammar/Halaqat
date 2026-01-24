@@ -21,7 +21,7 @@ export interface User {
 /**
  * Hook to list all users (Admin only)
  */
-export function useUsers() {
+export function useUsers(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ["users"],
     queryFn: async () => {
@@ -29,6 +29,7 @@ export function useUsers() {
       return response.data;
     },
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    ...options,
   });
 }
 

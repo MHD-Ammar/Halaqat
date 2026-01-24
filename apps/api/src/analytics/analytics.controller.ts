@@ -51,23 +51,32 @@ export class AnalyticsController {
 
   /**
    * GET /analytics/my-overview
-   * Returns daily statistics for the current teacher's circles only
+   * Returns role-based statistics for the current user
+   * - Admin: Mosque-wide stats
+   * - Teacher: Circle-specific stats
+   * - Examiner: Exam stats
    */
   @Get("my-overview")
-  @Roles(UserRole.TEACHER)
+  @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.EXAMINER)
   @ApiOperation({
-    summary: "Get teacher overview",
-    description: "Get daily stats for teacher's own circles (Teacher only)",
+    summary: "Get role-based overview",
+    description: "Get daily stats based on user role (Admin/Teacher/Examiner)",
   })
-  @ApiResponse({ status: 200, description: "Teacher's daily statistics" })
+  @ApiResponse({ status: 200, description: "Role-based statistics" })
   @ApiResponse({
     status: 403,
-    description: "Forbidden - requires TEACHER role",
+    description: "Forbidden - requires ADMIN, TEACHER, or EXAMINER role",
   })
-  async getMyOverview(@CurrentUser() user: { sub: string }) {
-    const data = await this.analyticsService.getTeacherStats(user.sub);
+  async getMyOverview(
+    @CurrentUser() user: { sub: string; role: string; mosqueId?: string },
+  ) {
+    const data = await this.analyticsService.getRoleBasedOverview(
+      user.sub,
+      user.role,
+      user.mosqueId,
+    );
     return {
-      message: "Teacher overview retrieved successfully",
+      message: "Overview retrieved successfully",
       data,
     };
   }

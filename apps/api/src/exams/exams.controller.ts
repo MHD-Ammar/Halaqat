@@ -49,10 +49,10 @@ export class ExamsController {
     description: "Forbidden - Examiner role required",
   })
   create(
-    @CurrentUser() user: { sub: string },
+    @CurrentUser() user: { sub: string; mosqueId?: string },
     @Body() createExamDto: CreateExamDto,
   ) {
-    return this.examsService.createExam(user.sub, createExamDto);
+    return this.examsService.createExam(user.sub, createExamDto, user.mosqueId);
   }
 
   /**
