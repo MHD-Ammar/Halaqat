@@ -229,24 +229,26 @@ export function CreateTeacherDialog({ children }: CreateTeacherDialogProps) {
             />
 
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-                disabled={createMutation.isPending}
-              >
-                {tCommon("cancel")}
-              </Button>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {t("creating")}
-                  </>
-                ) : (
-                  t("addTeacher")
-                )}
-              </Button>
+              <div className="flex justify-between flex-col gap-2">
+                <Button type="submit" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {t("creating")}
+                    </>
+                  ) : (
+                    t("addTeacher")
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                  disabled={createMutation.isPending}
+                >
+                  {tCommon("cancel")}
+                </Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>

@@ -85,14 +85,18 @@ export class ProgressService {
    * Record multiple pages in bulk with individual quality per page.
    * Each page gets its own point transaction and auto-linked surahId.
    */
-  async recordBulkRecitation(dto: BulkRecitationDto): Promise<BulkRecitationResult> {
+  async recordBulkRecitation(
+    dto: BulkRecitationDto,
+  ): Promise<BulkRecitationResult> {
     const recitations: Recitation[] = [];
     let totalPointsAwarded = 0;
 
     // Process each page individually
     for (const detail of dto.details) {
       // Auto-link: Get surahId from pageNumber using cached lookup
-      const surahId = this.curriculumService.getSurahIdByPage(detail.pageNumber);
+      const surahId = this.curriculumService.getSurahIdByPage(
+        detail.pageNumber,
+      );
 
       // Create recitation record for this page with auto-linked surahId
       const recitation = this.recitationRepository.create({

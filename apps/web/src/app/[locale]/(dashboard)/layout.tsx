@@ -62,7 +62,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       {/* Main Content Area */}
       <main className="md:ps-64">
-        <div className="min-h-screen pb-20 md:pb-0">{children}</div>
+        <div className="min-h-screen pb-20 md:pb-0 p-4">{children}</div>
       </main>
     </div>
   );

@@ -41,8 +41,8 @@ export class AnalyticsController {
     status: 403,
     description: "Forbidden - requires ADMIN or SUPERVISOR role",
   })
-  async getOverview() {
-    const data = await this.analyticsService.getDailyOverview();
+  async getOverview(@CurrentUser() user: { mosqueId?: string }) {
+    const data = await this.analyticsService.getDailyOverview(user.mosqueId);
     return {
       message: "Daily overview retrieved successfully",
       data,
@@ -68,10 +68,11 @@ export class AnalyticsController {
     description: "Forbidden - requires ADMIN, TEACHER, or EXAMINER role",
   })
   async getMyOverview(
-    @CurrentUser() user: { sub: string; role: string; mosqueId?: string },
+    @CurrentUser() user: { id: string; role: string; mosqueId?: string },
   ) {
+    console.log(user);
     const data = await this.analyticsService.getRoleBasedOverview(
-      user.sub,
+      user.id,
       user.role,
       user.mosqueId,
     );
@@ -96,8 +97,10 @@ export class AnalyticsController {
     status: 403,
     description: "Forbidden - requires ADMIN or SUPERVISOR role",
   })
-  async getTeacherPerformance() {
-    const data = await this.analyticsService.getTeacherPerformance();
+  async getTeacherPerformance(@CurrentUser() user: { mosqueId?: string }) {
+    const data = await this.analyticsService.getTeacherPerformance(
+      user.mosqueId,
+    );
     return {
       message: "Teacher performance retrieved successfully",
       data,

@@ -6,6 +6,7 @@ export {
   useTodaySession,
   useUpdateAttendance,
   useSessionHistory,
+  useStartSession,
 } from "./use-today-session";
 export { useUserProfile } from "./use-user-profile";
 export { useSurahs, type Surah } from "./use-surahs";

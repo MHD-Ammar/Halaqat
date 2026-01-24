@@ -61,8 +61,11 @@ export class UsersController {
   })
   @ApiResponse({ status: 200, description: "List of users" })
   @ApiResponse({ status: 403, description: "Forbidden - requires ADMIN role" })
-  findAll(@Query("role") role?: UserRole) {
-    return this.usersService.findAll(role);
+  findAll(
+    @Query("role") role?: UserRole,
+    @CurrentUser() user?: { mosqueId?: string },
+  ) {
+    return this.usersService.findAll(role, user?.mosqueId);
   }
 
   /**

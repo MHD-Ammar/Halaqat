@@ -16,12 +16,19 @@ import {
   Save,
   RefreshCw,
   Users,
+  PlayCircle,
 } from "lucide-react";
 import { AttendanceStatus } from "@halaqat/types";
 import { useTranslations, useFormatter } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -29,6 +36,7 @@ import {
   useUpdateAttendance,
 } from "@/hooks/use-today-session";
 import { useUserProfile } from "@/hooks/use-user-profile";
+import { useStartSession } from "@/hooks";
 import { StudentActionSheet } from "@/components/student-action-sheet";
 
 /**
@@ -57,6 +65,7 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const t = useTranslations("MyCircle");
   const tCommon = useTranslations("Common");
+  const tSession = useTranslations("DailySession");
   const format = useFormatter();
 
   // Get user profile to find their circle
@@ -76,6 +85,27 @@ export default function DashboardPage() {
 
   // Mutation for saving attendance
   const updateMutation = useUpdateAttendance(session?.id);
+  const startSessionMutation = useStartSession();
+
+  const handleStartSession = async () => {
+    if (!circleId) return;
+
+    try {
+      await startSessionMutation.mutateAsync(circleId);
+      toast({
+        title: tSession("sessionStarted"),
+        description: tSession("sessionStartedDesc"),
+      });
+      // Force refetch session
+      refetch();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: tCommon("error"),
+        description: "Failed to start session",
+      });
+    }
+  };
 
   // Local state for tracking changes
   const [localChanges, setLocalChanges] = useState<
@@ -277,31 +307,69 @@ export default function DashboardPage() {
         <p className="text-muted-foreground">{session?.circle?.name}</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {tCommon("name")}
+      {/* Start Session Card */}
+      {!session && !sessionLoading && circleId && (
+        <Card className="bg-primary/5 border-primary/20 border-dashed mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <Clock className="h-5 w-5" />
+              {tSession("title")}
             </CardTitle>
+            <CardContent className="p-0 pt-2">
+              <p className="text-muted-foreground">
+                {tSession("startSessionDesc")}
+              </p>
+            </CardContent>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-          </CardContent>
+          <CardFooter>
+            <Button
+              onClick={handleStartSession}
+              disabled={startSessionMutation.isPending}
+              className="w-full sm:w-auto gap-2"
+            >
+              {startSessionMutation.isPending ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  {tCommon("loading")}
+                </>
+              ) : (
+                <>
+                  <PlayCircle className="h-4 w-4" />
+                  {tSession("startAction")}
+                </>
+              )}
+            </Button>
+          </CardFooter>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t("present")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {stats.present}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      )}
+
+      {/* Stats Cards - Only show if session exists */}
+      {session && (
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {tCommon("name")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.total}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {t("present")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                {stats.present}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Attendance List */}
       <div className="space-y-2">
@@ -317,8 +385,8 @@ export default function DashboardPage() {
             <StudentActionSheet
               key={attendance.id}
               student={attendance.student}
-              sessionId={session!.id}
-              circleId={circleId!}
+              sessionId={session.id}
+              circleId={circleId}
             >
               <Card
                 className={`transition-all cursor-pointer hover:shadow-md ${hasChange ? "ring-2 ring-primary" : ""}`}
@@ -366,8 +434,8 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* Empty state */}
-      {session?.attendances.length === 0 && (
+      {/* Empty state - Only if session exists but somehow no students, OR if no session but not circle error */}
+      {session && session.attendances.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
             <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />

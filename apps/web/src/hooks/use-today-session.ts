@@ -32,6 +32,19 @@ interface Circle {
   name: string;
 }
 
+interface Recitation {
+  id: string;
+  pageNumber: number;
+  studentId: string;
+  mistakesCount: number;
+}
+
+interface PointTransaction {
+  id: string;
+  amount: number;
+  studentId: string;
+}
+
 interface Session {
   id: string;
   date: string;
@@ -40,6 +53,8 @@ interface Session {
   circleId: string;
   circle: Circle;
   attendances: Attendance[];
+  recitations: Recitation[];
+  pointTransactions: PointTransaction[];
 }
 
 interface AttendanceUpdate {
@@ -54,6 +69,9 @@ interface BulkAttendanceDto {
 /**
  * Fetch today's session for a circle
  */
+/**
+ * Fetch today's session for a circle
+ */
 export function useTodaySession(circleId: string | undefined) {
   return useQuery({
     queryKey: ["session", "today", circleId],
@@ -61,12 +79,34 @@ export function useTodaySession(circleId: string | undefined) {
       if (!circleId || circleId === "undefined") {
         throw new Error("Invalid circle ID");
       }
-      const response = await api.get<Session>(
+      const response = await api.get<Session | null>(
+        `/sessions/today?circleId=${circleId}`,
+      );
+      // Backend returns empty string or null if not found
+      if (!response.data) return null;
+      return response.data;
+    },
+    enabled: !!circleId && circleId !== "undefined",
+    retry: false,
+  });
+}
+
+/**
+ * Start a new session for today
+ */
+export function useStartSession() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (circleId: string) => {
+      const response = await api.post<Session>(
         `/sessions/today?circleId=${circleId}`,
       );
       return response.data;
     },
-    enabled: !!circleId && circleId !== "undefined",
+    onSuccess: (data, circleId) => {
+      queryClient.setQueryData(["session", "today", circleId], data);
+    },
   });
 }
 

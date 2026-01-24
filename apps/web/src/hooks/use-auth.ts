@@ -13,7 +13,12 @@ import Cookies from "js-cookie";
 import { TOKEN_COOKIE_NAME } from "@/lib/api";
 import { useUserProfile } from "./use-user-profile";
 
-export type UserRole = "ADMIN" | "TEACHER" | "SUPERVISOR" | "STUDENT";
+export type UserRole =
+  | "ADMIN"
+  | "TEACHER"
+  | "SUPERVISOR"
+  | "STUDENT"
+  | "EXAMINER";
 
 export interface AuthUser {
   id: string;

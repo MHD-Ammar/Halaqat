@@ -85,4 +85,16 @@ export class Session extends BaseEntity {
   @Column({ name: "mosque_id", type: "uuid" })
   @Index()
   mosqueId!: string;
+
+  /**
+   * Recitations recorded during this session
+   */
+  @OneToMany("Recitation", "session", { cascade: true })
+  recitations!: any[];
+
+  /**
+   * Point transactions recorded during this session
+   */
+  @OneToMany("PointTransaction", "session", { cascade: true })
+  pointTransactions!: any[];
 }

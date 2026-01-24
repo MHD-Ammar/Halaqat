@@ -74,11 +74,12 @@ export class UsersService {
   }
 
   /**
-   * Find all users with optional role filter
+   * Find all users with optional role and mosque filter
    * @param role - Optional role to filter by
+   * @param mosqueId - Optional mosque ID to filter by
    * @returns Array of users (without password)
    */
-  async findAll(role?: string): Promise<User[]> {
+  async findAll(role?: string, mosqueId?: string): Promise<User[]> {
     const query = this.userRepository
       .createQueryBuilder("user")
       .select([
@@ -87,11 +88,16 @@ export class UsersService {
         "user.fullName",
         "user.role",
         "user.createdAt",
+        "user.mosqueId",
       ])
       .orderBy("user.fullName", "ASC");
 
     if (role) {
-      query.where("user.role = :role", { role });
+      query.andWhere("user.role = :role", { role });
+    }
+
+    if (mosqueId) {
+      query.andWhere("user.mosqueId = :mosqueId", { mosqueId });
     }
 
     return query.getMany();

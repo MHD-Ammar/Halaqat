@@ -356,34 +356,36 @@ export function CreateStudentDialog({
               )}
             />
 
-            <DialogFooter className="pt-4 border-t">
+            <DialogFooter className="pt-4">
               {!form.formState.isValid && form.formState.isSubmitted && (
                 <p className="text-xs text-destructive text-center sm:text-left mb-2 sm:mb-0 w-full">
                   {tCommon("error")}
                 </p>
               )}
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => handleOpenChange(false)}
-                disabled={createMutation.isPending}
-              >
-                {tCommon("cancel")}
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitDisabled}
-                className="min-w-[100px]"
-              >
-                {createMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 me-2 animate-spin" />
-                    {tCommon("loading")}
-                  </>
-                ) : (
-                  tCommon("add")
-                )}
-              </Button>
+              <div className="flex justify-between flex-col gap-2">
+                <Button
+                  type="submit"
+                  disabled={isSubmitDisabled}
+                  className="min-w-[100px]"
+                >
+                  {createMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                      {tCommon("loading")}
+                    </>
+                  ) : (
+                    tCommon("add")
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleOpenChange(false)}
+                  disabled={createMutation.isPending}
+                >
+                  {tCommon("cancel")}
+                </Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>

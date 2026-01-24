@@ -12,6 +12,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Plus, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   Dialog,
@@ -43,21 +44,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateCircle, useTeachers } from "@/hooks";
 
-/**
- * Validation schema for circle creation
- * Requires name, gender, and teacherId
- */
-const createCircleSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  description: z.string().optional(),
-  gender: z.enum(["MALE", "FEMALE"], {
-    message: "Please select a gender",
-  }),
-  teacherId: z.string().uuid("Please select a teacher"),
-});
-
-type CreateCircleFormData = z.infer<typeof createCircleSchema>;
-
 interface CreateCircleDialogProps {
   /** Optional custom trigger button */
   children?: React.ReactNode;
@@ -65,21 +51,27 @@ interface CreateCircleDialogProps {
 
 /**
  * Dialog component for creating new study circles
- *
- * @example
- * ```tsx
- * <CreateCircleDialog />
- * // Or with custom trigger
- * <CreateCircleDialog>
- *   <Button>Add Circle</Button>
- * </CreateCircleDialog>
- * ```
  */
 export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const createMutation = useCreateCircle();
   const { data: teachers = [], isLoading: teachersLoading } = useTeachers();
+
+  const t = useTranslations("Circles");
+  const tCommon = useTranslations("Common");
+
+  // Define schema with translations
+  const createCircleSchema = z.object({
+    name: z.string().min(2, t("validationName")),
+    description: z.string().optional(),
+    gender: z.enum(["MALE", "FEMALE"], {
+      message: t("validationGender"),
+    }),
+    teacherId: z.string().uuid(t("validationTeacher")),
+  });
+
+  type CreateCircleFormData = z.infer<typeof createCircleSchema>;
 
   const form = useForm<CreateCircleFormData>({
     resolver: zodResolver(createCircleSchema),
@@ -105,21 +97,19 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
       });
 
       toast({
-        title: "Circle created!",
-        description: `${data.name} has been created successfully.`,
+        title: t("successTitle"),
+        description: t("successDesc", { name: data.name }),
       });
 
       setOpen(false);
       form.reset();
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to create circle. Please try again.";
-      
+        error instanceof Error ? error.message : t("errorDesc");
+
       toast({
         variant: "destructive",
-        title: "Error",
+        title: t("errorTitle"),
         description: errorMessage,
       });
     }
@@ -130,17 +120,15 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
       <DialogTrigger asChild>
         {children || (
           <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Circle
+            <Plus className="h-4 w-4 rtl:ml-2 ltr:mr-2" />
+            {t("newCircleBtn")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New Circle</DialogTitle>
-          <DialogDescription>
-            Create a new study circle (Halaqat) for your mosque.
-          </DialogDescription>
+          <DialogTitle>{t("createDialogTitle")}</DialogTitle>
+          <DialogDescription>{t("createDialogDesc")}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -150,10 +138,10 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>{t("nameLabel")}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="e.g., Morning Hifz Circle"
+                      placeholder={t("namePlaceholder")}
                       disabled={createMutation.isPending}
                       {...field}
                     />
@@ -169,7 +157,7 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
               name="teacherId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Teacher</FormLabel>
+                  <FormLabel>{t("teacherLabel")}</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -180,8 +168,8 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
                         <SelectValue
                           placeholder={
                             teachersLoading
-                              ? "Loading teachers..."
-                              : "Select a teacher"
+                              ? t("loadingTeachers")
+                              : t("selectTeacher")
                           }
                         />
                       </SelectTrigger>
@@ -189,7 +177,7 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
                     <SelectContent>
                       {teachers.length === 0 && !teachersLoading ? (
                         <SelectItem value="_none" disabled>
-                          No teachers available
+                          {t("noTeachers")}
                         </SelectItem>
                       ) : (
                         teachers.map((teacher) => (
@@ -211,7 +199,7 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
               name="gender"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Gender</FormLabel>
+                  <FormLabel>{t("genderLabel")}</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -219,12 +207,12 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select gender" />
+                        <SelectValue placeholder={t("selectGender")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="MALE">Male</SelectItem>
-                      <SelectItem value="FEMALE">Female</SelectItem>
+                      <SelectItem value="MALE">{t("male")}</SelectItem>
+                      <SelectItem value="FEMALE">{t("female")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -238,10 +226,10 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormLabel>{t("descriptionLabel")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Brief description of this circle..."
+                      placeholder={t("descriptionPlaceholder")}
                       disabled={createMutation.isPending}
                       rows={3}
                       {...field}
@@ -253,24 +241,26 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
             />
 
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-                disabled={createMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  "Create Circle"
-                )}
-              </Button>
+              <div className="flex justify-between flex-col gap-2">
+                <Button type="submit" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 rtl:ml-2 ltr:mr-2 animate-spin" />
+                      {t("creating")}
+                    </>
+                  ) : (
+                    t("createCircle")
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                  disabled={createMutation.isPending}
+                >
+                  {tCommon("cancel")}
+                </Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>

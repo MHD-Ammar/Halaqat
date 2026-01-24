@@ -4,7 +4,7 @@
  * Provides aggregated statistics for the Admin/Supervisor dashboard.
  */
 
-import { Injectable } from "@nestjs/common";
+import { Injectable, ForbiddenException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, MoreThanOrEqual } from "typeorm";
 
@@ -46,17 +46,20 @@ export class AnalyticsService {
   /**
    * Get daily overview statistics
    */
-  async getDailyOverview(): Promise<DailyOverview> {
+  async getDailyOverview(mosqueId?: string | null): Promise<DailyOverview> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     // Total active students (not soft-deleted)
-    const totalStudents = await this.studentRepository.count();
+    const totalStudents = await this.studentRepository.count({
+      where: mosqueId ? { mosqueId } : {},
+    });
 
     // Today's sessions
     const todaySessions = await this.sessionRepository.find({
       where: {
         date: MoreThanOrEqual(today),
+        ...(mosqueId ? { mosqueId } : {}),
       },
       relations: ["attendances"],
     });
@@ -82,11 +85,18 @@ export class AnalyticsService {
     // Points awarded today
     let pointsAwardedToday = 0;
     try {
-      const pointsResult = await this.pointTransactionRepository
+      const query = this.pointTransactionRepository
         .createQueryBuilder("pt")
         .select("COALESCE(SUM(pt.amount), 0)", "total")
-        .where("pt.createdAt >= :today", { today })
-        .getRawOne();
+        .where("pt.createdAt >= :today", { today });
+
+      if (mosqueId) {
+        query
+          .innerJoin("pt.student", "student")
+          .andWhere("student.mosqueId = :mosqueId", { mosqueId });
+      }
+
+      const pointsResult = await query.getRawOne();
       pointsAwardedToday = parseInt(pointsResult?.total || "0", 10);
     } catch {
       // If points table doesn't exist yet, default to 0
@@ -107,13 +117,22 @@ export class AnalyticsService {
   /**
    * Get teacher-specific statistics for their circles only
    */
-  async getTeacherStats(teacherId: string): Promise<DailyOverview> {
+  async getTeacherStats(
+    teacherId: string,
+    mosqueId?: string,
+  ): Promise<DailyOverview> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     // Get circles belonging to this teacher
+    // Security: Verify mosqueId if provided
+    const where: any = { teacherId };
+    if (mosqueId) {
+      where.mosqueId = mosqueId;
+    }
+
     const teacherCircles = await this.circleRepository.find({
-      where: { teacherId },
+      where,
       relations: ["students"],
     });
 
@@ -192,12 +211,20 @@ export class AnalyticsService {
   /**
    * Get teacher performance data
    */
-  async getTeacherPerformance(): Promise<TeacherPerformance[]> {
+  async getTeacherPerformance(
+    mosqueId?: string,
+  ): Promise<TeacherPerformance[]> {
     const threeDaysAgo = new Date();
     threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
     // Get all circles with their teachers and latest session
+    const where: any = {};
+    if (mosqueId) {
+      where.mosqueId = mosqueId;
+    }
+
     const circles = await this.circleRepository.find({
+      where,
       relations: ["teacher", "students"],
     });
 
@@ -253,8 +280,8 @@ export class AnalyticsService {
     today.setHours(0, 0, 0, 0);
 
     // Base case: Teacher stats (existing logic)
-    if (role === "TEACHER") {
-      return this.getTeacherStats(userId);
+    if (role.toUpperCase() === "TEACHER") {
+      return this.getTeacherStats(userId, mosqueId || undefined);
     }
 
     // Admin: Mosque-wide stats
@@ -307,8 +334,8 @@ export class AnalyticsService {
       };
     }
 
-    // Fallback to basic overview
-    return this.getDailyOverview();
+    // Fallback: If role doesn't match any known type, access is denied
+    throw new ForbiddenException("Invalid role for analytics access");
   }
 }
 

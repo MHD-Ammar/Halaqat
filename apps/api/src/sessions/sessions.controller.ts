@@ -7,6 +7,7 @@
 import {
   Controller,
   Get,
+  Post,
   Patch,
   Param,
   Body,
@@ -48,13 +49,28 @@ export class SessionsController {
   @ApiOperation({
     summary: "Get today's session",
     description:
-      "Get or create today's session for a circle. Creates attendance records for all students automatically.",
+      "Get today's session for a circle. Returns null if not started.",
   })
   @ApiQuery({ name: "circleId", description: "Circle UUID", required: true })
-  @ApiResponse({ status: 200, description: "Session with attendance records" })
-  @ApiResponse({ status: 404, description: "Circle not found" })
-  findOrCreateToday(@Query("circleId", ParseUUIDPipe) circleId: string) {
-    return this.sessionsService.findOrCreateTodaySession(circleId);
+  @ApiResponse({ status: 200, description: "Session details or empty" })
+  findToday(@Query("circleId", ParseUUIDPipe) circleId: string) {
+    return this.sessionsService.findTodaySession(circleId);
+  }
+
+  /**
+   * Start today's session
+   * POST /api/sessions/today
+   */
+  @Post("today")
+  @ApiOperation({
+    summary: "Start today's session",
+    description:
+      "Explicitly start a session for today. Creates attendance records.",
+  })
+  @ApiQuery({ name: "circleId", description: "Circle UUID", required: true })
+  @ApiResponse({ status: 201, description: "Session created" })
+  createToday(@Query("circleId", ParseUUIDPipe) circleId: string) {
+    return this.sessionsService.createTodaySession(circleId);
   }
 
   /**

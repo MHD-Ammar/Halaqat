@@ -28,11 +28,35 @@ export class SessionsService {
   ) {}
 
   /**
-   * Smart find or create today's session for a circle
-   * - If session exists: return it with attendance records
-   * - If not: create session + auto-populate attendance for all students
+   * Find today's session for a circle (Read Only)
+   * Returns null if no session exists.
    */
-  async findOrCreateTodaySession(circleId: string): Promise<Session> {
+  async findTodaySession(circleId: string): Promise<Session | null> {
+    const today = this.getTodayDate();
+
+    const session = await this.sessionRepository.findOne({
+      where: {
+        circleId,
+        date: today,
+      },
+      relations: [
+        "attendances",
+        "attendances.student",
+        "circle",
+        "recitations",
+        "pointTransactions",
+      ],
+    });
+
+    return session;
+  }
+
+  /**
+   * Explicitly create today's session for a circle
+   * - Creates session if not exists
+   * - Populates attendance for all students
+   */
+  async createTodaySession(circleId: string): Promise<Session> {
     // Validate circle exists first
     const circle = await this.circlesService
       .findOne(circleId)
@@ -45,7 +69,7 @@ export class SessionsService {
 
     const today = this.getTodayDate();
 
-    // Check for existing session
+    // Check for existing session first to avoid duplicates
     let session = await this.sessionRepository.findOne({
       where: {
         circleId,
@@ -107,7 +131,13 @@ export class SessionsService {
   async findOne(id: string): Promise<Session> {
     const session = await this.sessionRepository.findOne({
       where: { id },
-      relations: ["attendances", "attendances.student", "circle"],
+      relations: [
+        "attendances",
+        "attendances.student",
+        "circle",
+        "recitations",
+        "pointTransactions",
+      ],
     });
 
     if (!session) {
