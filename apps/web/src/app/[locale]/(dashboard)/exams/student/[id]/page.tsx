@@ -1,5 +1,5 @@
 "use client";
-import { useState, use } from "react";
+import { use } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import {
@@ -7,11 +7,9 @@ import {
   Plus,
   ArrowLeft,
   BookOpen,
-  CheckCircle2,
-  XCircle,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
+
+import { ExamMasteryGrid } from "@/components/exams/exam-mastery-grid";
 
 import {
   Card,
@@ -21,16 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useStudentExamCard } from "@/hooks";
 import api from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
@@ -49,16 +38,12 @@ function getInitials(name: string): string {
   return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 }
 
-// Generate array [1...30]
-const JUZ_ARRAY = Array.from({ length: 30 }, (_, i) => i + 1);
-
 export default function StudentExamHistoryPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id: studentId } = use(params);
-  const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
   const t = useTranslations("Exams");
   const tCommon = useTranslations("Common");
@@ -77,15 +62,6 @@ export default function StudentExamHistoryPage({
   const { data: examCard, isLoading: cardLoading } = useStudentExamCard(studentId);
 
   const isLoading = studentLoading || cardLoading;
-
-  // Toggle row expansion
-  const toggleRow = (juz: number) => {
-    if (expandedRow === juz) {
-      setExpandedRow(null);
-    } else {
-      setExpandedRow(juz);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -157,108 +133,7 @@ export default function StudentExamHistoryPage({
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="rounded-md border-t">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="w-[100px] text-center font-bold">{t("part")}</TableHead>
-                  <TableHead>{t("attempts")}</TableHead>
-                  <TableHead className="w-[150px] text-center">{t("latestScore")}</TableHead>
-                  <TableHead className="w-[100px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {JUZ_ARRAY.map((juz) => {
-                  const data = examCard?.[juz];
-                  const attempts = data?.attempts || [];
-                  const latestAttempt = attempts[0]; // Sorted by date DESC in backend
-                  const hasAttempts = attempts.length > 0;
-                  const isExpanded = expandedRow === juz;
-
-                  return (
-                    <>
-                      <TableRow 
-                        key={juz} 
-                        className={`cursor-pointer hover:bg-muted/30 transition-colors ${isExpanded ? "bg-muted/30" : ""}`}
-                        onClick={() => hasAttempts && toggleRow(juz)}
-                      >
-                        <TableCell className="text-center font-bold text-lg text-muted-foreground">
-                          {juz}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-2">
-                             {hasAttempts ? (
-                                attempts.map((attempt: any, idx: number) => (
-                                  <Badge 
-                                    key={idx}
-                                    variant={attempt.passed ? "default" : "destructive"} // Assuming default is acceptable for passed
-                                    className={`h-7 px-3 ${attempt.passed ? "bg-green-600 hover:bg-green-700" : ""}`}
-                                  >
-                                    {attempt.score}
-                                  </Badge>
-                                ))
-                             ) : (
-                               <span className="text-muted-foreground text-sm">-</span>
-                             )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                           {latestAttempt ? (
-                             <div className="flex flex-col items-center">
-                               <span className={`font-bold text-lg ${latestAttempt.passed ? "text-green-600" : "text-destructive"}`}>
-                                 {latestAttempt.score}
-                               </span>
-                               <span className="text-xs text-muted-foreground">
-                                 {new Date(latestAttempt.date).toLocaleDateString()}
-                               </span>
-                             </div>
-                           ) : (
-                             <span className="text-muted-foreground">-</span>
-                           )}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {hasAttempts && (
-                            isExpanded ? <ChevronUp className="h-4 w-4 opacity-50" /> : <ChevronDown className="h-4 w-4 opacity-50" />
-                          )}
-                        </TableCell>
-                      </TableRow>
-                      
-                      {/* Expanded Details Row */}
-                      {isExpanded && hasAttempts && (
-                        <TableRow className="bg-muted/10 hover:bg-muted/10 border-t-0">
-                          <TableCell colSpan={4} className="p-4">
-                            <div className="bg-background rounded-md border p-4 shadow-inner">
-                               <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                                  <FileText className="h-4 w-4 text-primary" />
-                                  {t("history")} - {t("juz")} {juz}
-                               </h4>
-                               <div className="space-y-2">
-                                {attempts.map((attempt: any, idx: number) => (
-                                     <div key={idx} className="flex items-center justify-between text-sm py-2 border-b last:border-0">
-                                        <div className="flex items-center gap-3">
-                                           {attempt.passed ? (
-                                             <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                           ) : (
-                                             <XCircle className="h-4 w-4 text-destructive" />
-                                           )}
-                                           <span>{new Date(attempt.date).toLocaleDateString()}</span>
-                                        </div>
-                                        <div className="font-mono font-medium">
-                                           {attempt.score} / 100
-                                        </div>
-                                     </div>
-                                  ))}
-                               </div>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
+          <ExamMasteryGrid data={examCard} />
         </CardContent>
       </Card>
     </div>

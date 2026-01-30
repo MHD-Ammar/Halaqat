@@ -67,6 +67,16 @@ export class ExamQuestionDto {
   @IsInt()
   @Min(1)
   maxScore!: number;
+  /**
+   * Specific Juz this question belongs to
+   */
+  @ApiPropertyOptional({
+    description: "Juz number for this specific question",
+    example: 5,
+  })
+  @IsOptional()
+  @IsInt()
+  questionJuzNumber?: number;
 }
 
 /**
@@ -86,18 +96,40 @@ export class SubmitExamDto {
   questions!: ExamQuestionDto[];
 
   /**
-   * Optional score override (if not provided, auto-calculated)
-   * Allows examiner to manually set final score
+   * Score for the current part (Gatekeeper)
    */
   @ApiPropertyOptional({
-    description:
-      "Override final score (0-100). If not provided, auto-calculated using 0.5 points per mistake",
+    description: "Score for the current part (0-100)",
     example: 85,
   })
   @IsOptional()
   @IsNumber()
   @Min(0)
-  score?: number;
+  currentPartScore?: number;
+
+  /**
+   * Score for cumulative parts
+   */
+  @ApiPropertyOptional({
+    description: "Score for cumulative parts (0-100)",
+    example: 90,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  cumulativeScore?: number;
+
+  /**
+   * Final weighted score
+   */
+  @ApiPropertyOptional({
+    description: "Final weighted score (0-100)",
+    example: 87.5,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  finalScore?: number;
 
   /**
    * Optional notes about the exam

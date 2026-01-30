@@ -41,6 +41,12 @@ export class ExamQuestion extends BaseEntity {
   type!: ExamQuestionType;
 
   /**
+   * Specific Juz number this question belongs to (mostly for cumulative)
+   */
+  @Column({ name: "question_juz_number", type: "int", nullable: true })
+  questionJuzNumber!: number | null;
+
+  /**
    * Optional question text (e.g., "Surah Al-Maida Verse 5")
    */
   @Column({ name: "question_text", type: "text", nullable: true })

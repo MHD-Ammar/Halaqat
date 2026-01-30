@@ -108,6 +108,8 @@ export interface ExamAttempt {
   score: number | null;
   passed: boolean | null;
   examId: string;
+  attemptNumber: number;
+  status: string;
 }
 
 export type ExamCardData = Record<number, { attempts: ExamAttempt[] }>;
@@ -119,7 +121,7 @@ export function useStudentExamCard(studentId: string | undefined) {
   return useQuery({
     queryKey: ["exams", "card", studentId],
     queryFn: async () => {
-      const response = await api.get<ExamCardData>(
+      const response = await api.get<{ juz: number; attempts: ExamAttempt[] }[]>(
         `/exams/student/${studentId}/card`,
       );
       return response.data;

@@ -50,6 +50,18 @@ export class CreateExamDto {
   notes?: string;
 
   /**
+   * The main Juz/Part being tested (1-30)
+   */
+  @ApiProperty({
+    description: "The main Juz/Part number being tested (1-30)",
+    example: 1,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(30)
+  juzNumber!: number;
+
+  /**
    * Array of Juz/Part numbers tested in this exam (1-30)
    */
   @ApiPropertyOptional({
