@@ -7,11 +7,13 @@
 import { Type } from "class-transformer";
 import {
   IsArray,
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   Min,
   ValidateNested,
 } from "class-validator";
@@ -107,4 +109,29 @@ export class SubmitExamDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  /**
+   * Status of whether the student passed the exam
+   */
+  @ApiPropertyOptional({
+    description: "Whether the student passed the exam",
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  passed?: boolean;
+
+  /**
+   * Array of Juz/Part numbers tested in this exam (1-30)
+   */
+  @ApiPropertyOptional({
+    description: "Array of Juz/Part numbers tested (1-30)",
+    example: [1, 2],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  @Max(30, { each: true })
+  testedParts?: number[];
 }

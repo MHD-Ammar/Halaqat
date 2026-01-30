@@ -12,9 +12,10 @@ import { ExamsController } from "./exams.controller";
 import { ExamsService } from "./exams.service";
 import { Exam } from "./entities/exam.entity";
 import { ExamQuestion } from "./entities/exam-question.entity";
+import { StudentsModule } from "../students/students.module";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Exam, ExamQuestion])],
+  imports: [TypeOrmModule.forFeature([Exam, ExamQuestion]), StudentsModule],
   controllers: [ExamsController],
   providers: [ExamsService],
   exports: [ExamsService],

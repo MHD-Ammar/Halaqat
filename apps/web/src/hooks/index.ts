@@ -62,8 +62,13 @@ export { useStudentPortal, type StudentPortalData } from "./use-student-portal";
 export {
   useStudentExams,
   useExam,
+  useSearchStudentsForExam,
+  useRecentExams,
+  useStudentExamCard,
   type Exam,
   type ExamQuestion,
   type StudentWithLastExam,
+  type ExamCardData,
 } from "./use-exams";
 export { useUsers, useUpdateUserRole, type User } from "./use-users";
+export { useToast } from "./use-toast";

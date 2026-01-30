@@ -12,6 +12,7 @@ import {
   Param,
   ParseUUIDPipe,
   UseGuards,
+  Query,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -36,9 +37,6 @@ import { CurrentUser } from "../auth/decorators/current-user.decorator";
 export class ExamsController {
   constructor(private readonly examsService: ExamsService) {}
 
-  /**
-   * Create a new exam session
-   */
   @Post()
   @Roles(UserRole.EXAMINER, UserRole.ADMIN)
   @ApiOperation({ summary: "Create a new exam session" })
@@ -53,6 +51,39 @@ export class ExamsController {
     @Body() createExamDto: CreateExamDto,
   ) {
     return this.examsService.createExam(user.sub, createExamDto, user.mosqueId);
+  }
+
+  /**
+   * Search students for exam
+   */
+  @Get("search")
+  @Roles(UserRole.EXAMINER, UserRole.ADMIN)
+  @ApiOperation({ summary: "Search students by name or ID" })
+  search(
+    @Query("q") query: string,
+    @CurrentUser() user: { mosqueId?: string },
+  ) {
+    return this.examsService.searchStudents(query, user.mosqueId);
+  }
+
+  /**
+   * Get recent exams
+   */
+  @Get("recent")
+  @Roles(UserRole.EXAMINER, UserRole.ADMIN)
+  @ApiOperation({ summary: "Get recent exams" })
+  getRecent(@CurrentUser() user: { mosqueId?: string }) {
+    return this.examsService.getRecentExams(user.mosqueId);
+  }
+
+  /**
+   * Get student exam card (grouped by Juz)
+   */
+  @Get("student/:studentId/card")
+  @Roles(UserRole.EXAMINER, UserRole.ADMIN, UserRole.TEACHER)
+  @ApiOperation({ summary: "Get student exam card history" })
+  getStudentCard(@Param("studentId", ParseUUIDPipe) studentId: string) {
+    return this.examsService.getStudentExamCard(studentId);
   }
 
   /**

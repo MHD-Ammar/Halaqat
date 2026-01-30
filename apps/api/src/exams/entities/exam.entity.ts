@@ -76,6 +76,18 @@ export class Exam extends BaseEntity {
   score!: number | null;
 
   /**
+   * Array of Juz/Part numbers tested in this exam (1-30)
+   */
+  @Column("int", { array: true, default: [] })
+  testedParts!: number[];
+
+  /**
+   * Whether the student passed this exam
+   */
+  @Column({ type: "boolean", nullable: true })
+  passed!: boolean | null;
+
+  /**
    * Exam status (PENDING/COMPLETED)
    */
   @Column({
