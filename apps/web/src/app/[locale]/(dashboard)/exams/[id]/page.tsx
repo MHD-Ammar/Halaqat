@@ -110,7 +110,7 @@ export default function StudentExamHistoryPage({
               {/* Actions */}
               <div className="flex gap-3 w-full md:w-auto">
                 <Button size="lg" className="w-full md:w-auto shadow-md hover:shadow-lg transition-all gap-2" asChild>
-                   <Link href={`/exams/student/${studentId}/new`}>
+                   <Link href={`/exams/${studentId}/session`}>
                       <Plus className="h-5 w-5" />
                       {t("startNewExam")}
                    </Link>
@@ -133,7 +133,7 @@ export default function StudentExamHistoryPage({
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <ExamMasteryGrid data={examCard} />
+          <ExamMasteryGrid data={examCard} studentId={studentId} />
         </CardContent>
       </Card>
     </div>

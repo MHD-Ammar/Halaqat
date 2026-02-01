@@ -8,7 +8,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { ExamQuestionType, ExamStatus } from "@halaqat/types";
+import {  ExamStatus } from "@halaqat/types";
 
 import { Exam } from "./entities/exam.entity";
 import { ExamQuestion } from "./entities/exam-question.entity";
@@ -94,11 +94,19 @@ export class ExamsService {
       throw new NotFoundException("Exam has already been completed");
     }
 
-    // Save questions
-    const questionEntities = dto.questions.map((q) =>
-      this.calculateQuestionScore(examId, q),
-    );
-    await this.examQuestionRepository.save(questionEntities);
+    // Create question entities
+    const questionEntities = dto.questions.map((q) => {
+      const entity = this.calculateQuestionScore(examId, q);
+      // Explicitly link the relation for safety, though cascade should handle it
+      entity.exam = exam;
+      return entity;
+    });
+
+    // Assign to exam to trigger cascade save
+    exam.questions = questionEntities;
+    
+    // NOTE: We do not call examQuestionRepository.save() here.
+    // The final examRepository.save(exam) will handle it due to cascade: true.
 
     // Update Scores
     exam.currentPartScore = dto.currentPartScore ?? null;
@@ -145,6 +153,21 @@ export class ExamsService {
   async findByStudent(studentId: string): Promise<Exam[]> {
     return this.examRepository.find({
       where: { studentId },
+      relations: ["examiner"],
+      order: { date: "DESC" },
+    });
+  }
+
+  /**
+   * Find all exams with optional filters
+   */
+  async findAll(studentId?: string, juzNumber?: number): Promise<Exam[]> {
+    const where: any = {};
+    if (studentId) where.studentId = studentId;
+    if (juzNumber) where.juzNumber = juzNumber;
+
+    return this.examRepository.find({
+      where,
       relations: ["examiner"],
       order: { date: "DESC" },
     });
@@ -210,7 +233,7 @@ export class ExamsService {
       } else if (exam.testedParts && exam.testedParts.length > 0) {
           // Fallback for legacy data without juzNumber
           const mainPart = exam.testedParts[0];
-          if (card[mainPart]) {
+          if (mainPart !== undefined && card[mainPart]) {
                card[mainPart].attempts.push({
                    examId: exam.id,
                    date: exam.date,

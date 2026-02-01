@@ -13,6 +13,8 @@ import {
   ParseUUIDPipe,
   UseGuards,
   Query,
+  UseInterceptors,
+  ClassSerializerInterceptor,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -33,6 +35,7 @@ import { CurrentUser } from "../auth/decorators/current-user.decorator";
 @ApiTags("exams")
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
+@UseInterceptors(ClassSerializerInterceptor)
 @Controller("exams")
 export class ExamsController {
   constructor(private readonly examsService: ExamsService) {}
@@ -47,10 +50,23 @@ export class ExamsController {
     description: "Forbidden - Examiner role required",
   })
   create(
-    @CurrentUser() user: { sub: string; mosqueId?: string },
+    @CurrentUser() user: { id: string; mosqueId?: string },
     @Body() createExamDto: CreateExamDto,
   ) {
-    return this.examsService.createExam(user.sub, createExamDto, user.mosqueId);
+    return this.examsService.createExam(user.id, createExamDto, user.mosqueId);
+  }
+
+  /**
+   * Get all exams (with optional filters)
+   */
+  @Get()
+  @Roles(UserRole.EXAMINER, UserRole.ADMIN, UserRole.TEACHER)
+  @ApiOperation({ summary: "Get all exams with optional filters" })
+  findAll(
+    @Query("studentId") studentId?: string,
+    @Query("juzNumber") juzNumber?: number,
+  ) {
+    return this.examsService.findAll(studentId, juzNumber);
   }
 
   /**

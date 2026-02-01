@@ -26,11 +26,14 @@ interface ExamCardItem {
     attempts: ExamAttempt[];
 }
 
+import { Link } from "@/i18n/routing";
+
 interface ExamMasteryGridProps {
     data: ExamCardItem[] | undefined;
+    studentId: string;
 }
 
-export function ExamMasteryGrid({ data }: ExamMasteryGridProps) {
+export function ExamMasteryGrid({ data, studentId }: ExamMasteryGridProps) {
     const t = useTranslations("Exams");
 
     // Helper to get data for a specific Juz
@@ -96,8 +99,13 @@ export function ExamMasteryGrid({ data }: ExamMasteryGridProps) {
                         
                         return (
                             <TableRow key={juz} className="hover:bg-muted/20">
-                                <TableCell className="text-center font-bold text-muted-foreground">
-                                    {juz}
+                                <TableCell className="text-center font-bold text-muted-foreground p-0">
+                                    <Link 
+                                      href={`/exams/${studentId}/${juz}`}
+                                      className="block w-full h-full py-4 hover:bg-muted/50 transition-colors text-primary underline-offset-4 hover:underline"
+                                    >
+                                        {juz}
+                                    </Link>
                                 </TableCell>
                                 <TableCell className="text-center">
                                     {att1 ? renderAttemptBadge(att1) : <span className="text-muted-foreground/30 text-xl">•</span>}

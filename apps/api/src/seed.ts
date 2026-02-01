@@ -319,26 +319,50 @@ async function seed() {
     // ========================================
     console.log("📝 Creating sample exams...");
 
-    const examStudents = students.slice(0, 3); // First 3 students
-    for (const student of examStudents) {
-      const examId = crypto.randomUUID();
-      await dataSource.query(
-        `
-        INSERT INTO "exam" (id, student_id, examiner_id, date, score, status, mosque_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
-        ON CONFLICT DO NOTHING
-      `,
-        [
-          examId,
-          student.id,
-          "dddddddd-dddd-4ddd-dddd-dddddddddddd", // Examiner
-          today,
-          Math.floor(Math.random() * 30) + 70, // Score 70-100
-          ExamStatus.COMPLETED,
-          MOSQUE_ID,
-        ],
-      );
-      console.log(`   ✓ Exam for ${student.name}`);
+    for (const student of students) {
+        // Create 1-3 exams per student
+        const examCount = Math.floor(Math.random() * 3) + 1;
+        
+        for (let i = 1; i <= examCount; i++) {
+            const examId = crypto.randomUUID();
+            const juzNumber = Math.floor(Math.random() * 5) + 26; // Juz 26-30
+            const passed = Math.random() > 0.3; // 70% pass rate
+            
+            // Score calculations
+            const currentScore = passed ? 85 + Math.floor(Math.random() * 15) : 60 + Math.floor(Math.random() * 15);
+            const cumulativeScore = passed ? 80 + Math.floor(Math.random() * 20) : 50 + Math.floor(Math.random() * 20);
+            const finalScore = (currentScore + cumulativeScore) / 2;
+            
+            await dataSource.query(
+                `
+                INSERT INTO "exam" (
+                    id, student_id, examiner_id, date, 
+                    juz_number, attempt_number,
+                    current_part_score, cumulative_score, final_score,
+                    passed, tested_parts,
+                    status, mosque_id, created_at, updated_at
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
+                ON CONFLICT DO NOTHING
+            `,
+                [
+                    examId,
+                    student.id,
+                    "dddddddd-dddd-4ddd-dddd-dddddddddddd", // Examiner
+                    new Date(today.getTime() - i * 86400000), // Previous days
+                    juzNumber,
+                    1, // attempt
+                    currentScore,
+                    cumulativeScore,
+                    finalScore,
+                    passed,
+                    [juzNumber, juzNumber > 1 ? juzNumber - 1 : 30], // Tested parts (current + prev)
+                    ExamStatus.COMPLETED,
+                    MOSQUE_ID,
+                ],
+            );
+            console.log(`   ✓ Exam for ${student.name} - Juz ${juzNumber} (${passed ? 'Passed' : 'Failed'})`);
+        }
     }
     console.log("");
 

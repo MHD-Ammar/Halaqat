@@ -69,7 +69,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         // Invalid UUID format
         message = "Invalid ID format provided";
       } else {
-        message = "Database operation failed";
+        message = `Database operation failed: ${(exception as any).message}`;
       }
 
       this.logger.error(

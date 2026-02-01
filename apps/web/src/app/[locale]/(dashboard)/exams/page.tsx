@@ -7,9 +7,9 @@
  * Features: Large search bar, student cards with circle and last exam score.
  */
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Link } from "@/i18n/routing";
-import { Search, FileText, BookOpen, CalendarDays } from "lucide-react";
+import { Search, BookOpen, CalendarDays } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import {
@@ -87,7 +87,7 @@ export default function ExamsPage() {
             students.map((student) => (
               <Link
                 key={student.id}
-                href={`/exams/student/${student.id}`}
+                href={`/exams/${student.id}`}
                 className="block"
               >
                 <Card className="hover:shadow-md hover:border-primary/50 transition-all cursor-pointer">
@@ -148,7 +148,7 @@ export default function ExamsPage() {
           ) : recentExams && recentExams.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {recentExams.map((exam) => (
-                <Link key={exam.id} href={`/exams/student/${exam.studentId}`}>
+                <Link key={exam.id} href={`/exams/${exam.studentId}`}>
                   <Card className="hover:shadow-sm transition-all h-full bg-muted/20">
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-start">

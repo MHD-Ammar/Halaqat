@@ -95,10 +95,9 @@ export default function NewExamPage({ params }: { params: Promise<{ id: string }
   };
 
   const calculateScore = () => {
-    // Frontend estimation: 100 - (total_mistakes * 0.5)
-    // This logic should match backend constants
+    // Frontend estimation: 100 - total_mistakes (since POINTS_PER_MISTAKE = 1 now)
     const totalMistakes = questions.reduce((sum, q) => sum + q.mistakesCount, 0);
-    return Math.max(0, 100 - (totalMistakes * 0.5));
+    return Math.max(0, 100 - totalMistakes);
   };
 
   const handleSubmit = async () => {
@@ -140,7 +139,7 @@ export default function NewExamPage({ params }: { params: Promise<{ id: string }
     } catch (error) {
       toast({
         title: tCommon("error"),
-        description: "Failed to submit exam",
+        description: t("failedToSubmit"),
         variant: "destructive"
       });
     } finally {
@@ -246,48 +245,66 @@ export default function NewExamPage({ params }: { params: Promise<{ id: string }
                      {q.type === "CUMULATIVE" ? t("cumulative") : `${t("question")} ${idx + 1}`}
                    </Badge>
                    <span className="font-mono text-lg font-bold text-destructive">
-                     -{q.mistakesCount * 0.5}
+                     -{q.mistakesCount}
                    </span>
                  </div>
               </CardHeader>
               <CardContent>
-                 <div className="flex gap-4 items-center justify-between">
-                    <Input 
-                      placeholder={t("optionalStartVerse")} 
-                      value={q.questionText || ""}
-                      onChange={(e) => {
-                        setQuestions(current => current.map((item, i) => 
-                          i === idx ? { ...item, questionText: e.target.value } : item
-                        ));
-                      }}
-                      className="flex-1"
-                    />
-                    <div className="flex items-center gap-3 bg-muted p-2 rounded-lg">
-                       <Button 
-                         variant="outline" 
-                         size="icon"
-                         onClick={() => {
-                            setQuestions(current => current.map((item, i) => 
-                              i === idx ? { ...item, mistakesCount: Math.max(0, item.mistakesCount - 1) } : item
-                            ));
-                         }}
-                       >
-                         -
-                       </Button>
-                       <span className="w-8 text-center font-bold text-xl">{q.mistakesCount}</span>
-                       <Button 
-                         variant="outline" 
-                         size="icon"
-                         onClick={() => {
-                            setQuestions(current => current.map((item, i) => 
-                              i === idx ? { ...item, mistakesCount: item.mistakesCount + 1 } : item
-                            ));
-                         }}
-                       >
-                         +
-                       </Button>
-                    </div>
-                 </div>
+                  <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                     <Input 
+                       placeholder={t("optionalStartVerse")} 
+                       value={q.questionText || ""}
+                       onChange={(e) => {
+                         setQuestions(current => current.map((item, i) => 
+                           i === idx ? { ...item, questionText: e.target.value } : item
+                         ));
+                       }}
+                       className="flex-1 w-full md:w-auto"
+                     />
+                     <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+                        <Button 
+                          variant="outline"
+                          className="h-12 px-4 border-yellow-500/50 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 font-bold"
+                          onClick={() => {
+                             setQuestions(current => current.map((item, i) => 
+                               i === idx ? { ...item, mistakesCount: item.mistakesCount + 1 } : item
+                             ));
+                          }}
+                        >
+                          {t("oneMistake")}
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          className="h-12 px-4 border-red-500/50 text-red-600 hover:text-red-700 hover:bg-red-50 font-bold"
+                          onClick={() => {
+                             setQuestions(current => current.map((item, i) => 
+                               i === idx ? { ...item, mistakesCount: item.mistakesCount + 3 } : item
+                             ));
+                          }}
+                        >
+                          {t("threeMistakes")}
+                        </Button>
+
+                        <div className="mx-2 h-8 w-px bg-border hidden md:block" />
+
+                        <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
+                           <Button 
+                             variant="ghost" 
+                             size="icon"
+                             className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                             onClick={() => {
+                                setQuestions(current => current.map((item, i) => 
+                                  i === idx ? { ...item, mistakesCount: Math.max(0, item.mistakesCount - 1) } : item
+                                ));
+                             }}
+                             disabled={q.mistakesCount === 0}
+                           >
+                             -
+                           </Button>
+                           <span className="w-8 text-center font-mono font-bold">{q.mistakesCount}</span>
+                        </div>
+                     </div>
+                  </div>
               </CardContent>
             </Card>
           ))}

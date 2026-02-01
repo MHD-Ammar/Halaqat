@@ -1,62 +1,35 @@
 
 import "reflect-metadata"; // Required for class-transformer/validator
-import { Type, plainToInstance } from "class-transformer";
+import { plainToInstance } from "class-transformer";
 import {
   IsArray,
-  IsBoolean,
-  IsEnum,
+  IsDateString,
   IsInt,
-  IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   Max,
   Min,
-  ValidateNested,
 } from "class-validator";
 import { validate } from "class-validator";
 
-// Mock the enum locally
-enum ExamQuestionType {
-  CURRENT_PART = "CURRENT_PART",
-  CUMULATIVE = "CUMULATIVE",
-}
-
-// Inlined DTOs
-class ExamQuestionDto {
-  @IsEnum(ExamQuestionType)
-  type!: ExamQuestionType;
+// --- CreateExamDto (Copied) ---
+class CreateExamDto {
+  @IsUUID()
+  studentId!: string;
 
   @IsOptional()
-  @IsString()
-  questionText?: string;
-
-  @IsInt()
-  @Min(0)
-  mistakesCount!: number;
-
-  @IsInt()
-  @Min(1)
-  maxScore!: number;
-}
-
-class SubmitExamDto {
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ExamQuestionDto)
-  questions!: ExamQuestionDto[];
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  score?: number;
+  @IsDateString()
+  date?: string;
 
   @IsOptional()
   @IsString()
   notes?: string;
 
-  @IsOptional()
-  @IsBoolean()
-  passed?: boolean;
+  @IsInt()
+  @Min(1)
+  @Max(30)
+  juzNumber!: number;
 
   @IsOptional()
   @IsArray()
@@ -66,37 +39,27 @@ class SubmitExamDto {
   testedParts?: number[];
 }
 
+// --- Test Logic ---
 async function testValidation() {
+  console.log("--- Testing CreateExamDto ---");
+  
+  // Payload mimicking Frontend
   const payload = {
-    questions: [
-      {
-        type: "CURRENT_PART",
-        mistakesCount: 0,
-        maxScore: 100,
-        questionText: "Test Ques"
-      },
-      {
-        type: "CUMULATIVE",
-        mistakesCount: 1,
-        maxScore: 100,
-        questionText: ""
-      }
-    ],
-    score: 99.5,
-    notes: "Notes",
-    passed: true,
-    testedParts: [1, 2]
+    studentId: "123e4567-e89b-12d3-a456-426614174000", // Valid UUID
+    date: new Date().toISOString(),
+    notes: "",
+    juzNumber: 1, // Number
+    testedParts: [1] // Number array
   };
 
   console.log("Testing payload:", JSON.stringify(payload, null, 2));
 
   try {
-    const dtoObject = plainToInstance(SubmitExamDto, payload);
+    const dtoObject = plainToInstance(CreateExamDto, payload);
     const errors = await validate(dtoObject);
 
     if (errors.length > 0) {
       console.log("Validation FAILED:");
-      // Deep log errors
       console.log(JSON.stringify(errors, null, 2));
     } else {
       console.log("Validation PASSED!");

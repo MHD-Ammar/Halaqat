@@ -7,6 +7,7 @@
  */
 
 import { Entity, Column, ManyToOne, JoinColumn, Index } from "typeorm";
+import { Exclude } from "class-transformer";
 import { ExamQuestionType } from "@halaqat/types";
 
 import { BaseEntity } from "../../common/entities/base.entity";
@@ -18,6 +19,7 @@ export class ExamQuestion extends BaseEntity {
    * The exam this question belongs to
    * Relationship: Many Questions -> One Exam
    */
+  @Exclude()
   @ManyToOne(() => Exam, (exam) => exam.questions, {
     onDelete: "CASCADE",
   })

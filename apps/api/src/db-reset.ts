@@ -22,8 +22,16 @@ async function resetDatabase() {
     );
     console.log("   ✓ Tables dropped\n");
 
-    // Step 2: Run migrations
-    console.log("2️⃣  Running migrations...");
+    // Step 2: Generate Migration
+    console.log("2️⃣  Generating initial migration...");
+    execSync("pnpm run migration:generate src/migrations/InitialSchema", {
+      stdio: "inherit",
+      cwd: __dirname,
+    });
+    console.log("   ✓ Migration generated\n");
+
+    // Step 3: Run migrations
+    console.log("3️⃣  Running migrations...");
     execSync("pnpm run migration:run", { stdio: "inherit", cwd: __dirname });
     console.log("   ✓ Migrations complete\n");
 
