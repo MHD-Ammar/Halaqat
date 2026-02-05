@@ -34,9 +34,9 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
-  // Enable CORS for development
+  // Enable CORS
   app.enableCors({
-    origin: ["http://localhost:3000", "http://localhost:3001"],
+    origin: ["http://localhost:3000", process.env.FRONTEND_URL || ""],
     credentials: true,
   });
 
