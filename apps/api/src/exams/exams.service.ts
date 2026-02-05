@@ -8,12 +8,13 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { ExamQuestionType, ExamStatus } from "@halaqat/types";
+import {  ExamStatus } from "@halaqat/types";
 
 import { Exam } from "./entities/exam.entity";
 import { ExamQuestion } from "./entities/exam-question.entity";
 import { CreateExamDto } from "./dto/create-exam.dto";
 import { SubmitExamDto, ExamQuestionDto } from "./dto/submit-exam.dto";
+import { StudentsService } from "../students/students.service";
 
 /** Points deducted per mistake for scoring calculation */
 const POINTS_PER_MISTAKE = 0.5;
@@ -25,6 +26,7 @@ export class ExamsService {
     private examRepository: Repository<Exam>,
     @InjectRepository(ExamQuestion)
     private examQuestionRepository: Repository<ExamQuestion>,
+    private studentsService: StudentsService,
   ) {}
 
   /**
@@ -40,14 +42,43 @@ export class ExamsService {
     dto: CreateExamDto,
     mosqueId?: string | null,
   ): Promise<Exam> {
+    console.log("Creating exam:", { examinerId, dto, mosqueId });
+
+    // Calculate attempt number
+    const previousAttempts = await this.examRepository.count({
+      where: {
+        studentId: dto.studentId,
+        juzNumber: dto.juzNumber,
+      },
+    });
+    const attemptNumber = previousAttempts + 1;
+
     const exam = new Exam();
     exam.studentId = dto.studentId;
     exam.examinerId = examinerId;
     exam.date = dto.date ? new Date(dto.date) : new Date();
     exam.notes = dto.notes ?? null;
     exam.status = ExamStatus.PENDING;
-    if (mosqueId) {
-      exam.mosqueId = mosqueId;
+    exam.juzNumber = dto.juzNumber;
+    exam.attemptNumber = attemptNumber;
+    
+    // Initialize scores as null
+    exam.currentPartScore = null;
+    exam.cumulativeScore = null;
+    exam.finalScore = null;
+    exam.passed = null;
+
+    if (dto.testedParts) {
+      exam.testedParts = dto.testedParts;
+    }
+    
+    // Fetch student to get mosqueId if not provided
+    if (!mosqueId) {
+       const student = await this.studentsService.findOne(dto.studentId);
+       if (!student) throw new NotFoundException("Student not found");
+       exam.mosqueId = student.mosqueId;
+    } else {
+       exam.mosqueId = mosqueId;
     }
 
     return this.examRepository.save(exam);
@@ -55,14 +86,6 @@ export class ExamsService {
 
   /**
    * Submit an exam with questions and calculate the final score
-   *
-   * Scoring Logic:
-   * - If score is provided in DTO, use it as override
-   * - Otherwise, calculate: 100 - (0.5 * total mistakes for CURRENT_PART questions)
-   *
-   * @param examId - ID of the exam to submit
-   * @param dto - SubmitExamDto with questions and optional score override
-   * @returns The updated exam with questions
    */
   async submitExam(examId: string, dto: SubmitExamDto): Promise<Exam> {
     const exam = await this.findOne(examId);
@@ -71,36 +94,38 @@ export class ExamsService {
       throw new NotFoundException("Exam has already been completed");
     }
 
-    // Calculate achieved scores for each question
-    const questionEntities = dto.questions.map((q) =>
-      this.calculateQuestionScore(examId, q),
-    );
+    // Create question entities
+    const questionEntities = dto.questions.map((q) => {
+      const entity = this.calculateQuestionScore(examId, q);
+      // Explicitly link the relation for safety, though cascade should handle it
+      entity.exam = exam;
+      return entity;
+    });
 
-    // Save all questions
-    await this.examQuestionRepository.save(questionEntities);
+    // Assign to exam to trigger cascade save
+    exam.questions = questionEntities;
+    
+    // NOTE: We do not call examQuestionRepository.save() here.
+    // The final examRepository.save(exam) will handle it due to cascade: true.
 
-    // Calculate final score
-    let finalScore: number;
-    if (dto.score !== undefined) {
-      // Use examiner's override score
-      finalScore = dto.score;
-    } else {
-      // Auto-calculate based on CURRENT_PART questions
-      const currentPartQuestions = dto.questions.filter(
-        (q) => q.type === ExamQuestionType.CURRENT_PART,
-      );
-      const totalMistakes = currentPartQuestions.reduce(
-        (sum, q) => sum + q.mistakesCount,
-        0,
-      );
-      finalScore = Math.max(0, 100 - totalMistakes * POINTS_PER_MISTAKE);
-    }
-
-    // Update exam status and score
+    // Update Scores
+    exam.currentPartScore = dto.currentPartScore ?? null;
+    exam.cumulativeScore = dto.cumulativeScore ?? null;
+    exam.finalScore = dto.finalScore ?? null;
+    
     exam.status = ExamStatus.COMPLETED;
-    exam.score = finalScore;
+    
     if (dto.notes) {
       exam.notes = dto.notes;
+    }
+    if (dto.testedParts) {
+      exam.testedParts = dto.testedParts;
+    }
+    if (dto.passed !== undefined) {
+      exam.passed = dto.passed;
+    } else if (exam.finalScore !== null) {
+      // Fallback: Pass if final score >= 70
+       exam.passed = exam.finalScore >= 70;
     }
 
     return this.examRepository.save(exam);
@@ -108,9 +133,6 @@ export class ExamsService {
 
   /**
    * Find an exam by ID with all relations
-   *
-   * @param id - Exam ID
-   * @returns The exam with student, examiner, and questions
    */
   async findOne(id: string): Promise<Exam> {
     const exam = await this.examRepository.findOne({
@@ -127,25 +149,136 @@ export class ExamsService {
 
   /**
    * Find all exams for a student
-   *
-   * @param studentId - Student ID
-   * @returns Array of exams ordered by date (newest first)
    */
   async findByStudent(studentId: string): Promise<Exam[]> {
     return this.examRepository.find({
       where: { studentId },
-      relations: ["examiner", "questions"],
+      relations: ["examiner"],
       order: { date: "DESC" },
     });
   }
 
   /**
-   * Calculate achieved score for a question based on mistakes
-   * Formula: achievedScore = maxScore - (mistakesCount * POINTS_PER_MISTAKE)
-   *
-   * @param examId - Exam ID
-   * @param dto - Question DTO
-   * @returns ExamQuestion entity with calculated score
+   * Find all exams with optional filters
+   */
+  async findAll(studentId?: string, juzNumber?: number): Promise<Exam[]> {
+    const where: any = {};
+    if (studentId) where.studentId = studentId;
+    if (juzNumber) where.juzNumber = juzNumber;
+
+    return this.examRepository.find({
+      where,
+      relations: ["examiner"],
+      order: { date: "DESC" },
+    });
+  }
+
+  /**
+   * Search students for exam (scoped by mosque)
+   */
+  async searchStudents(term: string, mosqueId?: string) {
+    if (!term) return [];
+    
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(term);
+    
+    if (isUuid) {
+      try {
+        const student = await this.studentsService.findOne(term);
+        if (mosqueId && student.mosqueId !== mosqueId) {
+          return [];
+        }
+        return [student];
+      } catch {
+        return [];
+      }
+    }
+
+    const result = await this.studentsService.findAll(
+      { search: term, limit: 10, page: 1 }, 
+      mosqueId
+    );
+    return result.data;
+  }
+
+  /**
+   * Get student's exam card (history grouped by Part/Juz)
+   * Returns a grid structure: 30 items for 30 Juz
+   */
+  async getStudentExamCard(studentId: string) {
+    const exams = await this.examRepository.find({
+      where: { studentId },
+      order: { date: "DESC" }, // Newest first
+    });
+
+    // Initialize structure for 30 Juz
+    // Shape: { 1: { juz: 1, attempts: [...] }, 2: ... }
+    const card: Record<number, { juz: number; attempts: any[] }> = {};
+    for (let i = 1; i <= 30; i++) {
+        card[i] = { juz: i, attempts: [] };
+    }
+
+    // Populate with exam data
+    for (const exam of exams) {
+      // Focus on the MAIN juz tested (juzNumber)
+      const juzNum = exam.juzNumber;
+      if (juzNum && card[juzNum]) {
+         card[juzNum].attempts.push({
+             examId: exam.id,
+             date: exam.date,
+             score: exam.finalScore,
+             passed: exam.passed, // Nullable
+             attemptNumber: exam.attemptNumber,
+             status: exam.passed === true ? 'PASSED' : exam.passed === false ? 'FAILED' : 'PENDING',
+         });
+      } else if (exam.testedParts && exam.testedParts.length > 0) {
+          // Fallback for legacy data without juzNumber
+          const mainPart = exam.testedParts[0];
+          if (mainPart !== undefined && card[mainPart]) {
+               card[mainPart].attempts.push({
+                   examId: exam.id,
+                   date: exam.date,
+                   score: (exam as any).score ?? null, // Cast to any for legacy field
+                   passed: exam.passed,
+                   attemptNumber: 1, // Default for legacy
+                   status: exam.passed === true ? 'PASSED' : exam.passed === false ? 'FAILED' : 'PENDING',
+                   isLegacy: true
+               });
+          }
+      }
+    }
+
+    // Sort attempts by attemptNumber ASC
+    for (let i = 1; i <= 30; i++) {
+        const idx = i; // storage const
+        const partData = card[idx];
+        if (partData && Array.isArray(partData.attempts)) {
+            partData.attempts.sort((a, b) => a.attemptNumber - b.attemptNumber);
+        }
+    }
+
+    // Convert to array
+    return Object.values(card);
+  }
+
+  /**
+   * Get recent exams conducted
+   */
+  async getRecentExams(mosqueId?: string, limit = 5) {
+    const where: any = { status: ExamStatus.COMPLETED };
+    if (mosqueId) {
+      where.mosqueId = mosqueId;
+    }
+
+    return this.examRepository.find({
+      where,
+      relations: ["student", "examiner"],
+      order: { date: "DESC", createdAt: "DESC" },
+      take: limit,
+    });
+  }
+
+  /**
+   * Calculate achieved score for a question
    */
   private calculateQuestionScore(
     examId: string,
@@ -154,7 +287,7 @@ export class ExamsService {
     const deduction = dto.mistakesCount * POINTS_PER_MISTAKE;
     const achievedScore = Math.max(0, Math.round(dto.maxScore - deduction));
 
-    return this.examQuestionRepository.create({
+    const q = this.examQuestionRepository.create({
       examId,
       type: dto.type,
       questionText: dto.questionText ?? null,
@@ -162,5 +295,11 @@ export class ExamsService {
       maxScore: dto.maxScore,
       achievedScore,
     });
+    
+    if (dto.questionJuzNumber) {
+        q.questionJuzNumber = dto.questionJuzNumber;
+    }
+    
+    return q;
   }
 }

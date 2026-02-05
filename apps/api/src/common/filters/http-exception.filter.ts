@@ -69,7 +69,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         // Invalid UUID format
         message = "Invalid ID format provided";
       } else {
-        message = "Database operation failed";
+        message = `Database operation failed: ${(exception as any).message}`;
       }
 
       this.logger.error(
@@ -100,11 +100,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       path: request.url,
     };
 
-    // Log errors (only for 5xx errors in production)
+    // Log errors (only for 5xx errors in production, but warn for 4xx)
     if (statusCode >= 500) {
       this.logger.error(
         `${request.method} ${request.url} - ${statusCode}`,
         exception instanceof Error ? exception.stack : String(exception),
+      );
+    } else if (statusCode >= 400) {
+      this.logger.warn(
+        `${request.method} ${request.url} - ${statusCode} - ${message} | Raw: ${exception instanceof Error ? exception.message : String(exception)}`,
       );
     }
 

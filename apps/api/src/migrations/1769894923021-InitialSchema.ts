@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class InitialMigrate1769199753766 implements MigrationInterface {
-    name = 'InitialMigrate1769199753766'
+export class InitialSchema1769894923021 implements MigrationInterface {
+    name = 'InitialSchema1769894923021'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TYPE "public"."circle_gender_enum" AS ENUM('MALE', 'FEMALE')`);
@@ -14,7 +14,7 @@ export class InitialMigrate1769199753766 implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "IDX_cdf9742519b09580df0bc13cb1" ON "student" ("username") `);
         await queryRunner.query(`CREATE INDEX "IDX_ed8cdc082b96b32871be408caa" ON "student" ("mosque_id") `);
         await queryRunner.query(`CREATE TYPE "public"."exam_status_enum" AS ENUM('PENDING', 'COMPLETED')`);
-        await queryRunner.query(`CREATE TABLE "exam" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "student_id" uuid NOT NULL, "examiner_id" uuid, "date" date NOT NULL, "score" double precision, "status" "public"."exam_status_enum" NOT NULL DEFAULT 'PENDING', "notes" text, "mosque_id" uuid NOT NULL, CONSTRAINT "PK_56071ab3a94aeac01f1b5ab74aa" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "exam" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "student_id" uuid NOT NULL, "examiner_id" uuid, "date" date NOT NULL, "juz_number" integer NOT NULL, "attempt_number" integer NOT NULL DEFAULT '1', "current_part_score" double precision, "cumulative_score" double precision, "final_score" double precision, "tested_parts" integer array NOT NULL DEFAULT '{}', "passed" boolean, "status" "public"."exam_status_enum" NOT NULL DEFAULT 'PENDING', "notes" text, "mosque_id" uuid NOT NULL, CONSTRAINT "PK_56071ab3a94aeac01f1b5ab74aa" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_77a5e7c775a0d8fa602d7547f1" ON "exam" ("student_id") `);
         await queryRunner.query(`CREATE INDEX "IDX_c27205a202e6680a28956b0bdf" ON "exam" ("examiner_id") `);
         await queryRunner.query(`CREATE INDEX "IDX_9a8b5c62e0598bd5b93e582894" ON "exam" ("date") `);
@@ -51,7 +51,7 @@ export class InitialMigrate1769199753766 implements MigrationInterface {
         await queryRunner.query(`CREATE TABLE "point_rule" ("id" SERIAL NOT NULL, "key" character varying NOT NULL, "description" character varying NOT NULL, "points" integer NOT NULL, "is_active" boolean NOT NULL DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_8a6551868d08f942914519d40e8" UNIQUE ("key"), CONSTRAINT "PK_cf38a25767f842df183d33d96f3" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_8a6551868d08f942914519d40e" ON "point_rule" ("key") `);
         await queryRunner.query(`CREATE TYPE "public"."exam_question_type_enum" AS ENUM('CURRENT_PART', 'CUMULATIVE')`);
-        await queryRunner.query(`CREATE TABLE "exam_question" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "exam_id" uuid NOT NULL, "type" "public"."exam_question_type_enum" NOT NULL, "question_text" text, "mistakes_count" integer NOT NULL DEFAULT '0', "max_score" integer NOT NULL, "achieved_score" integer NOT NULL DEFAULT '0', CONSTRAINT "PK_a1c309a024492d50f43ff8b4c67" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "exam_question" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, "exam_id" uuid NOT NULL, "type" "public"."exam_question_type_enum" NOT NULL, "question_juz_number" integer, "question_text" text, "mistakes_count" integer NOT NULL DEFAULT '0', "max_score" integer NOT NULL, "achieved_score" integer NOT NULL DEFAULT '0', CONSTRAINT "PK_a1c309a024492d50f43ff8b4c67" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_6664355ca7a2d081b4d89cc1ea" ON "exam_question" ("exam_id") `);
         await queryRunner.query(`ALTER TABLE "circle" ADD CONSTRAINT "FK_18f21ba41c7762c679ba798d591" FOREIGN KEY ("teacher_id") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "circle" ADD CONSTRAINT "FK_f9e1bcb8a6a4254bce71d51089f" FOREIGN KEY ("mosque_id") REFERENCES "mosque"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);

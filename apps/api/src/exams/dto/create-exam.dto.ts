@@ -4,7 +4,16 @@
  * Data transfer object for starting a new exam session.
  */
 
-import { IsUUID, IsDateString, IsOptional, IsString } from "class-validator";
+import {
+  IsUUID,
+  IsDateString,
+  IsOptional,
+  IsString,
+  IsArray,
+  IsInt,
+  Min,
+  Max,
+} from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class CreateExamDto {
@@ -39,4 +48,30 @@ export class CreateExamDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  /**
+   * The main Juz/Part being tested (1-30)
+   */
+  @ApiProperty({
+    description: "The main Juz/Part number being tested (1-30)",
+    example: 1,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(30)
+  juzNumber!: number;
+
+  /**
+   * Array of Juz/Part numbers tested in this exam (1-30)
+   */
+  @ApiPropertyOptional({
+    description: "Array of Juz/Part numbers tested (1-30)",
+    example: [1, 2],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  @Max(30, { each: true })
+  testedParts?: number[];
 }

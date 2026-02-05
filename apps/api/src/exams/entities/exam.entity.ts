@@ -69,11 +69,47 @@ export class Exam extends BaseEntity {
   date!: Date;
 
   /**
-   * Final score out of 100 for the current part
-   * Nullable until the exam is submitted
+   * The main Juz/Part being tested (1-30)
    */
-  @Column({ type: "float", nullable: true })
-  score!: number | null;
+  @Column({ name: "juz_number", type: "int" })
+  juzNumber!: number;
+
+  /**
+   * Attempt number for this Juz (1st, 2nd, etc.)
+   */
+  @Column({ name: "attempt_number", type: "int", default: 1 })
+  attemptNumber!: number;
+
+  /**
+   * Score for the current part (The Gatekeeper)
+   */
+  @Column({ name: "current_part_score", type: "float", nullable: true })
+  currentPartScore!: number | null;
+
+  /**
+   * Score for cumulative revision parts
+   */
+  @Column({ name: "cumulative_score", type: "float", nullable: true })
+  cumulativeScore!: number | null;
+
+  /**
+   * Final weighted score
+   */
+  @Column({ name: "final_score", type: "float", nullable: true })
+  finalScore!: number | null;
+
+  /**
+   * Array of Juz/Part numbers tested in this exam (1-30)
+   * Helpful for cumulative tracking
+   */
+  @Column("int", { array: true, default: [] })
+  testedParts!: number[];
+
+  /**
+   * Whether the student passed this exam
+   */
+  @Column({ type: "boolean", nullable: true })
+  passed!: boolean | null;
 
   /**
    * Exam status (PENDING/COMPLETED)

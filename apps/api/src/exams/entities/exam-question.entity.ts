@@ -7,6 +7,7 @@
  */
 
 import { Entity, Column, ManyToOne, JoinColumn, Index } from "typeorm";
+import { Exclude } from "class-transformer";
 import { ExamQuestionType } from "@halaqat/types";
 
 import { BaseEntity } from "../../common/entities/base.entity";
@@ -18,6 +19,7 @@ export class ExamQuestion extends BaseEntity {
    * The exam this question belongs to
    * Relationship: Many Questions -> One Exam
    */
+  @Exclude()
   @ManyToOne(() => Exam, (exam) => exam.questions, {
     onDelete: "CASCADE",
   })
@@ -39,6 +41,12 @@ export class ExamQuestion extends BaseEntity {
     enum: ExamQuestionType,
   })
   type!: ExamQuestionType;
+
+  /**
+   * Specific Juz number this question belongs to (mostly for cumulative)
+   */
+  @Column({ name: "question_juz_number", type: "int", nullable: true })
+  questionJuzNumber!: number | null;
 
   /**
    * Optional question text (e.g., "Surah Al-Maida Verse 5")

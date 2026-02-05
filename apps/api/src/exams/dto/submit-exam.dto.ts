@@ -7,11 +7,13 @@
 import { Type } from "class-transformer";
 import {
   IsArray,
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   Min,
   ValidateNested,
 } from "class-validator";
@@ -65,6 +67,16 @@ export class ExamQuestionDto {
   @IsInt()
   @Min(1)
   maxScore!: number;
+  /**
+   * Specific Juz this question belongs to
+   */
+  @ApiPropertyOptional({
+    description: "Juz number for this specific question",
+    example: 5,
+  })
+  @IsOptional()
+  @IsInt()
+  questionJuzNumber?: number;
 }
 
 /**
@@ -84,18 +96,40 @@ export class SubmitExamDto {
   questions!: ExamQuestionDto[];
 
   /**
-   * Optional score override (if not provided, auto-calculated)
-   * Allows examiner to manually set final score
+   * Score for the current part (Gatekeeper)
    */
   @ApiPropertyOptional({
-    description:
-      "Override final score (0-100). If not provided, auto-calculated using 0.5 points per mistake",
+    description: "Score for the current part (0-100)",
     example: 85,
   })
   @IsOptional()
   @IsNumber()
   @Min(0)
-  score?: number;
+  currentPartScore?: number;
+
+  /**
+   * Score for cumulative parts
+   */
+  @ApiPropertyOptional({
+    description: "Score for cumulative parts (0-100)",
+    example: 90,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  cumulativeScore?: number;
+
+  /**
+   * Final weighted score
+   */
+  @ApiPropertyOptional({
+    description: "Final weighted score (0-100)",
+    example: 87.5,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  finalScore?: number;
 
   /**
    * Optional notes about the exam
@@ -107,4 +141,29 @@ export class SubmitExamDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  /**
+   * Status of whether the student passed the exam
+   */
+  @ApiPropertyOptional({
+    description: "Whether the student passed the exam",
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  passed?: boolean;
+
+  /**
+   * Array of Juz/Part numbers tested in this exam (1-30)
+   */
+  @ApiPropertyOptional({
+    description: "Array of Juz/Part numbers tested (1-30)",
+    example: [1, 2],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  @Max(30, { each: true })
+  testedParts?: number[];
 }

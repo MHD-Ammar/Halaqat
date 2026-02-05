@@ -12,6 +12,9 @@ import {
   Param,
   ParseUUIDPipe,
   UseGuards,
+  Query,
+  UseInterceptors,
+  ClassSerializerInterceptor,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -32,13 +35,11 @@ import { CurrentUser } from "../auth/decorators/current-user.decorator";
 @ApiTags("exams")
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
+@UseInterceptors(ClassSerializerInterceptor)
 @Controller("exams")
 export class ExamsController {
   constructor(private readonly examsService: ExamsService) {}
 
-  /**
-   * Create a new exam session
-   */
   @Post()
   @Roles(UserRole.EXAMINER, UserRole.ADMIN)
   @ApiOperation({ summary: "Create a new exam session" })
@@ -49,10 +50,56 @@ export class ExamsController {
     description: "Forbidden - Examiner role required",
   })
   create(
-    @CurrentUser() user: { sub: string; mosqueId?: string },
+    @CurrentUser() user: { id: string; mosqueId?: string },
     @Body() createExamDto: CreateExamDto,
   ) {
-    return this.examsService.createExam(user.sub, createExamDto, user.mosqueId);
+    return this.examsService.createExam(user.id, createExamDto, user.mosqueId);
+  }
+
+  /**
+   * Get all exams (with optional filters)
+   */
+  @Get()
+  @Roles(UserRole.EXAMINER, UserRole.ADMIN, UserRole.TEACHER)
+  @ApiOperation({ summary: "Get all exams with optional filters" })
+  findAll(
+    @Query("studentId") studentId?: string,
+    @Query("juzNumber") juzNumber?: number,
+  ) {
+    return this.examsService.findAll(studentId, juzNumber);
+  }
+
+  /**
+   * Search students for exam
+   */
+  @Get("search")
+  @Roles(UserRole.EXAMINER, UserRole.ADMIN)
+  @ApiOperation({ summary: "Search students by name or ID" })
+  search(
+    @Query("q") query: string,
+    @CurrentUser() user: { mosqueId?: string },
+  ) {
+    return this.examsService.searchStudents(query, user.mosqueId);
+  }
+
+  /**
+   * Get recent exams
+   */
+  @Get("recent")
+  @Roles(UserRole.EXAMINER, UserRole.ADMIN)
+  @ApiOperation({ summary: "Get recent exams" })
+  getRecent(@CurrentUser() user: { mosqueId?: string }) {
+    return this.examsService.getRecentExams(user.mosqueId);
+  }
+
+  /**
+   * Get student exam card (grouped by Juz)
+   */
+  @Get("student/:studentId/card")
+  @Roles(UserRole.EXAMINER, UserRole.ADMIN, UserRole.TEACHER)
+  @ApiOperation({ summary: "Get student exam card history" })
+  getStudentCard(@Param("studentId", ParseUUIDPipe) studentId: string) {
+    return this.examsService.getStudentExamCard(studentId);
   }
 
   /**
