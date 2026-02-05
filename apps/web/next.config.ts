@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
    * Standalone mode is enabled via environment variable for production/CI/Linux environments
    * to avoid EPERM symlink errors on Windows dev machines.
    */
-  output: process.env.STANDALONE === "true" ? "standalone" : undefined,
+  output: "standalone",
 
   // Enable React strict mode for highlighting potential problems
   reactStrictMode: true,

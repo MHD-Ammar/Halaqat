@@ -8,7 +8,6 @@ FROM base AS builder
 WORKDIR /app
 COPY . .
 RUN pnpm install --frozen-lockfile
-ENV STANDALONE=true
 RUN pnpm turbo run build --filter=@halaqat/web
 
 # Runner
