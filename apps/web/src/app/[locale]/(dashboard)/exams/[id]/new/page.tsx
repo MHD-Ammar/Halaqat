@@ -9,18 +9,16 @@
  * Step 3: Grading (Pass/Fail + Notes)
  */
 
-import { useState, use } from "react";
-import { Link, useRouter } from "@/i18n/routing";
-import { useTranslations } from "next-intl";
 import { ArrowLeft, Save } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState, use } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 // import { Checkbox } from "@/components/ui/checkbox"; // Missing
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 // import { Switch } from "@/components/ui/switch"; // Missing
 // import { Separator } from "@/components/ui/separator"; // Missing
 import {
@@ -30,8 +28,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks";
-import api from "@/lib/api";
+import { Link, useRouter } from "@/i18n/routing";
+import { api } from "@/lib/api";
 
 const JUZ_OPTIONS = Array.from({ length: 30 }, (_, i) => i + 1);
 

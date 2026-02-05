@@ -7,13 +7,14 @@
  * Includes required fields: name, email, phone, and password.
  */
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { UserPlus, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -32,9 +33,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { useCreateTeacher, useUserProfile } from "@/hooks";
+import { useToast } from "@/hooks/use-toast";
 
 // Validation schema defined in component for translations
 

@@ -6,12 +6,15 @@
  * User account settings with profile update and password change.
  */
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Loader2, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -19,11 +22,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import {
   Form,
   FormControl,
@@ -32,10 +30,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks";
+import { useChangePassword } from "@/hooks/use-change-password";
 import { useToast } from "@/hooks/use-toast";
 import { useUpdateProfile } from "@/hooks/use-update-profile";
-import { useChangePassword } from "@/hooks/use-change-password";
 
 /**
  * Get initials from name

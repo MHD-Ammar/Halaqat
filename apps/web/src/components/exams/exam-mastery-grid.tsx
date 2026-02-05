@@ -1,7 +1,9 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { Check, X, CheckCircle2, XCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
+
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -10,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Link } from "@/i18n/routing";
 
 interface ExamAttempt {
     date: string;
@@ -25,8 +27,6 @@ interface ExamCardItem {
     juz: number;
     attempts: ExamAttempt[];
 }
-
-import { Link } from "@/i18n/routing";
 
 interface ExamMasteryGridProps {
     data: ExamCardItem[] | undefined;

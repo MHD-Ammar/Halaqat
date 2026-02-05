@@ -7,9 +7,10 @@
  * Shows page number with corresponding Surah name.
  */
 
-import { Badge } from "@/components/ui/badge";
-import { BookOpen } from "lucide-react";
 import { RecitationQuality } from "@halaqat/types";
+import { BookOpen } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
 
 interface RecitationItemProps {
   pageNumber: number;

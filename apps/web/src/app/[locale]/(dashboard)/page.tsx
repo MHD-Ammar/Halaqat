@@ -11,9 +11,10 @@
  */
 
 import { useEffect } from "react";
-import { useRouter } from "@/i18n/routing";
-import { useAuth } from "@/hooks";
+
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/hooks";
+import { useRouter } from "@/i18n/routing";
 
 /** Role to home path mapping */
 const ROLE_HOME_PATHS: Record<string, string> = {

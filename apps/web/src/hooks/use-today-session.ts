@@ -7,9 +7,10 @@
  * Uses smart initialization from the backend.
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AttendanceStatus } from "@halaqat/types";
-import api from "@/lib/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+import { api } from "@/lib/api";
 
 /**
  * Types for session data

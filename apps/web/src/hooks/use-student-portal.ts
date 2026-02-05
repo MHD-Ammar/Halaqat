@@ -7,7 +7,9 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
+
+import { api } from "@/lib/api";
+
 import { useUserProfile } from "./use-user-profile";
 
 interface StudentStats {

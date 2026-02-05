@@ -7,7 +7,8 @@
  */
 
 import { useMutation } from "@tanstack/react-query";
-import api from "@/lib/api";
+
+import { api } from "@/lib/api";
 
 interface ChangePasswordDto {
   currentPassword: string;

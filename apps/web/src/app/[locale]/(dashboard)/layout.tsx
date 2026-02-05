@@ -9,13 +9,14 @@
  * - Auth protection: Redirects to /login if no token
  */
 
-import { ReactNode, useEffect, useState } from "react";
 import Cookies from "js-cookie";
-import { TOKEN_COOKIE_NAME } from "@/lib/api";
+import { ReactNode, useEffect, useState } from "react";
+
 import { MainNav } from "@/components/main-nav";
 import { MobileHeader } from "@/components/mobile-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "@/i18n/routing";
+import { TOKEN_COOKIE_NAME } from "@/lib/api";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter();

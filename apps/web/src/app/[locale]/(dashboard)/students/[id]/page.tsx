@@ -6,8 +6,6 @@
  * Comprehensive student profile with stats and tabbed content.
  */
 
-import { useParams, useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
 import {
   ArrowLeft,
   Star,
@@ -16,16 +14,18 @@ import {
   Calendar,
   Award,
 } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PointsItem } from "@/components/points-item";
+import { RecitationItem } from "@/components/recitation-item";
+import { StatsCard } from "@/components/stats-card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StatsCard } from "@/components/stats-card";
-import { RecitationItem } from "@/components/recitation-item";
-import { PointsItem } from "@/components/points-item";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStudentProfile } from "@/hooks";
 
 /**

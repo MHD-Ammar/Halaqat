@@ -8,9 +8,10 @@
  * - Logged-in users on / or auth routes → redirect to /overview
  */
 
-import createMiddleware from "next-intl/middleware";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import createMiddleware from "next-intl/middleware";
+
 import { routing } from "./i18n/routing";
 
 // Create the next-intl middleware

@@ -1,5 +1,18 @@
 "use client";
 
+import { AttendanceStatus } from "@halaqat/types";
+import {
+  CheckCircle2,
+  XCircle,
+  Clock,
+  AlertCircle,
+  BookOpen,
+  Star,
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -15,18 +28,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { useTranslations } from "next-intl";
-import { AttendanceStatus } from "@halaqat/types";
-import {
-  CheckCircle2,
-  XCircle,
-  Clock,
-  AlertCircle,
-  BookOpen,
-  Star,
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 
 interface Student {
   id: string;

@@ -7,7 +7,8 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
+
+import { api } from "@/lib/api";
 
 export interface SurahWithPages {
   id: number;

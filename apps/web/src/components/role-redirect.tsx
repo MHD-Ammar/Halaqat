@@ -11,8 +11,9 @@
  */
 
 import { useEffect } from "react";
-import { useRouter, usePathname } from "@/i18n/routing";
+
 import { useAuth } from "@/hooks";
+import { useRouter, usePathname } from "@/i18n/routing";
 
 /** Role to home path mapping */
 const ROLE_HOME_PATHS: Record<string, string> = {

@@ -6,8 +6,7 @@
  * The teacher's main view showing today's session with attendance management.
  */
 
-import { useState, useMemo, useCallback } from "react";
-import { Link } from "@/i18n/routing";
+import { AttendanceStatus } from "@halaqat/types";
 import {
   Check,
   X,
@@ -18,9 +17,10 @@ import {
   Users,
   PlayCircle,
 } from "lucide-react";
-import { AttendanceStatus } from "@halaqat/types";
 import { useTranslations, useFormatter } from "next-intl";
+import { useState, useMemo, useCallback } from "react";
 
+import { StudentActionSheet } from "@/components/student-action-sheet";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,14 +30,14 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useStartSession } from "@/hooks";
 import { useToast } from "@/hooks/use-toast";
 import {
   useTodaySession,
   useUpdateAttendance,
 } from "@/hooks/use-today-session";
 import { useUserProfile } from "@/hooks/use-user-profile";
-import { useStartSession } from "@/hooks";
-import { StudentActionSheet } from "@/components/student-action-sheet";
+import { Link } from "@/i18n/routing";
 
 /**
  * Status cycle order for toggling

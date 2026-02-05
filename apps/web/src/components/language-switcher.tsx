@@ -7,19 +7,19 @@
  * Stores preference in a cookie for persistence.
  */
 
-import { useLocale } from "next-intl";
-import { useRouter, usePathname } from "@/i18n/routing";
-import { useTransition } from "react";
 import Cookies from "js-cookie";
 import { Globe, Check } from "lucide-react";
+import { useLocale } from "next-intl";
+import { useTransition } from "react";
 
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { useRouter, usePathname } from "@/i18n/routing";
 
 const LOCALE_COOKIE_NAME = "NEXT_LOCALE";
 

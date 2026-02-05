@@ -1,9 +1,6 @@
 "use client";
 
-import { useState, use } from "react";
-import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/routing";
-import { Link } from "@/i18n/routing";
+
 import {
   ArrowLeft,
   CheckCircle2,
@@ -18,7 +15,10 @@ import {
   XCircle,
   Flag
 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState, use } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,12 +28,11 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks";
-import api from "@/lib/api";
-import { useQuery } from "@tanstack/react-query";
-import { Progress } from "@/components/ui/progress";
+import { useRouter , Link } from "@/i18n/routing";
+import { api } from "@/lib/api";
 
 // Types
 type ExamStep = "SETUP" | "CURRENT_TEST" | "CUMULATIVE_TEST" | "SUMMARY";
@@ -52,7 +51,6 @@ interface ExamState {
   notes: string;
 }
 
-const JUZ_AMMA = 30;
 const WEIGHT_CURRENT = 100; // Base score for current part
 const WEIGHT_CUMULATIVE = 100; // Base score for cumulative
 const DEDUCTION_PER_MISTAKE = 1; // Points deducted per mistake (Frontend count = Points lost)
@@ -121,26 +119,8 @@ export default function ExamSessionPage({
   const isExamPassed = finalScore >= PASSING_THRESHOLD && isGatekeeperPassed;
 
   // --- API ---
-  const { data: student } = useQuery({
-    queryKey: ["student", studentId],
-    queryFn: async () => {
-      const res = await api.get(`/students/${studentId}`);
-      return res.data;
-    },
-  });
+  // Queries removed as variables 'student' and 'attemptInfo' were unused
 
-  // Check attempt number (mock/real)
-  const { data: attemptInfo } = useQuery({
-    queryKey: ["exams", "attempt", studentId, state.config.currentJuz],
-    queryFn: async () => {
-        // Find existing exams for this juz
-        // Actual implementation would be a specific endpoint or derived
-        // For now, assume we just want to show "Attempt X"
-        // We'll mock it or use search
-        return { count: 0 }; // Placeholder
-    },
-    enabled: !!state.config.currentJuz
-  });
 
 
   // --- HANDLERS ---
@@ -361,7 +341,6 @@ export default function ExamSessionPage({
                        <CardContent>
                             <div className="grid grid-cols-5 gap-2">
                                 {Array.from({length: 30}, (_, i) => i + 1).map(juz => {
-                                    const isCurrent = state.config.currentJuz === juz;
                                     const isSelected = state.config.cumulativeParts.includes(juz);
 
                                     // Disable current or future parts (optional logic, but usually we review BEFORE current)

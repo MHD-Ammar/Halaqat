@@ -7,17 +7,10 @@
  * Uses Command (cmdk) for search-as-you-type functionality.
  */
 
-import { useState, useEffect } from "react";
 import { UserPlus, Loader2, User } from "lucide-react";
+import { useState, useEffect } from "react";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -26,10 +19,17 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useAssignStudentToCircle } from "@/hooks/use-assign-student-to-circle";
 import { useToast } from "@/hooks/use-toast";
 import { useUnassignedStudents } from "@/hooks/use-unassigned-students";
-import { useAssignStudentToCircle } from "@/hooks/use-assign-student-to-circle";
 
 interface AddStudentToCircleDialogProps {
   /** The circle ID to add students to */

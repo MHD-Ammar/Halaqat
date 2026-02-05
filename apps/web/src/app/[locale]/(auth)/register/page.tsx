@@ -6,15 +6,14 @@
 
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "@/i18n/routing"; // Use locale-aware router
-import { Link } from "@/i18n/routing"; // Use locale-aware Link
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Loader2, Ticket } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -24,8 +23,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Link, useRouter } from "@/i18n/routing"; // Use locale-aware Link and router
 import { authService } from "@/services/auth.service";
 
 export default function RegisterPage() {

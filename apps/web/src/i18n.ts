@@ -4,8 +4,8 @@
  * Configuration for next-intl with locale-specific message loading.
  */
 
-import { getRequestConfig } from "next-intl/server";
 import { cookies } from "next/headers";
+import { getRequestConfig } from "next-intl/server";
 
 export const locales = ["ar", "en"] as const;
 export const defaultLocale = "ar" as const;

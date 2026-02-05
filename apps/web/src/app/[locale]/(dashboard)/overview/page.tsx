@@ -1,10 +1,12 @@
 "use client";
 
-import { useAuth } from "@/hooks";
-import { AdminDashboard } from "@/components/dashboards/admin-dashboard";
-import { TeacherDashboard } from "@/components/dashboards/teacher-dashboard";
-import { ExaminerDashboard } from "@/components/dashboards/examiner-dashboard";
 import { useTranslations } from "next-intl";
+
+import { AdminDashboard } from "@/components/dashboards/admin-dashboard";
+import { ExaminerDashboard } from "@/components/dashboards/examiner-dashboard";
+import { TeacherDashboard } from "@/components/dashboards/teacher-dashboard";
+import { useAuth } from "@/hooks";
+
 
 export default function OverviewPage() {
   const { user, isLoading } = useAuth();

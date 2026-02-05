@@ -1,10 +1,17 @@
-/**
- * ESLint configuration for Halaqat Web
- */
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const path = require("path");
+
 module.exports = {
-  extends: ["@halaqat/config/eslint", "next/core-web-vitals"],
+  extends: ["../../packages/config/eslint/next.js"],
   parserOptions: {
-    project: "./tsconfig.json",
+    project: path.resolve(__dirname, "tsconfig.json"),
     tsconfigRootDir: __dirname,
+  },
+  settings: {
+    "import/resolver": {
+      typescript: {
+        project: path.resolve(__dirname, "tsconfig.json"),
+      },
+    },
   },
 };

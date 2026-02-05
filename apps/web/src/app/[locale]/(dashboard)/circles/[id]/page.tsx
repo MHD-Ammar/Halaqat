@@ -7,13 +7,14 @@
  * including assigned teacher and list of students.
  */
 
-import { use } from "react";
-import Link from "next/link";
 import { ArrowLeft, Users, BookOpen, User } from "lucide-react";
+import Link from "next/link";
+import { use } from "react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { AddStudentToCircleDialog } from "@/components/add-student-to-circle-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -23,7 +24,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AddStudentToCircleDialog } from "@/components/add-student-to-circle-dialog";
 import { useCircle } from "@/hooks";
 
 interface PageProps {

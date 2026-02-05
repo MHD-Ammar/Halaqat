@@ -6,15 +6,16 @@
  * Dashboard for students to view their progress and QR code for attendance.
  */
 
-import { useState } from "react";
+import { Award, BookOpen, Calendar, GraduationCap } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 import QRCode from "react-qr-code";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStudentPortal } from "@/hooks/use-student-portal";
-import { Award, BookOpen, Calendar, GraduationCap } from "lucide-react";
+
 
 export default function StudentPortalPage() {
   const t = useTranslations("StudentPortal");

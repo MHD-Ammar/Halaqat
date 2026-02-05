@@ -7,7 +7,8 @@
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
+
+import { api } from "@/lib/api";
 
 interface UpdateProfileDto {
   fullName?: string;
