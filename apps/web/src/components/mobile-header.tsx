@@ -6,8 +6,10 @@
  * Simple top bar for mobile view with logo, language switcher, user avatar, and logout.
  */
 
-import { useRouter } from "@/i18n/routing";
+import { LogOut, Settings, User } from "lucide-react";
 import { useTranslations } from "next-intl";
+
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -17,9 +19,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Settings, User } from "lucide-react";
 import { useAuth } from "@/hooks";
-import { LanguageSwitcher } from "@/components/language-switcher";
+import { useRouter } from "@/i18n/routing";
 
 /**
  * Get initials from name

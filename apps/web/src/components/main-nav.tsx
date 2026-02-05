@@ -10,16 +10,16 @@
  * Features role-based navigation filtering with i18n support.
  */
 
-import { usePathname } from "@/i18n/routing";
-import { Link } from "@/i18n/routing";
 import { LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
-import { getNavItemsForRole } from "@/config/nav";
-import { useAuth } from "@/hooks";
+
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LanguageSwitcher } from "@/components/language-switcher";
+import { getNavItemsForRole } from "@/config/nav";
+import { useAuth } from "@/hooks";
+import { usePathname , Link } from "@/i18n/routing";
+import { cn } from "@/lib/utils";
 
 export function MainNav() {
   const pathname = usePathname();

@@ -5,9 +5,9 @@
  * Features a clean gradient background.
  */
 
-import { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
+import { ReactNode } from "react";
 
 interface AuthLayoutProps {
   children: ReactNode;

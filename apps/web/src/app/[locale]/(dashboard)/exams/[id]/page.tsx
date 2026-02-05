@@ -1,16 +1,18 @@
 "use client";
-import { use } from "react";
-import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/routing";
+import { useQuery } from "@tanstack/react-query";
 import {
   FileText,
   Plus,
   ArrowLeft,
   BookOpen,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { use } from "react";
+
+
 
 import { ExamMasteryGrid } from "@/components/exams/exam-mastery-grid";
-
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -18,11 +20,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStudentExamCard } from "@/hooks";
+import { Link } from "@/i18n/routing";
 import api from "@/lib/api";
-import { useQuery } from "@tanstack/react-query";
+
 
 interface Student {
   id: string;

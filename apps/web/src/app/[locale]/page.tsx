@@ -4,12 +4,13 @@
  * Simple landing page with redirect to login.
  */
 
-import { Link } from "@/i18n/routing";
-import { Button } from "@/components/ui/button";
 import { BookOpen, Users, Calendar, ArrowRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
+
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/routing";
 
 interface HomePageProps {
   params: Promise<{ locale: string }>;

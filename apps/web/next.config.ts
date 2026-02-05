@@ -13,10 +13,11 @@ const withNextIntl = createNextIntlPlugin("./src/i18n.ts");
  */
 const nextConfig: NextConfig = {
   /**
-   * Output mode for Next.js
-   * @see https://nextjs.org/docs/app/api-reference/next-config-js/output
+   * Output mode for Next.js.
+   * Standalone mode is enabled via environment variable for production/CI/Linux environments
+   * to avoid EPERM symlink errors on Windows dev machines.
    */
-  output: "standalone",
+  output: process.env.STANDALONE === "true" ? "standalone" : undefined,
 
   // Enable React strict mode for highlighting potential problems
   reactStrictMode: true,

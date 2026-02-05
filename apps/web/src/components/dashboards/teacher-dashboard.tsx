@@ -12,8 +12,12 @@ import {
   CalendarCheck,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/routing";
+import { useState } from "react";
 
+import { CreateStudentDialog } from "@/components/create-student-dialog";
+import { StatsCard } from "@/components/stats-card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -22,12 +26,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { StatsCard } from "@/components/stats-card";
-import { CreateStudentDialog } from "@/components/create-student-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
 import {
   useTeacherStats,
   useCircle,
@@ -35,7 +34,10 @@ import {
   useTodaySession,
   useStartSession,
 } from "@/hooks";
-import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { Link } from "@/i18n/routing";
+
+
 import { DailySummaryModal } from "../daily-summary-modal";
 
 /**

@@ -10,7 +10,13 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
+
+import { CreateTeacherDialog } from "@/components/create-teacher-dialog";
+import { StatsCard } from "@/components/stats-card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -19,11 +25,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { StatsCard } from "@/components/stats-card";
-import { CreateTeacherDialog } from "@/components/create-teacher-dialog";
 import { useAdminStats, useTeacherPerformance, useUserProfile } from "@/hooks";
 import { useToast } from "@/hooks/use-toast";
 

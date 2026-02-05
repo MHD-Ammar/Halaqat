@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
  import{ ArrowLeft,
   Calendar,
   CheckCircle2,
@@ -8,7 +9,11 @@
   Clock,
   BookOpen
 } from "lucide-react";
+import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { use } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,7 +22,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -27,10 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import api from "@/lib/api";
-import { useTranslations } from "next-intl";
-import { use } from "react";
-import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
+
 
 type ExamHistoryItem = {
   id: string;

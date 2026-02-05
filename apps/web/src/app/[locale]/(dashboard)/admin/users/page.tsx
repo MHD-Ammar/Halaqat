@@ -6,10 +6,19 @@
  * Lists all users and allows role changes.
  */
 
-import { useTranslations } from "next-intl";
 import { UserCog, Users } from "lucide-react";
+import { useTranslations } from "next-intl";
 
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -18,15 +27,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useUsers, useUpdateUserRole, type User } from "@/hooks";
 import { useToast } from "@/hooks/use-toast";
 

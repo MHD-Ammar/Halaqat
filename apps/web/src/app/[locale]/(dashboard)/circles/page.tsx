@@ -7,29 +7,29 @@
  * Features: List circles, create new circles, view circle details.
  */
 
-import { Link } from "@/i18n/routing";
 import { BookOpen, Users, MoreVertical, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useEffect } from "react";
 
+import { CreateCircleDialog } from "@/components/create-circle-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CreateCircleDialog } from "@/components/create-circle-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCircles, useDeleteCircle, useAuth } from "@/hooks";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { Link } from "@/i18n/routing";
 
 export default function CirclesPage() {
   const { isAdmin, isLoading: authLoading } = useAuth();
@@ -41,6 +41,8 @@ export default function CirclesPage() {
   const deleteMutation = useDeleteCircle();
   const { toast } = useToast();
   const router = useRouter();
+  const t = useTranslations("Circles");
+  const tCommon = useTranslations("Common");
 
   // Protect the page - redirect non-admins
   useEffect(() => {
@@ -50,8 +52,6 @@ export default function CirclesPage() {
   }, [isAdmin, authLoading, router]);
 
   if (authLoading) return null;
-  const t = useTranslations("Circles");
-  const tCommon = useTranslations("Common");
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(t("deleteConfirmation"))) return;

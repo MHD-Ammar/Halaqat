@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Cairo } from "next/font/google";
+import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
-import { notFound } from "next/navigation";
 
 import "../globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import { QueryProvider } from "@/providers/query-provider";
 import { routing } from "@/i18n/routing";
+import { QueryProvider } from "@/providers/query-provider";
 
 /**
  * Font configurations using Next.js font optimization

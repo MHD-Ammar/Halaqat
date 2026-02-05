@@ -6,11 +6,13 @@
  * Provides authentication utilities including logout and current user info.
  */
 
-import { useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
+import { useCallback } from "react";
+
 import { TOKEN_COOKIE_NAME } from "@/lib/api";
+
 import { useUserProfile } from "./use-user-profile";
 
 export type UserRole =

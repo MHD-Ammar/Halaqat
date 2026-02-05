@@ -10,7 +10,7 @@
  * Shows Surah names next to page numbers in the review list.
  */
 
-import { useState, useMemo } from "react";
+import { RecitationType, RecitationQuality } from "@halaqat/types";
 import {
   Loader2,
   Check,
@@ -18,9 +18,13 @@ import {
   ArrowLeft,
   BookOpen,
 } from "lucide-react";
-import { RecitationType, RecitationQuality } from "@halaqat/types";
 import { useTranslations } from "next-intl";
+import { useState, useMemo } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
   SheetContent,
@@ -30,10 +34,6 @@ import {
   SheetTrigger,
   SheetFooter,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
 import {
   useRecordRecitation,
   type PageDetail,
@@ -42,7 +42,7 @@ import {
   useSurahsWithPages,
   findSurahForPage,
 } from "@/hooks/use-surahs-with-pages";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/hooks/use-toast";
 
 interface StudentActionSheetProps {
   student: {

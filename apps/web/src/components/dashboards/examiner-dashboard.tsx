@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "@/i18n/routing";
-import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
+import { useEffect } from "react";
+
+import { Button } from "@/components/ui/button";
+import { useRouter } from "@/i18n/routing";
 
 export function ExaminerDashboard() {
   const router = useRouter();

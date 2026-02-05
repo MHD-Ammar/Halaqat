@@ -7,11 +7,12 @@
  * Features: Large search bar, student cards with circle and last exam score.
  */
 
-import { useState } from "react";
-import { Link } from "@/i18n/routing";
 import { Search, BookOpen, CalendarDays } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useState , useEffect } from "react";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -20,11 +21,9 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { useSearchStudentsForExam, useRecentExams } from "@/hooks";
-import { useEffect } from "react";
+import { Link } from "@/i18n/routing";
 
 /**
  * Get initials from name
@@ -43,7 +42,6 @@ export default function ExamsPage() {
   const debouncedSearch = useDebounce(searchTerm, 500); // We'll need useDebounce
 
   const t = useTranslations("Exams");
-  const tCommon = useTranslations("Common");
 
   // Backend Search
   const { data: searchResults, isLoading: isSearchLoading } = useSearchStudentsForExam(debouncedSearch);

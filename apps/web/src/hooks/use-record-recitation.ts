@@ -6,9 +6,10 @@
  * Mutation hook for recording bulk page recitations.
  */
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
 import { RecitationType, RecitationQuality } from "@halaqat/types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+import api from "@/lib/api";
 
 /**
  * Single page recitation detail
