@@ -32,7 +32,7 @@ import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks";
 import { useRouter , Link } from "@/i18n/routing";
-import api from "@/lib/api";
+import { api } from "@/lib/api";
 
 // Types
 type ExamStep = "SETUP" | "CURRENT_TEST" | "CUMULATIVE_TEST" | "SUMMARY";

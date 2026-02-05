@@ -9,7 +9,7 @@
 import { RecitationType, RecitationQuality } from "@halaqat/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import api from "@/lib/api";
+import { api } from "@/lib/api";
 
 /**
  * Single page recitation detail

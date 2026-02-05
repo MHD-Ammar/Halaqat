@@ -31,7 +31,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks";
 import { Link, useRouter } from "@/i18n/routing";
-import api from "@/lib/api";
+import { api } from "@/lib/api";
 
 const JUZ_OPTIONS = Array.from({ length: 30 }, (_, i) => i + 1);
 

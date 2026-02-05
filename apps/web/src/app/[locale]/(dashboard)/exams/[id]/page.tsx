@@ -23,7 +23,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStudentExamCard } from "@/hooks";
 import { Link } from "@/i18n/routing";
-import api from "@/lib/api";
+import { api } from "@/lib/api";
 
 
 interface Student {

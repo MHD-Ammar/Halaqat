@@ -30,7 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import api from "@/lib/api";
+import { api } from "@/lib/api";
 
 
 type ExamHistoryItem = {
