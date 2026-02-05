@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  # 1. Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: halaqat_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - halaqat_postgres_data:/var/lib/postgresql/data
+    networks:
+      - halaqat_network
+
+  # 2. Backend (NestJS)
+  api:
+    build:
+      context: .             # Important: Context is the root of the project to look for packages
+      dockerfile: apps/api/Dockerfile
+    container_name: halaqat_api
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      PORT: 3001
+      # Add any other Environment Variables the API needs here
+    depends_on:
+      - postgres
+    networks:
+      - halaqat_network
+
+  # 3. Frontend (Next.js)
+  web:
+    build:
+      context: .             # Same thing, Context is the root of the project to look for packages
+      dockerfile: apps/web/Dockerfile
+    container_name: halaqat_web
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # Internal API URL (for server) and External API URL (for browser)
+      NEXT_PUBLIC_API_URL: http://your-domain.com/api 
+    networks:
+      - halaqat_network
+
+volumes:
+  halaqat_postgres_data:
+
+networks:
+  halaqat_network:

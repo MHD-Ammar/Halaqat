@@ -12,6 +12,12 @@ const withNextIntl = createNextIntlPlugin("./src/i18n.ts");
  * @see https://nextjs.org/docs/app/api-reference/next-config-js
  */
 const nextConfig: NextConfig = {
+  /**
+   * Output mode for Next.js
+   * @see https://nextjs.org/docs/app/api-reference/next-config-js/output
+   */
+  output: "standalone",
+
   // Enable React strict mode for highlighting potential problems
   reactStrictMode: true,
 
