@@ -13,6 +13,7 @@ import { Student } from "../students/entities/student.entity";
 import { Session } from "../sessions/entities/session.entity";
 import { PointTransaction } from "../points/entities/point-transaction.entity";
 import { Circle } from "../circles/entities/circle.entity";
+import { User } from "../users/entities/user.entity";
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { Circle } from "../circles/entities/circle.entity";
       Session,
       PointTransaction,
       Circle,
+      User,
     ]),
   ],
   controllers: [AnalyticsController],

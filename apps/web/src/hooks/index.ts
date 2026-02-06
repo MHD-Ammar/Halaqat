@@ -51,7 +51,6 @@ export {
   type CircleDetails,
   type CircleStudent,
 } from "./use-circle";
-export { useCreateTeacher } from "./use-create-teacher";
 export {
   useUnassignedStudents,
   type UnassignedStudent,
@@ -71,4 +70,5 @@ export {
   type ExamCardData,
 } from "./use-exams";
 export { useUsers, useUpdateUserRole, type User } from "./use-users";
+export { useCreateUser } from "./use-create-user";
 export { useToast } from "./use-toast";

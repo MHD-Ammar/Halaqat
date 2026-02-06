@@ -190,7 +190,6 @@ export default function RegisterPage() {
             <Input
               id="inviteCode"
               type="text"
-              inputMode="numeric"
               maxLength={6}
               placeholder="111111"
               className="font-mono text-center tracking-widest text-lg"

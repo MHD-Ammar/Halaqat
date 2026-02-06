@@ -171,7 +171,14 @@
     "successTitle": "تم إنشاء الحلقة!",
     "successDesc": "تم إنشاء {name} بنجاح.",
     "errorTitle": "خطأ",
-    "errorDesc": "فشل إنشاء الحلقة. يرجى المحاولة مرة أخرى."
+    "errorDesc": "فشل إنشاء الحلقة. يرجى المحاولة مرة أخرى.",
+    "details": "معلومات الحلقة",
+    "location": "الموقع",
+    "assignedTeacher": "المعلم المسؤول",
+    "noTeacherAssigned": "لم يتم تعيين معلم",
+    "noStudentsInCircle": "لا يوجد طلاب في هذه الحلقة بعد",
+    "addStudentsPrompt": "أضف طلاباً للبدء.",
+    "failedToLoad": "فشل تحميل تفاصيل الحلقة. يرجى المحاولة مرة أخرى."
   },
   "Students": {
     "title": "الطلاب",
@@ -339,7 +346,22 @@
     "noUsers": "لم يتم العثور على مستخدمين",
     "roleUpdated": "تم تحديث الدور بنجاح",
     "selectRole": "اختر الدور",
-    "updateRole": "تحديث الدور"
+    "updateRole": "تحديث الدور",
+    "addUser": "إضافة مستخدم",
+    "addNewUser": "إضافة مستخدم جديد",
+    "createUserDescription": "إنشاء حساب مستخدم جديد لمسجدك.",
+    "userCreated": "تم إنشاء المستخدم!",
+    "userCreatedDescription": "تمت إضافة {name} بنجاح.",
+    "createFailed": "فشل إنشاء المستخدم. يرجى المحاولة مرة أخرى.",
+    "phone": "رقم الهاتف",
+    "password": "كلمة المرور",
+    "creating": "جاري الإنشاء...",
+    "namePlaceholder": "مثال: أحمد حسن",
+    "emailPlaceholder": "user@example.com",
+    "phonePlaceholder": "+966 50 123 4567",
+    "passwordPlaceholder": "6 أحرف كحد أدنى",
+    "nameMinLength": "الاسم يجب أن يكون حرفين على الأقل",
+    "phoneMinLength": "رقم الهاتف يجب أن يكون 10 أرقام على الأقل"
   },
   "Teachers": {
     "addTeacher": "إضافة معلم",

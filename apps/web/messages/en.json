@@ -171,7 +171,14 @@
     "successTitle": "Circle created!",
     "successDesc": "{name} has been created successfully.",
     "errorTitle": "Error",
-    "errorDesc": "Failed to create circle. Please try again."
+    "errorDesc": "Failed to create circle. Please try again.",
+    "details": "Circle Information",
+    "location": "Location",
+    "assignedTeacher": "Assigned Teacher",
+    "noTeacherAssigned": "No teacher assigned",
+    "noStudentsInCircle": "No students in this circle yet.",
+    "addStudentsPrompt": "Add students to get started.",
+    "failedToLoad": "Failed to load circle details. Please try again."
   },
   "Students": {
     "title": "Students",
@@ -339,7 +346,22 @@
     "noUsers": "No users found",
     "roleUpdated": "Role updated successfully",
     "selectRole": "Select role",
-    "updateRole": "Update Role"
+    "updateRole": "Update Role",
+    "addUser": "Add User",
+    "addNewUser": "Add New User",
+    "createUserDescription": "Create a new user account for your mosque.",
+    "userCreated": "User created!",
+    "userCreatedDescription": "{name} has been added successfully.",
+    "createFailed": "Failed to create user. Please try again.",
+    "phone": "Phone Number",
+    "password": "Password",
+    "creating": "Creating...",
+    "namePlaceholder": "e.g., Ahmed Hassan",
+    "emailPlaceholder": "user@example.com",
+    "phonePlaceholder": "+966 50 123 4567",
+    "passwordPlaceholder": "Min. 6 characters",
+    "nameMinLength": "Name must be at least 2 characters",
+    "phoneMinLength": "Phone number must be at least 10 digits"
   },
   "Teachers": {
     "addTeacher": "Add Teacher",

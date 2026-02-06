@@ -1,24 +1,25 @@
 "use client";
 
 /**
- * useCreateTeacher Hook
+ * useCreateUser Hook
  *
- * Mutation hook for creating new teacher accounts.
+ * Mutation hook for creating new user accounts with any role.
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
 
-interface CreateTeacherData {
+interface CreateUserData {
   fullName: string;
   email: string;
   phoneNumber: string;
   password: string;
+  role: string;
   mosqueId?: string;
 }
 
-interface CreateTeacherResponse {
+interface CreateUserResponse {
   message: string;
   data: {
     id: string;
@@ -31,22 +32,20 @@ interface CreateTeacherResponse {
 }
 
 /**
- * Create a new teacher account
- * POST /users with role defaulting to TEACHER
+ * Create a new user account with specified role
+ * POST /users with role specified
  */
-export function useCreateTeacher() {
+export function useCreateUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreateTeacherData) => {
-      const response = await api.post<CreateTeacherResponse>("/users", {
-        ...data,
-        role: "TEACHER",
-      });
+    mutationFn: async (data: CreateUserData) => {
+      const response = await api.post<CreateUserResponse>("/users", data);
       return response.data;
     },
     onSuccess: () => {
-      // Invalidate teacher-related queries to refetch data
+      // Invalidate users list to refetch
+      queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["users", "teachers"] });
       queryClient.invalidateQueries({ queryKey: ["analytics", "teachers"] });
     },

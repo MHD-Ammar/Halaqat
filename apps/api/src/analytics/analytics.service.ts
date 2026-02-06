@@ -12,6 +12,7 @@ import { Student } from "../students/entities/student.entity";
 import { Session } from "../sessions/entities/session.entity";
 import { PointTransaction } from "../points/entities/point-transaction.entity";
 import { Circle } from "../circles/entities/circle.entity";
+import { User } from "../users/entities/user.entity";
 import { AttendanceStatus } from "@halaqat/types";
 
 interface DailyOverview {
@@ -41,6 +42,8 @@ export class AnalyticsService {
     private readonly pointTransactionRepository: Repository<PointTransaction>,
     @InjectRepository(Circle)
     private readonly circleRepository: Repository<Circle>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   /**
@@ -217,46 +220,74 @@ export class AnalyticsService {
     const threeDaysAgo = new Date();
     threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
-    // Get all circles with their teachers and latest session
-    const where: any = {};
+    // 1. Get ALL teachers in the mosque
+    const teacherWhere: any = { role: "TEACHER" };
     if (mosqueId) {
-      where.mosqueId = mosqueId;
+      teacherWhere.mosqueId = mosqueId;
+    }
+
+    const teachers = await this.userRepository.find({
+      where: teacherWhere,
+      order: { fullName: "ASC" },
+    });
+
+    // 2. Get all circles with relationships to map them to teachers
+    const circleWhere: any = {};
+    if (mosqueId) {
+      circleWhere.mosqueId = mosqueId;
     }
 
     const circles = await this.circleRepository.find({
-      where,
+      where: circleWhere,
       relations: ["teacher", "students"],
     });
 
+    // 3. Aggregate data per teacher
     const result: TeacherPerformance[] = [];
 
-    for (const circle of circles) {
-      // Skip circles without a teacher assigned
-      if (!circle.teacher) continue;
+    for (const teacher of teachers) {
+      // Find circles for this teacher
+      const teacherCircles = circles.filter(
+        (c) => c.teacher && c.teacher.id === teacher.id,
+      );
 
-      // Get the most recent session for this circle
+      // Aggregate circle stats
+      const circleNames = teacherCircles.map((c) => c.name).join(", ");
+      const totalStudents = teacherCircles.reduce(
+        (sum, c) => sum + (c.students?.length || 0),
+        0,
+      );
+
+      // Find the most recent session across all circles
       let lastSessionDate: Date | null = null;
       let isActive = false;
 
-      try {
-        const lastSession = await this.sessionRepository.findOne({
-          where: { circleId: circle.id },
-          order: { date: "DESC" },
-        });
+      // We need to check sessions for these circles
+      if (teacherCircles.length > 0) {
+        const circleIds = teacherCircles.map((c) => c.id);
+        try {
+          // This query might be expensive if many circles, but usually a teacher has 1-3 circles
+          // Optimized: Get just the absolute latest session for any of these circles
+          const lastSession = await this.sessionRepository.findOne({
+            where: circleIds.map((id) => ({ circleId: id })),
+            order: { date: "DESC" },
+          });
 
-        lastSessionDate = lastSession?.date || null;
-        isActive = lastSessionDate
-          ? new Date(lastSessionDate) >= threeDaysAgo
-          : false;
-      } catch {
-        // If there's an issue fetching sessions, continue with defaults
+          if (lastSession) {
+            lastSessionDate = lastSession.date;
+            isActive =
+              new Date(lastSessionDate) >= threeDaysAgo;
+          }
+        } catch {
+          // Ignore errors
+        }
       }
 
       result.push({
-        teacherId: circle.teacher.id,
-        teacherName: circle.teacher.fullName || "Unknown",
-        circleName: circle.name || "Unnamed Circle",
-        studentCount: circle.students?.length || 0,
+        teacherId: teacher.id,
+        teacherName: teacher.fullName || "Unknown",
+        circleName: circleNames || "No Circle",
+        studentCount: totalStudents,
         lastSessionDate,
         isActive,
       });

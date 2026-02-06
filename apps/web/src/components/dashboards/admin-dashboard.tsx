@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 
-import { CreateTeacherDialog } from "@/components/create-teacher-dialog";
+import { CreateUserDialog } from "@/components/create-user-dialog";
 import { StatsCard } from "@/components/stats-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -155,7 +155,7 @@ export function AdminDashboard() {
             <Users className="h-5 w-5" />
             {t("teacherPerformance")}
           </CardTitle>
-          <CreateTeacherDialog />
+          <CreateUserDialog />
         </CardHeader>
         <CardContent>
           {teachersLoading ? (

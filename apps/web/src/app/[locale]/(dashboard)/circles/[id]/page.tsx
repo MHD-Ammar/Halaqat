@@ -9,6 +9,7 @@
 
 import { ArrowLeft, Users, BookOpen, User } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { use } from "react";
 
 import { AddStudentToCircleDialog } from "@/components/add-student-to-circle-dialog";
@@ -43,6 +44,10 @@ function getInitials(name: string): string {
 }
 
 export default function CircleDetailsPage({ params }: PageProps) {
+  const t = useTranslations("Circles");
+  const tCommon = useTranslations("Common");
+  const tStudents = useTranslations("Students");
+  const tProfile = useTranslations("StudentProfile");
   const { id } = use(params);
   const { data: circle, isLoading, isError } = useCircle(id);
 
@@ -69,7 +74,7 @@ export default function CircleDetailsPage({ params }: PageProps) {
       <div className="p-4 md:p-6">
         <Card>
           <CardContent className="py-12 text-center text-destructive">
-            Failed to load circle details. Please try again.
+            {t("failedToLoad")}
           </CardContent>
         </Card>
       </div>
@@ -98,26 +103,26 @@ export default function CircleDetailsPage({ params }: PageProps) {
         {/* Basic Info Card */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
               <BookOpen className="h-5 w-5" />
-              Circle Information
+              {t("details")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Gender</span>
+              <span className="text-muted-foreground">{t("genderLabel")}</span>
               <Badge variant="secondary">
-                {circle.gender === "MALE" ? "Male" : "Female"}
+                {circle.gender === "MALE" ? t("male") : t("female")}
               </Badge>
             </div>
             {circle.location && (
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Location</span>
+                <span className="text-muted-foreground">{t("location")}</span>
                 <span className="font-medium">{circle.location}</span>
               </div>
             )}
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Students</span>
+              <span className="text-muted-foreground">{tStudents("title")}</span>
               <span className="font-medium">
                 {circle.students?.length || circle._count?.students || 0}
               </span>
@@ -130,7 +135,7 @@ export default function CircleDetailsPage({ params }: PageProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              Assigned Teacher
+              {t("assignedTeacher")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -147,7 +152,7 @@ export default function CircleDetailsPage({ params }: PageProps) {
                 </div>
               </div>
             ) : (
-              <p className="text-muted-foreground">No teacher assigned</p>
+              <p className="text-muted-foreground">{t("noTeacherAssigned")}</p>
             )}
           </CardContent>
         </Card>
@@ -158,7 +163,7 @@ export default function CircleDetailsPage({ params }: PageProps) {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Students ({circle.students?.length || 0})
+            {tStudents("title")} ({circle.students?.length || 0})
           </CardTitle>
           <AddStudentToCircleDialog circleId={id} />
         </CardHeader>
@@ -168,8 +173,8 @@ export default function CircleDetailsPage({ params }: PageProps) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead className="text-right">Points</TableHead>
+                    <TableHead>{tCommon("name")}</TableHead>
+                    <TableHead className="text-right">{tProfile("points")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -201,8 +206,8 @@ export default function CircleDetailsPage({ params }: PageProps) {
           ) : (
             <div className="py-8 text-center text-muted-foreground">
               <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No students in this circle yet.</p>
-              <p className="text-sm">Add students to get started.</p>
+              <p>{t("noStudentsInCircle")}</p>
+              <p className="text-sm">{t("addStudentsPrompt")}</p>
             </div>
           )}
         </CardContent>
