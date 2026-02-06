@@ -21,6 +21,7 @@ RUN apk add --no-cache netcat-openbsd
 # Copy built files from builder
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/apps/api/package.json ./package.json
 
 # Copy and setup entrypoint script

@@ -1,3 +1,5 @@
+import path from "path";
+
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
@@ -18,6 +20,9 @@ const nextConfig: NextConfig = {
    * to avoid EPERM symlink errors on Windows dev machines.
    */
   output: "standalone",
+
+  // Allow tracing files outside the app directory (monorepo support)
+  outputFileTracingRoot: path.join(__dirname, "../../"),
 
   // Enable React strict mode for highlighting potential problems
   reactStrictMode: true,
