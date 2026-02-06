@@ -15,6 +15,9 @@ RUN pnpm turbo run build --filter=@halaqat/api
 FROM base AS runner
 WORKDIR /app
 
+# Install netcat for database health check
+RUN apk add --no-cache netcat-openbsd
+
 # Copy built files from builder
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
