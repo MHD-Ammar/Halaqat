@@ -20,8 +20,13 @@ COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/package.json ./package.json
 
+# Copy and setup entrypoint script
+COPY apps/api/docker-entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
 # Environment
 ENV NODE_ENV=production
 EXPOSE 3001
 
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["node", "dist/main"]
