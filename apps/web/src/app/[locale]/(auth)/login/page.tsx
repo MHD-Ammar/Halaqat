@@ -64,7 +64,7 @@ export default function LoginPage() {
       // Store token in cookie (7 days expiry)
       Cookies.set(TOKEN_COOKIE_NAME, response.accessToken, {
         expires: 7,
-        secure: process.env.NODE_ENV === "production",
+        secure: window.location.protocol === "https:", // Only secure if actually using HTTPS TODO: Change to true after add ssl
         sameSite: "lax",
       });
 
