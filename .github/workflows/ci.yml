@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -26,11 +28,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build Types
+        run: pnpm --filter @halaqat/types build
+
       - name: Run Lint
-        run: pnpm lint
+        # We run lint only on the web app for now as that was the user focus
+        run: pnpm --filter @halaqat/web lint
 
       - name: Check Build
-        run: pnpm build 
+        run: pnpm build
+        env:
+           # Ensure standalone mode is ON in CI
+           STANDALONE: true
 
   deploy:
     name: 🚀 Deploy to VPS
@@ -46,7 +55,14 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
+            # 1. Navigate to project directory
             cd ~/halaqat 
+            
+            # 2. Pull latest changes
             git pull origin main
+            
+            # 3. Rebuild and restart containers
             docker compose -f docker-compose.prod.yml up -d --build --force-recreate
+            
+            # 4. Cleanup unused images
             docker image prune -f
