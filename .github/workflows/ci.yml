@@ -54,9 +54,10 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
+          script_stop: true
           script: |
             # 1. Navigate to project directory
-            cd ~/halaqat 
+            cd ~/Halaqat 
             
             # 2. Pull latest changes
             git pull origin main
