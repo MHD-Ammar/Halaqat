@@ -39,6 +39,11 @@ export class CirclesService {
   ): Promise<Circle> {
     const { teacherId, ...circleData } = createCircleDto;
 
+    // teacherId is required (controller sets it for teachers, admin must provide it)
+    if (!teacherId) {
+      throw new BadRequestException("Teacher ID is required");
+    }
+
     // Verify teacher exists and has TEACHER role
     const teacher = await this.usersRepository.findOne({
       where: { id: teacherId },
@@ -72,7 +77,7 @@ export class CirclesService {
    * Get all circles with teacher information (tenancy-aware)
    */
   async findAll(mosqueId?: string | null): Promise<Circle[]> {
-    const where: any = {};
+    const where: Record<string, string> = {};
     if (mosqueId) {
       where.mosqueId = mosqueId;
     }

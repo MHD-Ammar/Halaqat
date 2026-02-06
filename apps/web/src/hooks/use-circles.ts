@@ -43,6 +43,7 @@ export function useCircles(options: { enabled?: boolean } = {}) {
       return response.data;
     },
     staleTime: 5 * 60 * 1000,
+    refetchOnMount: "always",
     ...options,
   });
 }
@@ -57,6 +58,7 @@ export function useMyCircles(options: { enabled?: boolean } = {}) {
       const response = await api.get<Circle[]>("/circles/my-list");
       return response.data;
     },
+    refetchOnMount: "always",
     ...options,
   });
 }

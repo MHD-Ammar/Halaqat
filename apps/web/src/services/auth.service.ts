@@ -43,11 +43,12 @@ export async function login(
 
 /**
  * Register a new user
+ * Returns accessToken for immediate login after registration
  */
 export async function register(
   credentials: RegisterCredentials,
-): Promise<{ message: string; user: UserProfile }> {
-  const response = await api.post<{ message: string; user: UserProfile }>(
+): Promise<{ accessToken: string; user: UserProfile }> {
+  const response = await api.post<{ accessToken: string; user: UserProfile }>(
     "/auth/register",
     credentials,
   );

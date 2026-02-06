@@ -32,6 +32,7 @@ import { StudentsService } from "./students.service";
 import { CreateStudentDto } from "./dto/create-student.dto";
 import { UpdateStudentDto } from "./dto/update-student.dto";
 import { StudentQueryDto } from "./dto/student-query.dto";
+import { BulkCreateStudentsDto } from "./dto/bulk-create-students.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
@@ -72,6 +73,54 @@ export class StudentsController {
     }
     return this.studentsService.createForTeacher(
       createStudentDto,
+      user.sub,
+      user.mosqueId,
+    );
+  }
+
+  /**
+   * Bulk create students from an array of names
+   * POST /api/students/bulk
+   * Teachers can only add to their own circles
+   */
+  @Post("bulk")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
+  @ApiOperation({
+    summary: "Bulk create students",
+    description:
+      "Create multiple students from an array of names. Teachers can only add to their circles.",
+  })
+  @ApiResponse({
+    status: 201,
+    description: "Students created successfully",
+    schema: {
+      properties: {
+        created: { type: "array", items: { type: "object" } },
+        count: { type: "number", example: 5 },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: "Validation error" })
+  @ApiResponse({
+    status: 403,
+    description: "Teacher cannot add to this circle",
+  })
+  bulkCreate(
+    @Body() bulkCreateDto: BulkCreateStudentsDto,
+    @CurrentUser() user: { sub: string; role: UserRole; mosqueId?: string },
+  ) {
+    // Admins can create for any circle, teachers only for their own
+    if (user.role === UserRole.ADMIN) {
+      return this.studentsService.bulkCreate(
+        bulkCreateDto.circleId,
+        bulkCreateDto.names,
+        user.mosqueId,
+      );
+    }
+    return this.studentsService.bulkCreateForTeacher(
+      bulkCreateDto.circleId,
+      bulkCreateDto.names,
       user.sub,
       user.mosqueId,
     );

@@ -394,5 +394,28 @@
     "TEACHER": "Teacher",
     "EXAMINER": "Examiner",
     "STUDENT": "Student"
+  },
+  "Setup": {
+    "welcomeTitle": "Welcome, {name}! Let's set up your circle.",
+    "welcomeSubtitle": "Create your first study circle to get started.",
+    "circleName": "Circle Name",
+    "circleNamePlaceholder": "e.g., Abu Bakr Al-Siddiq Circle",
+    "circleCreated": "\"{name}\" has been created!",
+    "continue": "Continue",
+    "addStudentsTitle": "Add Students",
+    "quickAdd": "Quick Add",
+    "bulkImport": "Bulk Import",
+    "bulkImportPlaceholder": "Paste student names here (one per line)",
+    "bulkImportHint": "You can copy names from Excel or WhatsApp and paste them directly.",
+    "parsedNames": "Students to add",
+    "studentName": "Student Name",
+    "studentPhone": "Phone (Optional)",
+    "addAnother": "Add Another",
+    "skip": "Skip for now",
+    "successTitle": "All Done!",
+    "successMessage": "{count} students have been added to your circle.",
+    "noStudentsAdded": "Your circle is ready. You can add students later.",
+    "startNow": "Start Teaching Now"
   }
 }
+

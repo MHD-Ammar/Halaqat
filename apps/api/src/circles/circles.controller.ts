@@ -44,23 +44,30 @@ export class CirclesController {
   constructor(private readonly circlesService: CirclesService) {}
 
   /**
-   * Create a new circle (Admin only)
+   * Create a new circle (Admin or Teacher)
    * POST /api/circles
    */
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
   @ApiOperation({
     summary: "Create circle",
-    description: "Create a new Quran study circle (Admin only)",
+    description: "Create a new Quran study circle (Admin or Teacher)",
   })
   @ApiResponse({ status: 201, description: "Circle created successfully" })
   @ApiResponse({ status: 400, description: "Validation error" })
-  @ApiResponse({ status: 403, description: "Forbidden - requires ADMIN role" })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - requires ADMIN or TEACHER role",
+  })
   create(
     @Body() createCircleDto: CreateCircleDto,
-    @CurrentUser() user: { sub: string; mosqueId?: string },
+    @CurrentUser() user: { id: string; role: string; mosqueId?: string },
   ) {
+    // If teacher is creating, force teacherId to be themselves
+    if (user.role === UserRole.TEACHER) {
+      createCircleDto.teacherId = user.id;
+    }
     return this.circlesService.create(createCircleDto, user.mosqueId);
   }
 
@@ -77,7 +84,7 @@ export class CirclesController {
   })
   @ApiResponse({ status: 200, description: "List of all circles" })
   @ApiResponse({ status: 403, description: "Forbidden - requires ADMIN role" })
-  findAll(@CurrentUser() user: { sub: string; mosqueId?: string }) {
+  findAll(@CurrentUser() user: { id: string; mosqueId?: string }) {
     return this.circlesService.findAll(user.mosqueId);
   }
 
@@ -92,8 +99,8 @@ export class CirclesController {
     description: "Get circles assigned to the current teacher",
   })
   @ApiResponse({ status: 200, description: "List of teacher's circles" })
-  findMyCircles(@CurrentUser() user: { sub: string }) {
-    return this.circlesService.findMyCircles(user.sub);
+  findMyCircles(@CurrentUser() user: { id: string }) {
+    return this.circlesService.findMyCircles(user.id);
   }
 
   /**

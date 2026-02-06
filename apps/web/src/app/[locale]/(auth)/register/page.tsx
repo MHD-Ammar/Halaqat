@@ -7,6 +7,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import Cookies from "js-cookie";
 import { Loader2, Ticket } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -65,16 +66,28 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      // Register the user
-      await authService.register(data);
+      // Register the user - now returns accessToken for auto-login
+      const { accessToken, user } = await authService.register(data);
+
+      // Save the token for immediate authentication
+      Cookies.set("token", accessToken, {
+        expires: 7, // 7 days
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
 
       toast({
         title: tCommon("success"),
-        description: tAuth("loginSuccessDescription"), // Reuse similar message
+        description: tAuth("loginSuccessDescription"),
       });
 
-      // Redirect to login
-      router.push("/login");
+      // Redirect based on role:
+      // Teachers go to setup wizard, others go to overview
+      if (user.role === "TEACHER") {
+        router.push("/setup/welcome");
+      } else {
+        router.push("/overview");
+      }
     } catch (error: any) {
       const message = error.response?.data?.message || tCommon("error");
 

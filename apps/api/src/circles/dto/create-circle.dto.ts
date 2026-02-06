@@ -48,11 +48,12 @@ export class CreateCircleDto {
   @IsNotEmpty()
   gender!: Gender;
 
-  @ApiProperty({
-    description: "UUID of the teacher assigned to this circle",
+  @ApiPropertyOptional({
+    description:
+      "UUID of the teacher assigned to this circle. Required for admin, optional for teachers (defaults to self).",
     example: "123e4567-e89b-12d3-a456-426614174000",
   })
   @IsUUID()
-  @IsNotEmpty()
-  teacherId!: string;
+  @IsOptional()
+  teacherId?: string;
 }

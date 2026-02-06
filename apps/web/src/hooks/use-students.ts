@@ -62,6 +62,7 @@ export function useStudents(params?: StudentQueryParams) {
       const response = await api.get<PaginatedStudents>(`/students?${searchParams}`);
       return response.data;
     },
+    refetchOnMount: "always",
   });
 }
 
@@ -76,6 +77,7 @@ export function useStudentsByCircle(circleId: string | undefined) {
       return response.data;
     },
     enabled: !!circleId,
+    refetchOnMount: "always",
   });
 }
 
@@ -90,9 +92,13 @@ export function useCreateStudent() {
       const response = await api.post<Student>("/students", data);
       return response.data;
     },
-    onSuccess: () => {
-      // Invalidate students list to refetch
+    onSuccess: (_data, variables) => {
+      // Invalidate all student queries
       queryClient.invalidateQueries({ queryKey: ["students"] });
+      // Also invalidate circle-specific student query
+      queryClient.invalidateQueries({ queryKey: ["students", "by-circle", variables.circleId] });
+      // Invalidate circles to update student counts
+      queryClient.invalidateQueries({ queryKey: ["circles"] });
     },
   });
 }

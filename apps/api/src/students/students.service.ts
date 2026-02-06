@@ -84,6 +84,65 @@ export class StudentsService {
   }
 
   /**
+   * Bulk create students from an array of names (Admin flow)
+   */
+  async bulkCreate(
+    circleId: string,
+    names: string[],
+    mosqueId?: string | null,
+  ): Promise<{ created: Student[]; count: number }> {
+    // Verify circle exists and get mosqueId
+    const circle = await this.circlesService.findOne(circleId);
+    const effectiveMosqueId = mosqueId || circle.mosqueId;
+
+    // Create students in parallel
+    const students: Student[] = [];
+    for (const name of names) {
+      const trimmedName = name.trim();
+      if (!trimmedName) continue; // Skip empty names
+
+      const student = new Student();
+      student.name = trimmedName;
+      student.circleId = circleId;
+      student.mosqueId = effectiveMosqueId;
+
+      students.push(student);
+    }
+
+    // Save all students
+    const created = await this.studentsRepository.save(students);
+
+    return {
+      created,
+      count: created.length,
+    };
+  }
+
+  /**
+   * Bulk create students with teacher ownership validation
+   */
+  async bulkCreateForTeacher(
+    circleId: string,
+    names: string[],
+    teacherId: string,
+    mosqueId?: string | null,
+  ): Promise<{ created: Student[]; count: number }> {
+    // Verify teacher owns the circle
+    const isOwner = await this.circlesService.validateCircleOwnership(
+      circleId,
+      teacherId,
+    );
+
+    if (!isOwner) {
+      throw new ForbiddenException(
+        "You do not have permission to add students to this circle",
+      );
+    }
+
+    return this.bulkCreate(circleId, names, mosqueId);
+  }
+
+  /**
    * Get all students with pagination and filtering (tenancy-aware)
    */
   async findAll(

@@ -394,5 +394,28 @@
     "TEACHER": "معلم",
     "EXAMINER": "مختبر",
     "STUDENT": "طالب"
+  },
+  "Setup": {
+    "welcomeTitle": "أهلاً بك يا أستاذ {name}! لنجهز حلقتك.",
+    "welcomeSubtitle": "أنشئ حلقتك الأولى للبدء.",
+    "circleName": "اسم الحلقة",
+    "circleNamePlaceholder": "مثل: حلقة أبو بكر الصديق",
+    "circleCreated": "تم إنشاء حلقة \"{name}\"",
+    "continue": "تابع",
+    "addStudentsTitle": "أضف الطلاب",
+    "quickAdd": "إضافة سريعة",
+    "bulkImport": "استيراد جماعي",
+    "bulkImportPlaceholder": "الصق أسماء الطلاب هنا (اسم في كل سطر)",
+    "bulkImportHint": "يمكنك نسخ القائمة من إكسل أو واتساب ولصقها هنا مباشرة",
+    "parsedNames": "الطلاب المراد إضافتهم",
+    "studentName": "اسم الطالب",
+    "studentPhone": "الهاتف (اختياري)",
+    "addAnother": "أضف آخر",
+    "skip": "تخطي الآن",
+    "successTitle": "تم بنجاح!",
+    "successMessage": "تم إضافة {count} طالب إلى حلقتك.",
+    "noStudentsAdded": "حلقتك جاهزة. يمكنك إضافة الطلاب لاحقاً.",
+    "startNow": "ابدأ التسميع الآن"
   }
 }
+

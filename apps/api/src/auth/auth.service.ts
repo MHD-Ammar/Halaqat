@@ -64,6 +64,7 @@ export class AuthService {
 
   /**
    * Register a new user with invite code validation
+   * Returns accessToken for immediate login after registration
    * @throws BadRequestException if invite code is invalid
    */
   async register(
@@ -72,7 +73,7 @@ export class AuthService {
     fullName: string,
     phoneNumber: string,
     inviteCode: string,
-  ): Promise<Omit<User, "password">> {
+  ): Promise<{ accessToken: string; user: Omit<User, "password"> }> {
     // Validate invite code and get mosque
     const mosque = await this.mosquesService.findByCode(inviteCode);
 
@@ -89,8 +90,14 @@ export class AuthService {
       mosqueId: mosque.id,
     });
 
-    // Return user without password
-    const { password: _, ...result } = user;
-    return result;
+    // Generate access token for immediate login
+    const { accessToken } = await this.login(user);
+
+    // Return user without password + accessToken
+    const { password: _, ...userWithoutPassword } = user;
+    return {
+      accessToken,
+      user: userWithoutPassword,
+    };
   }
 }

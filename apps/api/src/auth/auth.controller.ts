@@ -59,7 +59,8 @@ export class AuthController {
     description: "Validation error or email already exists",
   })
   async register(@Body() dto: RegisterDto) {
-    const user = await this.authService.register(
+    // authService.register now returns { accessToken, user }
+    const result = await this.authService.register(
       dto.email,
       dto.password,
       dto.fullName,
@@ -68,7 +69,8 @@ export class AuthController {
     );
     return {
       message: "User registered successfully",
-      user,
+      accessToken: result.accessToken,
+      user: result.user,
     };
   }
 
