@@ -33,7 +33,8 @@
     "no": "لا",
     "create": "إنشاء",
     "update": "تحديث",
-    "phoneInvalid": "رقم الهاتف يجب أن يحتوي على أرقام ورموز + - ( ) فقط"
+    "phoneInvalid": "رقم الهاتف يجب أن يحتوي على أرقام ورموز + - ( ) فقط",
+    "processing": "جاري المعالجة..."
   },
   "Nav": {
     "overview": "نظرة عامة",
@@ -197,7 +198,33 @@
     "noCircle": "لم يتم تعيين حلقة",
     "failedToLoadProfile": "فشل تحميل ملف الطالب",
     "recentActivity": "النشاط الأخير",
-    "totalRecitations": "إجمالي التسميعات"
+    "totalRecitations": "إجمالي التسميعات",
+    "editStudent": "تعديل الطالب",
+    "editStudentDesc": "تحديث معلومات الطالب",
+    "studentUpdated": "تم تحديث الطالب بنجاح",
+    "deleteStudent": "حذف الطالب",
+    "deleteConfirmation": "هل أنت متأكد من حذف {name}؟ لا يمكن التراجع عن هذا الإجراء.",
+    "studentDeleted": "تم حذف الطالب بنجاح",
+    "studentInfo": "معلومات الطالب",
+    "guardianInfo": "معلومات ولي الأمر",
+    "dateOfBirth": "تاريخ الميلاد",
+    "address": "العنوان",
+    "addressPlaceholder": "أدخل العنوان",
+    "notes": "ملاحظات",
+    "notesPlaceholder": "أي ملاحظات خاصة بهذا الطالب",
+    "namePlaceholder": "أدخل اسم الطالب",
+    "guardianNamePlaceholder": "أدخل اسم ولي الأمر",
+    "circle": "الحلقة",
+    "deleteSuccess": "تم الحذف بنجاح",
+    "loginCredentials": "بيانات الدخول",
+    "username": "اسم المستخدم",
+    "newPassword": "كلمة المرور الجديدة",
+    "enterNewPassword": "أدخل كلمة المرور الجديدة",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "passwordResetSuccess": "تم إعادة تعيين كلمة المرور بنجاح",
+    "noCredentialsDesc": "هذا الطالب ليس لديه بيانات دخول حتى الآن.",
+    "generateCredentials": "توليد بيانات دخول",
+    "credentialsGenerated": "تم توليد البيانات بنجاح"
   },
   "StudentProfile": {
     "title": "ملف الطالب",
@@ -363,7 +390,26 @@
     "passwordPlaceholder": "6 أحرف كحد أدنى",
     "nameMinLength": "الاسم يجب أن يكون حرفين على الأقل",
     "phoneMinLength": "رقم الهاتف يجب أن يكون 10 أرقام على الأقل",
-    "phoneInvalid": "رقم الهاتف يجب أن يحتوي على أرقام ورموز + - ( ) فقط"
+    "phoneInvalid": "رقم الهاتف يجب أن يحتوي على أرقام ورموز + - ( ) فقط",
+    "editUser": "تعديل المستخدم",
+    "editUserDesc": "تحديث معلومات المستخدم",
+    "userUpdated": "تم تحديث المستخدم بنجاح",
+    "deleteUser": "حذف المستخدم",
+    "deleteConfirmation": "هل أنت متأكد من حذف {name}؟ لا يمكن التراجع عن هذا الإجراء.",
+    "userDeleted": "تم حذف المستخدم بنجاح",
+    "fullNamePlaceholder": "أدخل الاسم الكامل",
+    "nameRequired": "الاسم مطلوب",
+    "emailInvalid": "يرجى إدخال بريد إلكتروني صحيح",
+    "roleAdmin": "مدير",
+    "roleSupervisor": "مشرف",
+    "roleTeacher": "معلم",
+    "roleExaminer": "مختبر",
+    "deleteSuccess": "تم الحذف بنجاح",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "resetPasswordDesc": "إعادة تعيين كلمة المرور لـ {name}",
+    "newPassword": "كلمة المرور الجديدة",
+    "enterNewPassword": "أدخل كلمة المرور الجديدة",
+    "passwordResetSuccess": "تم إعادة تعيين كلمة المرور بنجاح"
   },
   "Teachers": {
     "addTeacher": "إضافة معلم",
@@ -417,7 +463,9 @@
     "successTitle": "تم بنجاح!",
     "successMessage": "تم إضافة {count} طالب إلى حلقتك.",
     "noStudentsAdded": "حلقتك جاهزة. يمكنك إضافة الطلاب لاحقاً.",
-    "startNow": "ابدأ التسميع الآن"
+    "startNow": "ابدأ التسميع الآن",
+    "circleLabel": "الحلقة",
+    "studentsLabel": "الطلاب"
   }
 }
 

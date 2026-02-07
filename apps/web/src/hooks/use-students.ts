@@ -22,6 +22,8 @@ export interface Student {
     name: string;
   };
   totalPoints?: number;
+  userId?: string;
+  username?: string;
   createdAt: string;
 }
 
@@ -104,6 +106,45 @@ export function useCreateStudent() {
 }
 
 /**
+ * DTO for updating a student
+ */
+export interface UpdateStudentDto {
+  name?: string;
+  phone?: string;
+  dob?: string;
+  address?: string;
+  notes?: string;
+  guardianName?: string;
+  guardianPhone?: string;
+  circleId?: string;
+}
+
+/**
+ * Update a student
+ * Calls PATCH /students/:id
+ */
+export function useUpdateStudent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...data }: UpdateStudentDto & { id: string }) => {
+      const response = await api.patch<Student>(`/students/${id}`, data);
+      return response.data;
+    },
+    onSuccess: (_data, variables) => {
+      // Invalidate all student queries
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      // Also invalidate circle-specific if circleId provided
+      if (variables.circleId) {
+        queryClient.invalidateQueries({
+          queryKey: ["students", "by-circle", variables.circleId],
+        });
+      }
+    },
+  });
+}
+
+/**
  * Delete a student
  */
 export function useDeleteStudent() {
@@ -112,6 +153,23 @@ export function useDeleteStudent() {
   return useMutation({
     mutationFn: async (id: string) => {
       await api.delete(`/students/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+    },
+  });
+}
+
+/**
+ * Generate credentials for a student
+ */
+export function useGenerateCredentials() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await api.post<any>(`/students/${id}/credentials`);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["students"] });

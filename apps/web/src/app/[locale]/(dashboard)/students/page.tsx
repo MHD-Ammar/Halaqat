@@ -4,7 +4,7 @@
  * Students Page
  *
  * Admin/Teacher view for managing students.
- * Features: List students with pagination, add new students, view details.
+ * Features: List students with pagination, add new students, view details, edit, delete.
  */
 
 import {
@@ -13,11 +13,14 @@ import {
   ChevronLeft,
   ChevronRight,
   BookOpen,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { CreateStudentDialog } from "@/components/create-student-dialog";
+import { EditStudentDialog } from "@/components/edit-student-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,9 +29,11 @@ import {
   CardDescription,
   CardTitle,
 } from "@/components/ui/card";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useStudents } from "@/hooks";
+import { useStudents, useDeleteStudent, type Student } from "@/hooks";
+import { useToast } from "@/hooks/use-toast";
 import { Link } from "@/i18n/routing";
 
 /**
@@ -48,10 +53,29 @@ export default function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const limit = 10;
 
+  // Dialog state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+
   const t = useTranslations("Students");
   const tCommon = useTranslations("Common");
+  const { toast } = useToast();
 
   const { data, isLoading, isError } = useStudents({ page, limit });
+  const deleteStudentMutation = useDeleteStudent();
+
+  const handleConfirmDelete = async () => {
+    if (!selectedStudent) return;
+    await deleteStudentMutation.mutateAsync(selectedStudent.id);
+    setDeleteDialogOpen(false);
+    toast({
+      title: t("studentDeleted"),
+      description: t("deleteSuccess"),
+    });
+  };
+
+
 
   const students = data?.data || [];
   const totalPages = data?.totalPages || 1;
@@ -60,9 +84,19 @@ export default function StudentsPage() {
   // Filter by search (client-side for now)
   const filteredStudents = searchTerm
     ? students.filter((s) =>
-        s.name.toLowerCase().includes(searchTerm.toLowerCase()),
+        s.name.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : students;
+
+  const handleEditClick = (student: Student) => {
+    setSelectedStudent(student);
+    setEditDialogOpen(true);
+  };
+
+  const handleDeleteClick = (student: Student) => {
+    setSelectedStudent(student);
+    setDeleteDialogOpen(true);
+  };
 
   // Loading state
   if (isLoading) {
@@ -173,6 +207,27 @@ export default function StudentsPage() {
                       {student.totalPoints} {tCommon("points")}
                     </Badge>
                   )}
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEditClick(student)}
+                      title={t("editStudent")}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => handleDeleteClick(student)}
+                      title={t("deleteStudent")}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -218,6 +273,29 @@ export default function StudentsPage() {
           </Button>
         </div>
       )}
+
+      {/* Edit Student Dialog */}
+      <EditStudentDialog
+        open={editDialogOpen}
+        student={selectedStudent}
+        onOpenChange={setEditDialogOpen}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={t("deleteStudent")}
+        description={t("deleteConfirmation", {
+          name: selectedStudent?.name || "",
+        })}
+        variant="destructive"
+        icon={<Trash2 className="h-5 w-5" />}
+        isPending={deleteStudentMutation.isPending}
+        onConfirm={handleConfirmDelete}
+        confirmLabel={t("deleteStudent")}
+      />
     </div>
   );
 }
+

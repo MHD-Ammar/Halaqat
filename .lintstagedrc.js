@@ -1,13 +1,15 @@
 const path = require('path');
 
-const buildEslintCommand = (filenames) =>
-  `next lint --fix --file ${filenames
-    .map((f) => path.relative(process.cwd(), f))
-    .join(' --file ')}`;
-
 module.exports = {
-  // Run ESLint on changes to JS/TS files
-  '*.{js,jsx,ts,tsx}': [buildEslintCommand],
-  // Run Prettier on other files (optional, can enable if you want)
-  // '*.{json,css,md}': ['prettier --write'], 
+  // Run eslint directly from root with proper config resolution
+  'apps/web/**/*.{js,jsx,ts,tsx}': (filenames) => {
+    const files = filenames.map((f) => path.relative(process.cwd(), f)).join(' ');
+    return `npx eslint --fix ${files}`;
+  },
+
+  // Run eslint on api source files only (exclude config files)
+  'apps/api/src/**/*.{js,ts}': (filenames) => {
+    const files = filenames.map((f) => path.relative(process.cwd(), f)).join(' ');
+    return `npx eslint --fix ${files}`;
+  },
 };

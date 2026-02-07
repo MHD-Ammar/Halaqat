@@ -4,14 +4,19 @@
  * Handles user CRUD operations with secure password hashing.
  */
 
-import { Injectable, ConflictException } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import * as bcrypt from "bcrypt";
 import { UserRole } from "@halaqat/types";
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import * as bcrypt from "bcrypt";
+import { Repository, Not } from "typeorm";
 
-import { User } from "./entities/user.entity";
 import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { User } from "./entities/user.entity";
 
 const SALT_ROUNDS = 10;
 
@@ -86,6 +91,7 @@ export class UsersService {
         "user.id",
         "user.email",
         "user.fullName",
+        "user.phoneNumber",
         "user.role",
         "user.createdAt",
         "user.mosqueId",
@@ -112,7 +118,7 @@ export class UsersService {
   async updateRole(userId: string, role: UserRole): Promise<User> {
     const user = await this.findById(userId);
     if (!user) {
-      throw new Error("User not found");
+      throw new NotFoundException("User not found");
     }
 
     user.role = role;
@@ -128,7 +134,7 @@ export class UsersService {
   ): Promise<User> {
     const user = await this.findById(userId);
     if (!user) {
-      throw new Error("User not found");
+      throw new NotFoundException("User not found");
     }
 
     if (updates.fullName) {
@@ -152,7 +158,7 @@ export class UsersService {
   ): Promise<void> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new Error("User not found");
+      throw new NotFoundException("User not found");
     }
 
     // Verify current password
@@ -168,4 +174,63 @@ export class UsersService {
     user.password = await bcrypt.hash(newPassword, SALT_ROUNDS);
     await this.userRepository.save(user);
   }
+
+  /**
+   * Reset user password (Admin only)
+   * Does not require current password
+   */
+  async adminResetPassword(userId: string, newPassword: string): Promise<void> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    user.password = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await this.userRepository.save(user);
+  }
+
+  /**
+   * Update user (Admin only)
+   * Updates fullName, email, phoneNumber, and/or role
+   * @throws NotFoundException if user not found
+   * @throws ConflictException if email already taken by another user
+   */
+  async update(userId: string, dto: UpdateUserDto): Promise<User> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    // Check email uniqueness if updating email
+    if (dto.email && dto.email !== user.email) {
+      const existingUser = await this.userRepository.findOne({
+        where: { email: dto.email, id: Not(userId) },
+      });
+      if (existingUser) {
+        throw new ConflictException("Email already in use");
+      }
+      user.email = dto.email;
+    }
+
+    // Update other fields if provided
+    if (dto.fullName) user.fullName = dto.fullName;
+    if (dto.phoneNumber) user.phoneNumber = dto.phoneNumber;
+    if (dto.role) user.role = dto.role;
+
+    return this.userRepository.save(user);
+  }
+
+  /**
+   * Delete user (Admin only)
+   * @throws NotFoundException if user not found
+   */
+  async delete(userId: string): Promise<void> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    await this.userRepository.remove(user);
+  }
 }
+

@@ -196,7 +196,7 @@ export default function SetupStudentsPage() {
           {t("addStudentsTitle")}
         </CardTitle>
         <CardDescription>
-          {circleName && `الحلقة: ${circleName}`}
+          {circleName && `${t("circleLabel")}: ${circleName}`}
         </CardDescription>
       </CardHeader>
 

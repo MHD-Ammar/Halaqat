@@ -69,6 +69,12 @@ export {
   type StudentWithLastExam,
   type ExamCardData,
 } from "./use-exams";
-export { useUsers, useUpdateUserRole, type User } from "./use-users";
+export {
+  useUsers,
+  useUpdateUser,
+  useUpdateUserRole,
+  useDeleteUser,
+  type User,
+} from "./use-users";
 export { useCreateUser } from "./use-create-user";
 export { useToast } from "./use-toast";

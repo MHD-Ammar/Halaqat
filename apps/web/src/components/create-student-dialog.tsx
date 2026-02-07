@@ -376,7 +376,7 @@ export function CreateStudentDialog({
                   {tCommon("error")}
                 </p>
               )}
-              <div className="flex justify-between flex-col gap-2">
+              <div className="flex justify-between gap-2">
                 <Button
                   type="submit"
                   disabled={isSubmitDisabled}

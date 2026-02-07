@@ -3,7 +3,7 @@
  * Extends shared config from @halaqat/config
  */
 module.exports = {
-  extends: ["@halaqat/config/eslint"],
+  extends: ["../../packages/config/eslint/index.js"],
   parserOptions: {
     project: "./tsconfig.json",
     tsconfigRootDir: __dirname,

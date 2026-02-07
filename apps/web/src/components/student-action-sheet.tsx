@@ -264,7 +264,7 @@ export function StudentActionSheet({
 
         {/* Step 1: Range Input */}
         {step === "INPUT" && (
-          <div className="flex-1 space-y-6 py-4 overflow-auto">
+          <div className="flex-1 space-y-6 p-4 overflow-auto">
             {/* Page Range */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

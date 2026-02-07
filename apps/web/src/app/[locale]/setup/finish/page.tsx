@@ -75,14 +75,14 @@ export default function SetupFinishPage() {
           {/* Circle Info */}
           <div className="bg-muted/50 rounded-lg p-4 text-center">
             <BookOpen className="h-8 w-8 mx-auto mb-2 text-primary" />
-            <div className="text-sm text-muted-foreground">الحلقة</div>
+            <div className="text-sm text-muted-foreground">{t("circleLabel")}</div>
             <div className="font-semibold truncate">{circleName}</div>
           </div>
 
           {/* Students Count */}
           <div className="bg-muted/50 rounded-lg p-4 text-center">
             <Users className="h-8 w-8 mx-auto mb-2 text-primary" />
-            <div className="text-sm text-muted-foreground">الطلاب</div>
+            <div className="text-sm text-muted-foreground">{t("studentsLabel")}</div>
             <div className="font-semibold text-2xl">{studentCount}</div>
           </div>
         </div>

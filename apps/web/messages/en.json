@@ -33,7 +33,8 @@
     "no": "No",
     "create": "Create",
     "update": "Update",
-    "phoneInvalid": "Phone number can only contain digits and + - ( ) symbols"
+    "phoneInvalid": "Phone number can only contain digits and + - ( ) symbols",
+    "processing": "Processing..."
   },
   "Nav": {
     "overview": "Overview",
@@ -197,7 +198,33 @@
     "noCircle": "No Circle Assigned",
     "failedToLoadProfile": "Failed to load student profile",
     "recentActivity": "Recent Activity",
-    "totalRecitations": "Total Recitations"
+    "totalRecitations": "Total Recitations",
+    "editStudent": "Edit Student",
+    "editStudentDesc": "Update student information",
+    "studentUpdated": "Student updated successfully",
+    "deleteStudent": "Delete Student",
+    "deleteConfirmation": "Are you sure you want to delete {name}? This action cannot be undone.",
+    "studentDeleted": "Student deleted successfully",
+    "studentInfo": "Student Information",
+    "guardianInfo": "Guardian Information",
+    "dateOfBirth": "Date of Birth",
+    "address": "Address",
+    "addressPlaceholder": "Enter address",
+    "notes": "Notes",
+    "notesPlaceholder": "Any special notes about this student",
+    "namePlaceholder": "Enter student name",
+    "guardianNamePlaceholder": "Enter guardian name",
+    "circle": "Circle",
+    "deleteSuccess": "Record deleted successfully",
+    "loginCredentials": "Login Credentials",
+    "username": "Username",
+    "newPassword": "New Password",
+    "enterNewPassword": "Enter new password",
+    "resetPassword": "Reset Password",
+    "passwordResetSuccess": "Password reset successfully",
+    "noCredentialsDesc": "This student does not have login credentials yet.",
+    "generateCredentials": "Generate Credentials",
+    "credentialsGenerated": "Credentials generated"
   },
   "StudentProfile": {
     "title": "Student Profile",
@@ -363,7 +390,26 @@
     "passwordPlaceholder": "Min. 6 characters",
     "nameMinLength": "Name must be at least 2 characters",
     "phoneMinLength": "Phone number must be at least 10 digits",
-    "phoneInvalid": "Phone number can only contain digits and + - ( ) symbols"
+    "phoneInvalid": "Phone number can only contain digits and + - ( ) symbols",
+    "editUser": "Edit User",
+    "editUserDesc": "Update user information",
+    "userUpdated": "User updated successfully",
+    "deleteUser": "Delete User",
+    "deleteConfirmation": "Are you sure you want to delete {name}? This action cannot be undone.",
+    "userDeleted": "User deleted successfully",
+    "fullNamePlaceholder": "Enter full name",
+    "nameRequired": "Name is required",
+    "emailInvalid": "Please enter a valid email",
+    "roleAdmin": "Admin",
+    "roleSupervisor": "Supervisor",
+    "roleTeacher": "Teacher",
+    "roleExaminer": "Examiner",
+    "deleteSuccess": "Record deleted successfully",
+    "resetPassword": "Reset Password",
+    "resetPasswordDesc": "Reset password for {name}",
+    "newPassword": "New Password",
+    "enterNewPassword": "Enter new password",
+    "passwordResetSuccess": "Password reset successfully"
   },
   "Teachers": {
     "addTeacher": "Add Teacher",
@@ -417,7 +463,9 @@
     "successTitle": "All Done!",
     "successMessage": "{count} students have been added to your circle.",
     "noStudentsAdded": "Your circle is ready. You can add students later.",
-    "startNow": "Start Teaching Now"
+    "startNow": "Start Teaching Now",
+    "circleLabel": "Circle",
+    "studentsLabel": "Students"
   }
 }
 

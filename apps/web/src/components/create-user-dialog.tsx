@@ -262,7 +262,7 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
             />
 
             <DialogFooter>
-              <div className="flex justify-between flex-col gap-2">
+              <div className="flex justify-between gap-2">
                 <Button type="submit" disabled={createMutation.isPending}>
                   {createMutation.isPending ? (
                     <>
