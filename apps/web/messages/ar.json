@@ -466,6 +466,45 @@
     "startNow": "ابدأ التسميع الآن",
     "circleLabel": "الحلقة",
     "studentsLabel": "الطلاب"
+  },
+  "Settings": {
+    "title": "الإعدادات",
+    "description": "إدارة إعدادات المسجد ونظام النقاط",
+    "mosqueProfile": "ملف المسجد",
+    "mosqueProfileDesc": "تعديل اسم المسجد ومعلوماته الأساسية",
+    "mosqueName": "اسم المسجد",
+    "mosqueNamePlaceholder": "أدخل اسم المسجد",
+    "inviteCode": "رمز الدعوة",
+    "pointRules": "قواعد النقاط",
+    "pointRulesDesc": "تحديد عدد النقاط التي يحصل عليها الطالب لكل نشاط",
+    "pointsSuffix": "نقطة",
+    "saveChanges": "حفظ التغييرات",
+    "dangerZone": "منطقة الخطر",
+    "general": "عام",
+    "integrations": "التكاملات",
+    "notifications": "الإشعارات",
+    "save": "حفظ الإعدادات",
+    "messages": {
+      "success": "تم الحفظ",
+      "mosqueUpdated": "تم تحديث معلومات المسجد بنجاح",
+      "rulesUpdated": "تم تحديث نظام النقاط بنجاح",
+      "error": "خطأ",
+      "mosqueUpdateFailed": "فشل في تحديث المسجد",
+      "rulesUpdateFailed": "فشل في تحديث نظام النقاط",
+      "mosqueNameRequired": "يرجى إدخال اسم المسجد"
+    },
+    "PointRules": {
+      "RECITATION_PAGE": "نقاط لكل صفحة",
+      "RECITATION_EXCELLENT": "تسميع ممتاز",
+      "RECITATION_VERY_GOOD": "تسميع جيد جداً",
+      "RECITATION_GOOD": "تسميع جيد",
+      "RECITATION_ACCEPTABLE": "تسميع مقبول",
+      "RECITATION_POOR": "تسميع ضعيف",
+      "ATTENDANCE_PRESENT": "الحضور",
+      "ATTENDANCE_ON_TIME": "الحضور في الموعد",
+      "EXAM_EXCELLENT": "اختبار ممتاز (علامة كاملة)",
+      "EXAM_GOOD": "اختبار جيد"
+    }
   }
 }
 

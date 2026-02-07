@@ -15,6 +15,7 @@ export interface PointRuleSeedData {
  */
 export const POINT_RULE_DATA: PointRuleSeedData[] = [
   // Recitation-based points
+  { key: "RECITATION_PAGE", description: "Points per page of recitation", points: 5 },
   { key: "RECITATION_EXCELLENT", description: "Points for excellent recitation with no mistakes", points: 5 },
   { key: "RECITATION_VERY_GOOD", description: "Points for very good recitation with few mistakes", points: 3 },
   { key: "RECITATION_GOOD", description: "Points for good recitation", points: 1 },
@@ -24,4 +25,8 @@ export const POINT_RULE_DATA: PointRuleSeedData[] = [
   // Attendance-based points
   { key: "ATTENDANCE_PRESENT", description: "Points for being present in the session", points: 2 },
   { key: "ATTENDANCE_ON_TIME", description: "Bonus points for arriving on time", points: 1 },
+
+  // Exam-based points
+  { key: "EXAM_EXCELLENT", description: "Points for excellent exam performance (Full Mark)", points: 20 },
+  { key: "EXAM_GOOD", description: "Points for good exam performance", points: 15 },
 ];

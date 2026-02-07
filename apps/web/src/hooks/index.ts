@@ -78,3 +78,13 @@ export {
 } from "./use-users";
 export { useCreateUser } from "./use-create-user";
 export { useToast } from "./use-toast";
+export {
+  useMosqueSettings,
+  useUpdateMosque,
+  usePointRules,
+  useUpdatePointRules,
+  type Mosque,
+  type PointRule,
+  type UpdateMosqueDto,
+  type BulkUpdatePointRulesDto,
+} from "./use-settings";

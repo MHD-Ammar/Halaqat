@@ -52,4 +52,26 @@ export class MosquesService {
       order: { name: "ASC" },
     });
   }
+
+  /**
+   * Update a mosque by ID
+   * @param id - The mosque ID
+   * @param dto - The update data
+   * @returns The updated mosque
+   */
+  async updateMosque(
+    id: string,
+    dto: { name: string },
+  ): Promise<Mosque> {
+    const mosque = await this.mosqueRepository.findOne({
+      where: { id },
+    });
+
+    if (!mosque) {
+      throw new NotFoundException("Mosque not found");
+    }
+
+    mosque.name = dto.name;
+    return this.mosqueRepository.save(mosque);
+  }
 }

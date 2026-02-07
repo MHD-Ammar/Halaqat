@@ -466,6 +466,45 @@
     "startNow": "Start Teaching Now",
     "circleLabel": "Circle",
     "studentsLabel": "Students"
+  },
+  "Settings": {
+    "title": "Settings",
+    "description": "Manage mosque settings and point rules",
+    "mosqueProfile": "Mosque Profile",
+    "mosqueProfileDesc": "Update mosque name and basic information",
+    "mosqueName": "Mosque Name",
+    "mosqueNamePlaceholder": "Enter mosque name",
+    "inviteCode": "Invite Code",
+    "pointRules": "Point Rules",
+    "pointRulesDesc": "Configure how many points students earn for each activity",
+    "pointsSuffix": "points",
+    "saveChanges": "Save Changes",
+    "dangerZone": "Danger Zone",
+    "general": "General",
+    "integrations": "Integrations",
+    "notifications": "Notifications",
+    "save": "Save Settings",
+    "messages": {
+      "success": "Saved",
+      "mosqueUpdated": "Mosque information updated successfully",
+      "rulesUpdated": "Point rules updated successfully",
+      "error": "Error",
+      "mosqueUpdateFailed": "Failed to update mosque",
+      "rulesUpdateFailed": "Failed to update point rules",
+      "mosqueNameRequired": "Please enter mosque name"
+    },
+    "PointRules": {
+      "RECITATION_PAGE": "Points per Page",
+      "RECITATION_EXCELLENT": "Excellent Recitation",
+      "RECITATION_VERY_GOOD": "Very Good Recitation",
+      "RECITATION_GOOD": "Good Recitation",
+      "RECITATION_ACCEPTABLE": "Acceptable Recitation",
+      "RECITATION_POOR": "Poor Recitation",
+      "ATTENDANCE_PRESENT": "Attendance",
+      "ATTENDANCE_ON_TIME": "On Time",
+      "EXAM_EXCELLENT": "Excellent Exam",
+      "EXAM_GOOD": "Good Exam"
+    }
   }
 }
 

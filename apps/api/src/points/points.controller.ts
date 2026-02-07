@@ -4,36 +4,38 @@
  * REST API endpoints for managing points and point rules.
  */
 
+import { UserRole } from "@halaqat/types";
 import {
+  Body,
   Controller,
   Get,
-  Post,
-  Patch,
   Param,
-  Body,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Put,
   Query,
   UseGuards,
-  ParseUUIDPipe,
   UseInterceptors,
   ClassSerializerInterceptor,
 } from "@nestjs/common";
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
+  ApiOperation,
   ApiParam,
   ApiQuery,
+  ApiResponse,
+  ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@halaqat/types";
 
-import { PointsService } from "./points.service";
 import { AddManualPointsDto } from "./dto/add-manual-points.dto";
+import { BulkUpdatePointRulesDto } from "./dto/bulk-update-point-rules.dto";
 import { UpdatePointRuleDto } from "./dto/update-point-rule.dto";
+import { PointsService } from "./points.service";
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { CurrentUser } from "../auth/decorators/current-user.decorator";
 
 @ApiTags("Points")
 @ApiBearerAuth("JWT-auth")
@@ -46,7 +48,7 @@ export class PointsController {
   // ==================== POINT RULES (Admin) ====================
 
   /**
-   * Get all point rules
+   * Get all point rules for the current user's mosque
    * GET /api/points/rules
    */
   @Get("rules")
@@ -54,12 +56,12 @@ export class PointsController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: "Get all point rules",
-    description: "Get all point rules (Admin only)",
+    description: "Get all point rules for the current user's mosque (Admin only)",
   })
   @ApiResponse({ status: 200, description: "List of point rules" })
   @ApiResponse({ status: 403, description: "Forbidden - requires ADMIN role" })
-  findAllRules() {
-    return this.pointsService.findAllRules();
+  findAllRules(@CurrentUser() user: { mosqueId: string }) {
+    return this.pointsService.findAllRules(user.mosqueId);
   }
 
   /**
@@ -76,8 +78,36 @@ export class PointsController {
   @ApiParam({ name: "key", description: "Point rule key" })
   @ApiResponse({ status: 200, description: "Point rule updated" })
   @ApiResponse({ status: 404, description: "Rule not found" })
-  updateRule(@Param("key") key: string, @Body() dto: UpdatePointRuleDto) {
-    return this.pointsService.updateRule(key, dto);
+  updateRule(
+    @Param("key") key: string,
+    @Body() dto: UpdatePointRuleDto,
+    @CurrentUser() user: { mosqueId: string },
+  ) {
+    return this.pointsService.updateRule(key, user.mosqueId, dto);
+  }
+
+  /**
+   * Bulk update point rules
+   * PUT /api/points/rules
+   */
+  @Put("rules")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Bulk update point rules",
+    description: "Update multiple point rules at once (Admin only)",
+  })
+  @ApiResponse({ status: 200, description: "Point rules updated" })
+  @ApiResponse({ status: 403, description: "Forbidden - requires ADMIN role" })
+  async bulkUpdateRules(
+    @Body() dto: BulkUpdatePointRulesDto,
+    @CurrentUser() user: { mosqueId: string },
+  ) {
+    const updatedRules = await this.pointsService.bulkUpdateRules(user.mosqueId, dto);
+    return {
+      message: "Point rules updated successfully",
+      data: updatedRules,
+    };
   }
 
   // ==================== MANUAL POINTS ====================
