@@ -51,7 +51,7 @@ function getInitials(name?: string): string {
 }
 
 export default function ProfilePage() {
-  const { user, isLoading, logout } = useAuth();
+  const { user, isLoading } = useAuth();
   const { toast } = useToast();
   const updateProfile = useUpdateProfile();
   const changePassword = useChangePassword();
@@ -328,19 +328,6 @@ export default function ProfilePage() {
               </Button>
             </form>
           </Form>
-        </CardContent>
-      </Card>
-
-      {/* Danger Zone */}
-      <Card className="border-destructive/50">
-        <CardHeader>
-          <CardTitle className="text-destructive">{t("dangerZone")}</CardTitle>
-          <CardDescription>{t("dangerZoneDesc")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="destructive" onClick={logout}>
-            {tCommon("logout")}
-          </Button>
         </CardContent>
       </Card>
     </div>

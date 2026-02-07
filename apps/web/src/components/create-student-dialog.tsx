@@ -82,7 +82,14 @@ export function CreateStudentDialog({
     name: z.string().min(2, t("nameRequired")),
     circleId: z.string(t("circleRequired")),
     guardianName: z.string().optional().or(z.literal("")),
-    guardianPhone: z.string().optional().or(z.literal("")),
+    guardianPhone: z
+      .string()
+      .optional()
+      .or(z.literal(""))
+      .refine(
+        (val) => !val || /^[0-9+\-\s()]*$/.test(val),
+        tCommon("phoneInvalid") || "Invalid phone format"
+      ),
   });
 
   type CreateStudentFormData = z.infer<typeof createStudentSchema>;
@@ -345,10 +352,17 @@ export function CreateStudentDialog({
                   <FormLabel>{t("guardianPhone")}</FormLabel>
                   <FormControl>
                     <Input
+                      type="tel"
+                      inputMode="numeric"
                       placeholder="+123..."
                       disabled={createMutation.isPending}
                       {...field}
                       value={field.value || ""}
+                      onChange={(e) => {
+                        // Only allow digits, +, -, spaces, and parentheses
+                        const value = e.target.value.replace(/[^0-9+\-\s()]/g, "");
+                        field.onChange(value);
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

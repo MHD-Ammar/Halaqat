@@ -6,7 +6,7 @@
  * Simple top bar for mobile view with logo, language switcher, user avatar, and logout.
  */
 
-import { LogOut, Settings, User } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -88,10 +88,6 @@ export function MobileHeader() {
               <DropdownMenuItem onClick={handleSettings}>
                 <User className="mr-2 h-4 w-4" />
                 {t("profile")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleSettings}>
-                <Settings className="mr-2 h-4 w-4" />
-                {t("settings")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

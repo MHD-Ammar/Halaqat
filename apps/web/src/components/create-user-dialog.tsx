@@ -71,7 +71,10 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
   const createUserSchema = z.object({
     fullName: z.string().min(2, t("nameMinLength")),
     email: z.string().email(tAuth("validEmail")),
-    phoneNumber: z.string().min(10, t("phoneMinLength")),
+    phoneNumber: z
+      .string()
+      .min(10, t("phoneMinLength"))
+      .regex(/^[0-9+\-\s()]+$/, t("phoneInvalid")),
     password: z.string().min(6, tAuth("passwordMinLength")),
     role: z.enum(ROLES, { message: t("selectRole") }),
   });
@@ -191,9 +194,16 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
                   <FormControl>
                     <Input
                       type="tel"
+                      inputMode="numeric"
+                      pattern="[0-9+\-\s()]*"
                       placeholder={t("phonePlaceholder")}
                       disabled={createMutation.isPending}
                       {...field}
+                      onChange={(e) => {
+                        // Only allow digits, +, -, spaces, and parentheses
+                        const value = e.target.value.replace(/[^0-9+\-\s()]/g, "");
+                        field.onChange(value);
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

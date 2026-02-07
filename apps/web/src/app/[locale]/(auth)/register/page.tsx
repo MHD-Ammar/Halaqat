@@ -40,7 +40,10 @@ export default function RegisterPage() {
   const registerSchema = z.object({
     fullName: z.string().min(2, tAuth("validEmail")), // reusing validEmail generic error or simple min length
     email: z.string().email(tAuth("validEmail")),
-    phoneNumber: z.string().min(10, tCommon("phone") + " invalid"), // simplified for now
+    phoneNumber: z
+      .string()
+      .min(10, tCommon("phone") + " invalid")
+      .regex(/^[0-9+\-\s()]+$/, tCommon("phone") + " invalid"),
     password: z.string().min(6, tAuth("passwordMinLength")),
     inviteCode: z.string().length(6, t("inviteCodeRequired")),
   });
@@ -158,11 +161,16 @@ export default function RegisterPage() {
             <Input
               id="phoneNumber"
               type="tel"
-              inputMode="tel"
+              inputMode="numeric"
               autoComplete="tel"
               placeholder="+966 50 123 4567"
               disabled={isLoading}
-              {...register("phoneNumber")}
+              {...register("phoneNumber", {
+                onChange: (e) => {
+                  // Filter non-phone characters
+                  e.target.value = e.target.value.replace(/[^0-9+\-\s()]/g, "");
+                },
+              })}
             />
             {errors.phoneNumber && (
               <p className="text-sm text-destructive">

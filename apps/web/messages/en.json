@@ -32,7 +32,8 @@
     "yes": "Yes",
     "no": "No",
     "create": "Create",
-    "update": "Update"
+    "update": "Update",
+    "phoneInvalid": "Phone number can only contain digits and + - ( ) symbols"
   },
   "Nav": {
     "overview": "Overview",
@@ -361,7 +362,8 @@
     "phonePlaceholder": "+966 50 123 4567",
     "passwordPlaceholder": "Min. 6 characters",
     "nameMinLength": "Name must be at least 2 characters",
-    "phoneMinLength": "Phone number must be at least 10 digits"
+    "phoneMinLength": "Phone number must be at least 10 digits",
+    "phoneInvalid": "Phone number can only contain digits and + - ( ) symbols"
   },
   "Teachers": {
     "addTeacher": "Add Teacher",
