@@ -44,7 +44,8 @@
     "profile": "الملف الشخصي",
     "studentPortal": "بوابتي",
     "exams": "الاختبارات",
-    "usersManagement": "المستخدمين"
+    "usersManagement": "المستخدمين",
+    "settings": "الإعدادات"
   },
   "Auth": {
     "welcomeBack": "مرحباً بعودتك",
@@ -111,7 +112,21 @@
     "saveAll": "حفظ الكل ({count} صفحات)",
     "recitationRecorded": "تم تسجيل التسميع!",
     "recitationSavedDescription": "تم حفظ {pageCount} صفحات. +{points} نقاط.",
-    "saveFailed": "فشل حفظ التسميع. يرجى المحاولة مرة أخرى."
+    "saveFailed": "فشل حفظ التسميع. يرجى المحاولة مرة أخرى.",
+    "recitationTab": "التسميع",
+    "rewardsTab": {
+      "title": "المكافآت",
+      "description": "اختر مكافأة لمنحها للطالب",
+      "noRewards": "لا توجد مكافآت متاحة",
+      "noRewardsHint": "اطلب من المشرف إضافة فئات مكافآت",
+      "upTo": "حتى {max} نقطة",
+      "amount": "الكمية",
+      "enterAmount": "يرجى إدخال عدد النقاط",
+      "exceedsMax": "لا يمكن أن تتجاوز الكمية {max} نقطة",
+      "awarded": "تم منح المكافأة!",
+      "awardedDesc": "حصل الطالب على {points} نقاط ({name})",
+      "awardFailed": "فشل في منح المكافأة"
+    }
   },
   "Header": {
     "halaqat": "حلقات",
@@ -504,6 +519,42 @@
       "ATTENDANCE_ON_TIME": "الحضور في الموعد",
       "EXAM_EXCELLENT": "اختبار ممتاز (علامة كاملة)",
       "EXAM_GOOD": "اختبار جيد"
+    },
+    "PointRulesDesc": {
+      "RECITATION_PAGE": "حفظ صفحة جديدة",
+      "RECITATION_EXCELLENT": "تسميع بجودة ممتازة",
+      "RECITATION_VERY_GOOD": "تسميع بجودة جيدة جداً",
+      "RECITATION_GOOD": "تسميع بجودة جيدة",
+      "RECITATION_ACCEPTABLE": "تسميع بجودة مقبولة",
+      "RECITATION_POOR": "تسميع بجودة ضعيفة",
+      "ATTENDANCE_PRESENT": "حضور الحلقة",
+      "ATTENDANCE_ON_TIME": "الحضور في الوقت المحدد",
+      "EXAM_EXCELLENT": "الحصول على درجة ممتازة في الاختبار",
+      "EXAM_GOOD": "الحصول على درجة جيدة في الاختبار"
+    },
+    "customRules": {
+      "title": "فئات المكافآت المخصصة",
+      "desc": "إنشاء فئات مكافآت مخصصة ليستخدمها المعلمون في مكافأة الطلاب السريعة",
+      "add": "إضافة فئة",
+      "addTitle": "إضافة فئة مكافأة جديدة",
+      "addDesc": "أنشئ فئة مكافأة مخصصة لتظهر في قائمة المكافآت السريعة للمعلمين",
+      "label": "اسم الفئة",
+      "labelPlaceholder": "مثال: حفظ متن، أدب، حسن سلوك",
+      "labelRequired": "يرجى إدخال اسم الفئة",
+      "defaultPoints": "النقاط الافتراضية",
+      "variableInput": "إدخال متغير",
+      "variableInputDesc": "السماح للمعلمين بإدخال عدد النقاط يدوياً",
+      "maxPoints": "الحد الأقصى للنقاط",
+      "created": "تم إنشاء فئة المكافأة بنجاح",
+      "createFailed": "فشل في إنشاء فئة المكافأة",
+      "deleted": "تم حذف فئة المكافأة",
+      "deleteFailed": "فشل في حذف فئة المكافأة",
+      "deleteTitle": "حذف فئة المكافأة",
+      "deleteDesc": "هل أنت متأكد من حذف \"{name}\"؟ لا يمكن التراجع عن هذا الإجراء.",
+      "empty": "لا توجد فئات مكافآت مخصصة",
+      "emptyHint": "أضف فئة مكافأة لتظهر في قائمة المكافآت السريعة للمعلمين",
+      "variable": "متغير",
+      "maxValue": "حتى {max} نقطة"
     }
   }
 }

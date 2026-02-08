@@ -63,6 +63,33 @@ export class PointRule {
   @Column({ default: true })
   isActive!: boolean;
 
+  /**
+   * System rules (like Attendance, Recitation) cannot be deleted by admins.
+   * Custom rules created by admins have isSystem = false.
+   */
+  @Column({ name: "is_system", default: false })
+  isSystem!: boolean;
+
+  /**
+   * Whether this rule appears in the teacher's Quick Reward menu.
+   */
+  @Column({ name: "is_visible_to_teacher", default: true })
+  isVisibleToTeacher!: boolean;
+
+  /**
+   * If true, the teacher enters points manually (e.g., for competitions).
+   * If false, the rule has a fixed point value.
+   */
+  @Column({ name: "is_custom_entry", default: false })
+  isCustomEntry!: boolean;
+
+  /**
+   * Maximum points allowed for custom entry rules.
+   * Only applicable when isCustomEntry is true.
+   */
+  @Column({ name: "max_custom_value", type: "int", nullable: true })
+  maxCustomValue!: number | null;
+
   @CreateDateColumn({ name: "created_at" })
   createdAt!: Date;
 

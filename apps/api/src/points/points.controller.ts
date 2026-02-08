@@ -8,8 +8,10 @@ import { UserRole } from "@halaqat/types";
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
@@ -29,7 +31,9 @@ import {
 } from "@nestjs/swagger";
 
 import { AddManualPointsDto } from "./dto/add-manual-points.dto";
+import { AwardByRuleDto } from "./dto/award-by-rule.dto";
 import { BulkUpdatePointRulesDto } from "./dto/bulk-update-point-rules.dto";
+import { CreatePointRuleDto } from "./dto/create-point-rule.dto";
 import { UpdatePointRuleDto } from "./dto/update-point-rule.dto";
 import { PointsService } from "./points.service";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
@@ -62,6 +66,65 @@ export class PointsController {
   @ApiResponse({ status: 403, description: "Forbidden - requires ADMIN role" })
   findAllRules(@CurrentUser() user: { mosqueId: string }) {
     return this.pointsService.findAllRules(user.mosqueId);
+  }
+
+  /**
+   * Get teacher-visible rules for Quick Reward menu
+   * GET /api/points/rules/teacher
+   */
+  @Get("rules/teacher")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.TEACHER, UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Get teacher-visible rules",
+    description: "Get reward rules visible to teachers for Quick Reward menu",
+  })
+  @ApiResponse({ status: 200, description: "List of teacher-visible rules" })
+  findTeacherRules(@CurrentUser() user: { mosqueId: string }) {
+    return this.pointsService.findTeacherVisibleRules(user.mosqueId);
+  }
+
+  /**
+   * Create a custom reward rule
+   * POST /api/points/rules
+   */
+  @Post("rules")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Create custom rule",
+    description: "Create a new custom reward rule (Admin only)",
+  })
+  @ApiResponse({ status: 201, description: "Rule created successfully" })
+  @ApiResponse({ status: 403, description: "Forbidden - requires ADMIN role" })
+  createRule(
+    @Body() dto: CreatePointRuleDto,
+    @CurrentUser() user: { mosqueId: string },
+  ) {
+    return this.pointsService.createCustomRule(user.mosqueId, dto);
+  }
+
+  /**
+   * Delete a custom rule (non-system rules only)
+   * DELETE /api/points/rules/:id
+   */
+  @Delete("rules/:id")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Delete custom rule",
+    description: "Delete a custom reward rule (Admin only, system rules cannot be deleted)",
+  })
+  @ApiParam({ name: "id", description: "Rule ID" })
+  @ApiResponse({ status: 200, description: "Rule deleted successfully" })
+  @ApiResponse({ status: 403, description: "Cannot delete system rules" })
+  @ApiResponse({ status: 404, description: "Rule not found" })
+  async deleteRule(
+    @Param("id", ParseIntPipe) id: number,
+    @CurrentUser() user: { mosqueId: string },
+  ) {
+    await this.pointsService.deleteCustomRule(id, user.mosqueId);
+    return { message: "Rule deleted successfully" };
   }
 
   /**
@@ -108,6 +171,29 @@ export class PointsController {
       message: "Point rules updated successfully",
       data: updatedRules,
     };
+  }
+
+  // ==================== QUICK REWARD (Teacher) ====================
+
+  /**
+   * Award points by rule (for Quick Reward)
+   * POST /api/points/award-by-rule
+   */
+  @Post("award-by-rule")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.TEACHER, UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Award points by rule",
+    description: "Award points to a student using a specific reward rule",
+  })
+  @ApiResponse({ status: 201, description: "Points awarded successfully" })
+  @ApiResponse({ status: 400, description: "Validation error or budget exceeded" })
+  @ApiResponse({ status: 404, description: "Rule not found" })
+  awardByRule(
+    @Body() dto: AwardByRuleDto,
+    @CurrentUser() user: { sub: string; mosqueId: string },
+  ) {
+    return this.pointsService.awardPointsByRule(dto, user.sub, user.mosqueId);
   }
 
   // ==================== MANUAL POINTS ====================

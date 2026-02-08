@@ -5,8 +5,8 @@
  * The API runs on port 3001 to avoid conflicts with the web frontend.
  */
 
-import { NestFactory } from "@nestjs/core";
 import { Logger, ValidationPipe } from "@nestjs/common";
+import { NestFactory } from "@nestjs/core";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 
 import { AppModule } from "./app.module";
@@ -80,6 +80,7 @@ async function bootstrap(): Promise<void> {
   await app.listen(port);
   logger.log(`🚀 Halaqat API is running on: http://localhost:${port}/api`);
   logger.log(`📚 Swagger docs available at: http://localhost:${port}/api/docs`);
+  logger.log(`✅ Server restarted at ${new Date().toISOString()}`);
 }
 
 bootstrap();

@@ -3,9 +3,9 @@
 /**
  * StudentActionSheet Component
  *
- * A 2-step wizard for recording page recitations:
- * Step 1: Range Input - Enter page range and global quality
- * Step 2: Review List - Adjust individual page qualities before saving
+ * A tabbed interface for interacting with students:
+ * - Recitation Tab: 2-step wizard for recording page recitations
+ * - Rewards Tab: Quick reward awarding using custom reward categories
  *
  * Shows Surah names next to page numbers in the review list.
  */
@@ -17,6 +17,7 @@ import {
   ChevronRight,
   ArrowLeft,
   BookOpen,
+  Gift,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useMemo } from "react";
@@ -34,6 +35,7 @@ import {
   SheetTrigger,
   SheetFooter,
 } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useRecordRecitation,
   type PageDetail,
@@ -42,6 +44,7 @@ import {
   useSurahsWithPages,
   findSurahForPage,
 } from "@/hooks/use-surahs-with-pages";
+import { useTeacherRewards, useAwardReward } from "@/hooks/use-teacher-rewards";
 import { useToast } from "@/hooks/use-toast";
 
 interface StudentActionSheetProps {
@@ -64,6 +67,8 @@ export function StudentActionSheet({
   const { toast } = useToast();
   const recordRecitation = useRecordRecitation();
   const { data: surahs } = useSurahsWithPages();
+  const { data: rewardRules = [], isLoading: isLoadingRules } = useTeacherRewards();
+  const awardReward = useAwardReward();
   const t = useTranslations("StudentAction");
   const tCommon = useTranslations("Common");
 
@@ -119,6 +124,7 @@ export function StudentActionSheet({
   // Wizard state
   const [step, setStep] = useState<WizardStep>("INPUT");
   const [isOpen, setIsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"recitation" | "rewards">("recitation");
 
   // Step 1: Range input state
   const [startPage, setStartPage] = useState<number | "">("");
@@ -133,6 +139,11 @@ export function StudentActionSheet({
   // Step 2: Page details state (with individual quality overrides)
   const [pageDetails, setPageDetails] = useState<PageDetail[]>([]);
 
+  // Rewards tab state
+  const [selectedRule, setSelectedRule] = useState<number | null>(null);
+  const [customAmount, setCustomAmount] = useState<number>(0);
+  const [awardingRuleId, setAwardingRuleId] = useState<number | null>(null);
+
   // Reset form
   const resetForm = () => {
     setStep("INPUT");
@@ -141,6 +152,9 @@ export function StudentActionSheet({
     setGlobalQuality(RecitationQuality.EXCELLENT);
     setLessonType(RecitationType.NEW_LESSON);
     setPageDetails([]);
+    setSelectedRule(null);
+    setCustomAmount(0);
+    setAwardingRuleId(null);
   };
 
   // Handle open change
@@ -238,6 +252,76 @@ export function StudentActionSheet({
     }
   };
 
+  // Handle awarding a reward
+  const handleAwardReward = async (ruleId: number, isCustomEntry: boolean, maxCustomValue: number | null) => {
+    if (!sessionId || sessionId === "undefined") {
+      toast({
+        variant: "destructive",
+        title: tCommon("error"),
+        description: "Invalid Session ID",
+      });
+      return;
+    }
+
+    // For custom entry rules, show input first
+    if (isCustomEntry && selectedRule !== ruleId) {
+      setSelectedRule(ruleId);
+      setCustomAmount(0);
+      return;
+    }
+
+    // Validate custom amount
+    if (isCustomEntry) {
+      if (customAmount <= 0) {
+        toast({
+          variant: "destructive",
+          title: tCommon("error"),
+          description: t("rewardsTab.enterAmount"),
+        });
+        return;
+      }
+      if (maxCustomValue && customAmount > maxCustomValue) {
+        toast({
+          variant: "destructive",
+          title: tCommon("error"),
+          description: t("rewardsTab.exceedsMax", { max: maxCustomValue }),
+        });
+        return;
+      }
+    }
+
+    setAwardingRuleId(ruleId);
+
+    try {
+      await awardReward.mutateAsync({
+        ruleId,
+        studentId: student.id,
+        sessionId,
+        customAmount: isCustomEntry ? customAmount : undefined,
+      });
+
+      const rule = rewardRules.find((r) => r.id === ruleId);
+      toast({
+        title: t("rewardsTab.awarded"),
+        description: t("rewardsTab.awardedDesc", {
+          name: rule?.description || "",
+          points: isCustomEntry ? customAmount : rule?.points || 0,
+        }),
+      });
+
+      setSelectedRule(null);
+      setCustomAmount(0);
+    } catch {
+      toast({
+        variant: "destructive",
+        title: tCommon("error"),
+        description: t("rewardsTab.awardFailed"),
+      });
+    } finally {
+      setAwardingRuleId(null);
+    }
+  };
+
   /**
    * Get surah name for a page number
    */
@@ -253,203 +337,301 @@ export function StudentActionSheet({
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
-            {t("recordRecitation")} - {student.name}
+            {student.name}
           </SheetTitle>
           <SheetDescription>
-            {step === "INPUT"
-              ? t("enterPageRange")
-              : t("reviewPages", { count: pageDetails.length })}
+            {activeTab === "recitation"
+              ? step === "INPUT"
+                ? t("enterPageRange")
+                : t("reviewPages", { count: pageDetails.length })
+              : t("rewardsTab.description")}
           </SheetDescription>
         </SheetHeader>
 
-        {/* Step 1: Range Input */}
-        {step === "INPUT" && (
-          <div className="flex-1 space-y-6 p-4 overflow-auto">
-            {/* Page Range */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="startPage">{t("startPage")}</Label>
-                <Input
-                  id="startPage"
-                  type="number"
-                  min={1}
-                  max={604}
-                  placeholder="1"
-                  value={startPage}
-                  onChange={(e) =>
-                    setStartPage(
-                      e.target.value === "" ? "" : parseInt(e.target.value, 10),
-                    )
-                  }
-                  className="h-12 text-lg"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="endPage">{t("endPage")}</Label>
-                <Input
-                  id="endPage"
-                  type="number"
-                  min={1}
-                  max={604}
-                  placeholder="604"
-                  value={endPage}
-                  onChange={(e) =>
-                    setEndPage(
-                      e.target.value === "" ? "" : parseInt(e.target.value, 10),
-                    )
-                  }
-                  className="h-12 text-lg"
-                />
-              </div>
-            </div>
+        {/* Tabbed Interface */}
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as "recitation" | "rewards")}
+          className="flex-1 flex flex-col overflow-hidden"
+        >
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="recitation" className="gap-2">
+              <BookOpen className="h-4 w-4" />
+              {t("recitationTab")}
+            </TabsTrigger>
+            <TabsTrigger value="rewards" className="gap-2">
+              <Gift className="h-4 w-4" />
+              {t("rewardsTab.title")}
+            </TabsTrigger>
+          </TabsList>
 
-            {/* Page count indicator */}
-            {isStep1Valid && (
-              <div className="text-center text-sm text-muted-foreground">
-                {t("pagesSelected", {
-                  count: (endPage as number) - (startPage as number) + 1,
-                })}
+          {/* Recitation Tab Content */}
+          <TabsContent value="recitation" className="flex-1 flex flex-col overflow-hidden mt-0">
+            {/* Step 1: Range Input */}
+            {step === "INPUT" && (
+              <div className="flex-1 space-y-6 p-4 overflow-auto">
+                {/* Page Range */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="startPage">{t("startPage")}</Label>
+                    <Input
+                      id="startPage"
+                      type="number"
+                      min={1}
+                      max={604}
+                      placeholder="1"
+                      value={startPage}
+                      onChange={(e) =>
+                        setStartPage(
+                          e.target.value === "" ? "" : parseInt(e.target.value, 10),
+                        )
+                      }
+                      className="h-12 text-lg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="endPage">{t("endPage")}</Label>
+                    <Input
+                      id="endPage"
+                      type="number"
+                      min={1}
+                      max={604}
+                      placeholder="604"
+                      value={endPage}
+                      onChange={(e) =>
+                        setEndPage(
+                          e.target.value === "" ? "" : parseInt(e.target.value, 10),
+                        )
+                      }
+                      className="h-12 text-lg"
+                    />
+                  </div>
+                </div>
+
+                {/* Page count indicator */}
+                {isStep1Valid && (
+                  <div className="text-center text-sm text-muted-foreground">
+                    {t("pagesSelected", {
+                      count: (endPage as number) - (startPage as number) + 1,
+                    })}
+                  </div>
+                )}
+
+                {/* Quality Selection */}
+                <div className="space-y-2">
+                  <Label>{t("quality")}</Label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {QUALITY_OPTIONS.map((option) => (
+                      <Button
+                        key={option.value}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className={`h-12 text-sm font-medium ${option.color} ${
+                          globalQuality === option.value ? option.selectedColor : ""
+                        }`}
+                        onClick={() => setGlobalQuality(option.value)}
+                      >
+                        {option.shortLabel}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Lesson Type Toggle */}
+                <div className="space-y-2">
+                  <Label>{t("lessonType")}</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={
+                        lessonType === RecitationType.NEW_LESSON
+                          ? "default"
+                          : "outline"
+                      }
+                      className="flex-1 h-12"
+                      onClick={() => setLessonType(RecitationType.NEW_LESSON)}
+                    >
+                      {t("newLesson")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={
+                        lessonType === RecitationType.REVIEW ? "default" : "outline"
+                      }
+                      className="flex-1 h-12"
+                      onClick={() => setLessonType(RecitationType.REVIEW)}
+                    >
+                      {t("review")}
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Quality Selection */}
-            <div className="space-y-2">
-              <Label>{t("quality")}</Label>
-              <div className="grid grid-cols-5 gap-2">
-                {QUALITY_OPTIONS.map((option) => (
-                  <Button
-                    key={option.value}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={`h-12 text-sm font-medium ${option.color} ${
-                      globalQuality === option.value ? option.selectedColor : ""
-                    }`}
-                    onClick={() => setGlobalQuality(option.value)}
-                  >
-                    {option.shortLabel}
-                  </Button>
-                ))}
-              </div>
-            </div>
+            {/* Step 2: Review List with Surah Names */}
+            {step === "REVIEW" && (
+              <ScrollArea className="flex-1 py-4">
+                <div className="space-y-3 pe-4">
+                  {pageDetails.map((page) => {
+                    const surahName = getSurahName(page.pageNumber);
 
-            {/* Lesson Type Toggle */}
-            <div className="space-y-2">
-              <Label>{t("lessonType")}</Label>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant={
-                    lessonType === RecitationType.NEW_LESSON
-                      ? "default"
-                      : "outline"
-                  }
-                  className="flex-1 h-12"
-                  onClick={() => setLessonType(RecitationType.NEW_LESSON)}
-                >
-                  {t("newLesson")}
-                </Button>
-                <Button
-                  type="button"
-                  variant={
-                    lessonType === RecitationType.REVIEW ? "default" : "outline"
-                  }
-                  className="flex-1 h-12"
-                  onClick={() => setLessonType(RecitationType.REVIEW)}
-                >
-                  {t("review")}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Review List with Surah Names */}
-        {step === "REVIEW" && (
-          <ScrollArea className="flex-1 py-4">
-            <div className="space-y-3 pe-4">
-              {pageDetails.map((page) => {
-                const surahName = getSurahName(page.pageNumber);
-
-                return (
-                  <div
-                    key={page.pageNumber}
-                    className="flex items-center justify-between p-3 rounded-lg border bg-card"
-                  >
-                    <div>
-                      <div className="font-medium">
-                        {tCommon("page")} {page.pageNumber}
+                    return (
+                      <div
+                        key={page.pageNumber}
+                        className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                      >
+                        <div>
+                          <div className="font-medium">
+                            {tCommon("page")} {page.pageNumber}
+                          </div>
+                          {surahName && (
+                            <div className="text-sm text-muted-foreground">
+                              {surahName}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex gap-1">
+                          {QUALITY_OPTIONS.map((option) => (
+                            <Button
+                              key={option.value}
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className={`h-8 px-2 text-xs ${
+                                page.quality === option.value
+                                  ? option.badgeColor + " font-semibold"
+                                  : "text-muted-foreground hover:text-foreground"
+                              }`}
+                              onClick={() =>
+                                updatePageQuality(page.pageNumber, option.value)
+                              }
+                            >
+                              {option.shortLabel}
+                            </Button>
+                          ))}
+                        </div>
                       </div>
-                      {surahName && (
-                        <div className="text-sm text-muted-foreground">
-                          {surahName}
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            )}
+
+            {/* Footer with Actions for Recitation Tab */}
+            <SheetFooter className="flex-row gap-2 pt-4 border-t">
+              {step === "INPUT" ? (
+                <Button
+                  className="flex-1 h-12"
+                  disabled={!isStep1Valid}
+                  onClick={handleNext}
+                >
+                  {tCommon("next")}
+                  <ChevronRight className="ms-2 h-4 w-4" />
+                </Button>
+              ) : (
+                <>
+                  <Button variant="outline" className="h-12" onClick={handleBack}>
+                    <ArrowLeft className="me-2 h-4 w-4" />
+                    {tCommon("back")}
+                  </Button>
+                  <Button
+                    className="flex-1 h-12"
+                    disabled={recordRecitation.isPending}
+                    onClick={handleSaveAll}
+                  >
+                    {recordRecitation.isPending ? (
+                      <>
+                        <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                        {tCommon("saving")}
+                      </>
+                    ) : (
+                      <>
+                        <Check className="me-2 h-4 w-4" />
+                        {t("saveAll", { count: pageDetails.length })}
+                      </>
+                    )}
+                  </Button>
+                </>
+              )}
+            </SheetFooter>
+          </TabsContent>
+
+          {/* Rewards Tab Content */}
+          <TabsContent value="rewards" className="flex-1 flex flex-col overflow-hidden mt-0">
+            <ScrollArea className="flex-1 py-4">
+              {isLoadingRules ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : rewardRules.length === 0 ? (
+                <div className="text-center p-8 text-muted-foreground">
+                  <Gift className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                  <p>{t("rewardsTab.noRewards")}</p>
+                  <p className="text-sm">{t("rewardsTab.noRewardsHint")}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 p-1">
+                  {rewardRules.map((rule) => (
+                    <div key={rule.id} className="space-y-2">
+                      <Button
+                        variant={selectedRule === rule.id ? "default" : "outline"}
+                        className={`w-full h-auto flex-col py-4 px-3 ${
+                          awardingRuleId === rule.id ? "opacity-50" : ""
+                        }`}
+                        disabled={awardingRuleId !== null}
+                        onClick={() =>
+                          handleAwardReward(rule.id, rule.isCustomEntry, rule.maxCustomValue)
+                        }
+                      >
+                        {awardingRuleId === rule.id ? (
+                          <Loader2 className="h-5 w-5 animate-spin mb-1" />
+                        ) : (
+                          <Gift className="h-5 w-5 mb-1" />
+                        )}
+                        <span className="text-sm font-medium line-clamp-2">
+                          {rule.description}
+                        </span>
+                        <span className="text-xs mt-1 opacity-70">
+                          {rule.isCustomEntry
+                            ? t("rewardsTab.upTo", { max: rule.maxCustomValue ?? 0 })
+                            : `+${rule.points} ${tCommon("points")}`}
+                        </span>
+                      </Button>
+
+                      {/* Custom amount input */}
+                      {rule.isCustomEntry && selectedRule === rule.id && (
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            min={1}
+                            max={rule.maxCustomValue ?? 100}
+                            value={customAmount || ""}
+                            onChange={(e) =>
+                              setCustomAmount(parseInt(e.target.value, 10) || 0)
+                            }
+                            placeholder={t("rewardsTab.amount")}
+                            className="h-10"
+                          />
+                          <Button
+                            size="sm"
+                            className="h-10 px-4"
+                            disabled={awardReward.isPending || customAmount <= 0}
+                            onClick={() =>
+                              handleAwardReward(rule.id, true, rule.maxCustomValue)
+                            }
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-1">
-                      {QUALITY_OPTIONS.map((option) => (
-                        <Button
-                          key={option.value}
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className={`h-8 px-2 text-xs ${
-                            page.quality === option.value
-                              ? option.badgeColor + " font-semibold"
-                              : "text-muted-foreground hover:text-foreground"
-                          }`}
-                          onClick={() =>
-                            updatePageQuality(page.pageNumber, option.value)
-                          }
-                        >
-                          {option.shortLabel}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </ScrollArea>
-        )}
-
-        {/* Footer with Actions */}
-        <SheetFooter className="flex-row gap-2 pt-4 border-t">
-          {step === "INPUT" ? (
-            <Button
-              className="flex-1 h-12"
-              disabled={!isStep1Valid}
-              onClick={handleNext}
-            >
-              {tCommon("next")}
-              <ChevronRight className="ms-2 h-4 w-4" />
-            </Button>
-          ) : (
-            <>
-              <Button variant="outline" className="h-12" onClick={handleBack}>
-                <ArrowLeft className="me-2 h-4 w-4" />
-                {tCommon("back")}
-              </Button>
-              <Button
-                className="flex-1 h-12"
-                disabled={recordRecitation.isPending}
-                onClick={handleSaveAll}
-              >
-                {recordRecitation.isPending ? (
-                  <>
-                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                    {tCommon("saving")}
-                  </>
-                ) : (
-                  <>
-                    <Check className="me-2 h-4 w-4" />
-                    {t("saveAll", { count: pageDetails.length })}
-                  </>
-                )}
-              </Button>
-            </>
-          )}
-        </SheetFooter>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
       </SheetContent>
     </Sheet>
   );

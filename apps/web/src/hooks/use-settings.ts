@@ -25,6 +25,14 @@ export interface PointRule {
   points: number;
   isActive: boolean;
   mosqueId: string;
+  /** System rules (like Attendance) cannot be deleted */
+  isSystem: boolean;
+  /** Whether this rule appears in the teacher's Quick Reward menu */
+  isVisibleToTeacher: boolean;
+  /** If true, teacher enters points manually (variable input) */
+  isCustomEntry: boolean;
+  /** Maximum points for custom entry rules */
+  maxCustomValue: number | null;
 }
 
 export interface UpdateMosqueDto {
@@ -33,6 +41,14 @@ export interface UpdateMosqueDto {
 
 export interface BulkUpdatePointRulesDto {
   rules: { key: string; points: number }[];
+}
+
+export interface CreatePointRuleDto {
+  description: string;
+  points: number;
+  isVisibleToTeacher?: boolean;
+  isCustomEntry?: boolean;
+  maxCustomValue?: number;
 }
 
 // ==================== MOSQUE HOOKS ====================
@@ -100,6 +116,39 @@ export function useUpdatePointRules() {
         data
       );
       return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["points", "rules"] });
+    },
+  });
+}
+
+/**
+ * Hook to create a custom reward rule
+ */
+export function useCreateCustomRule() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CreatePointRuleDto) => {
+      const response = await api.post<PointRule>("/points/rules", data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["points", "rules"] });
+    },
+  });
+}
+
+/**
+ * Hook to delete a custom reward rule
+ */
+export function useDeleteCustomRule() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ruleId: number) => {
+      await api.delete(`/points/rules/${ruleId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["points", "rules"] });
