@@ -19,7 +19,7 @@ import {
   BookOpen,
   Gift,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useState, useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -71,6 +71,8 @@ export function StudentActionSheet({
   const awardReward = useAwardReward();
   const t = useTranslations("StudentAction");
   const tCommon = useTranslations("Common");
+  const locale = useLocale();
+  const dir = locale === "ar" ? "rtl" : "ltr";
 
   /**
    * Quality configuration with colors
@@ -101,18 +103,18 @@ export function StudentActionSheet({
         selectedColor: "ring-2 ring-blue-500 ring-offset-2",
         badgeColor: "bg-blue-100 text-blue-700",
       },
-      {
-        value: RecitationQuality.ACCEPTABLE,
-        label: t("acceptable"),
-        shortLabel: t("acceptableShort"),
-        color: "bg-yellow-500 hover:bg-yellow-600 text-white",
-        selectedColor: "ring-2 ring-yellow-500 ring-offset-2",
-        badgeColor: "bg-yellow-100 text-yellow-700",
-      },
+      // {
+      //   value: RecitationQuality.ACCEPTABLE,
+      //   label: t("acceptable"),
+      //   shortLabel: t("acceptableShort"),
+      //   color: "bg-yellow-500 hover:bg-yellow-600 text-white",
+      //   selectedColor: "ring-2 ring-yellow-500 ring-offset-2",
+      //   badgeColor: "bg-yellow-100 text-yellow-700",
+      // },
       {
         value: RecitationQuality.POOR,
-        label: t("poor"),
-        shortLabel: t("poorShort"),
+        label: t("notAccepted"),
+        shortLabel: t("notAcceptedShort"),
         color: "bg-red-500 hover:bg-red-600 text-white",
         selectedColor: "ring-2 ring-red-500 ring-offset-2",
         badgeColor: "bg-red-100 text-red-700",
@@ -333,7 +335,7 @@ export function StudentActionSheet({
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent side="bottom" className="h-[85vh] flex flex-col">
+      <SheetContent side="bottom" className="h-[85vh] flex flex-col" dir={dir}>
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
@@ -350,6 +352,7 @@ export function StudentActionSheet({
 
         {/* Tabbed Interface */}
         <Tabs
+          dir={dir}
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as "recitation" | "rewards")}
           className="flex-1 flex flex-col overflow-hidden"
@@ -420,7 +423,7 @@ export function StudentActionSheet({
                 {/* Quality Selection */}
                 <div className="space-y-2">
                   <Label>{t("quality")}</Label>
-                  <div className="grid grid-cols-5 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     {QUALITY_OPTIONS.map((option) => (
                       <Button
                         key={option.value}
@@ -432,7 +435,7 @@ export function StudentActionSheet({
                         }`}
                         onClick={() => setGlobalQuality(option.value)}
                       >
-                        {option.shortLabel}
+                        {option.label}
                       </Button>
                     ))}
                   </div>

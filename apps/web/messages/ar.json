@@ -109,6 +109,8 @@
     "acceptableShort": "مقبول",
     "poor": "ضعيف",
     "poorShort": "ضعيف",
+    "notAccepted": "غير مقبول",
+    "notAcceptedShort": "غير مقبول",
     "saveAll": "حفظ الكل ({count} صفحات)",
     "recitationRecorded": "تم تسجيل التسميع!",
     "recitationSavedDescription": "تم حفظ {pageCount} صفحات. +{points} نقاط.",

@@ -109,6 +109,8 @@
     "acceptableShort": "Acc",
     "poor": "Poor",
     "poorShort": "Poor",
+    "notAccepted": "Not Accepted",
+    "notAcceptedShort": "Not Acc",
     "saveAll": "Save All ({count} pages)",
     "recitationRecorded": "Recitation Recorded!",
     "recitationSavedDescription": "{pageCount} pages saved. +{points} points awarded.",
