@@ -219,6 +219,32 @@ export class PointsController {
     return this.pointsService.addManualPoints(dto, user.sub);
   }
 
+  /**
+   * Get teacher's budget usage for a session
+   * GET /api/points/budget?sessionId=...
+   */
+  @Get("budget")
+  @ApiOperation({
+    summary: "Get budget usage",
+    description: "Get teacher's manual points budget usage for a session",
+  })
+  @ApiQuery({ name: "sessionId", description: "Session UUID" })
+  @ApiResponse({ status: 200, description: "Budget usage details" })
+  async getBudgetUsage(
+    @Query("sessionId", ParseUUIDPipe) sessionId: string,
+    @CurrentUser() user: { sub: string },
+  ) {
+    const used = await this.pointsService.getTeacherSessionBudgetUsage(
+      user.sub,
+      sessionId,
+    );
+    return {
+      used,
+      limit: 20, // Should match MANUAL_POINTS_BUDGET_PER_SESSION constant
+      remaining: Math.max(0, 20 - used),
+    };
+  }
+
   // ==================== POINT HISTORY ====================
 
   /**

@@ -23,8 +23,11 @@ export const POINT_RULE_DATA: PointRuleSeedData[] = [
   { key: "RECITATION_POOR", description: "Points for poor recitation (encouragement only)", points: 0 },
 
   // Attendance-based points
-  { key: "ATTENDANCE_PRESENT", description: "Points for being present in the session", points: 2 },
-  { key: "ATTENDANCE_ON_TIME", description: "Bonus points for arriving on time", points: 1 },
+  { key: "ATTENDANCE_ON_TIME", description: "حضور في الوقت", points: 5 },
+  { key: "ATTENDANCE_LATE", description: "حضور متأخر", points: 2 },
+
+  // Manual Behavior Examples
+  { key: "BEHAVIOR_BAD", description: "شغب / سوء سلوك", points: -5 },
 
   // Exam-based points
   { key: "EXAM_EXCELLENT", description: "Points for excellent exam performance (Full Mark)", points: 20 },

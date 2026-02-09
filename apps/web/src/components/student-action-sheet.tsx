@@ -18,6 +18,7 @@ import {
   ArrowLeft,
   BookOpen,
   Gift,
+  AlertTriangle,
 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { useState, useMemo } from "react";
@@ -36,6 +37,7 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToastAction } from "@/components/ui/toast";
 import {
   useRecordRecitation,
   type PageDetail,
@@ -44,7 +46,12 @@ import {
   useSurahsWithPages,
   findSurahForPage,
 } from "@/hooks/use-surahs-with-pages";
-import { useTeacherRewards, useAwardReward } from "@/hooks/use-teacher-rewards";
+import {
+  useTeacherRewards,
+  useAwardReward,
+  useTeacherBudget,
+  useAddManualPoints,
+} from "@/hooks/use-teacher-rewards";
 import { useToast } from "@/hooks/use-toast";
 
 interface StudentActionSheetProps {
@@ -68,7 +75,9 @@ export function StudentActionSheet({
   const recordRecitation = useRecordRecitation();
   const { data: surahs } = useSurahsWithPages();
   const { data: rewardRules = [], isLoading: isLoadingRules } = useTeacherRewards();
+  const { data: budget } = useTeacherBudget(sessionId);
   const awardReward = useAwardReward();
+  const addManualPoints = useAddManualPoints();
   const t = useTranslations("StudentAction");
   const tCommon = useTranslations("Common");
   const locale = useLocale();
@@ -303,12 +312,33 @@ export function StudentActionSheet({
       });
 
       const rule = rewardRules.find((r) => r.id === ruleId);
+      const pointsAwarded = isCustomEntry ? customAmount : rule?.points || 0;
+
       toast({
         title: t("rewardsTab.awarded"),
         description: t("rewardsTab.awardedDesc", {
           name: rule?.description || "",
-          points: isCustomEntry ? customAmount : rule?.points || 0,
+          points: pointsAwarded,
         }),
+        action: (
+          <ToastAction
+            altText={tCommon("undo")}
+            onClick={() => {
+              addManualPoints.mutate({
+                studentId: student.id,
+                sessionId,
+                amount: -pointsAwarded,
+                reason: `Undo: ${rule?.description}`,
+              }, {
+                onSuccess: () => {
+                   toast({ description: t("rewardsTab.undoSuccess") });
+                }
+              });
+            }}
+          >
+            {tCommon("undo")}
+          </ToastAction>
+        ),
       });
 
       setSelectedRule(null);
@@ -335,7 +365,7 @@ export function StudentActionSheet({
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent side="bottom" className="h-[85vh] flex flex-col" dir={dir}>
+      <SheetContent side="bottom" className="flex flex-col" dir={dir}>
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
@@ -562,6 +592,23 @@ export function StudentActionSheet({
 
           {/* Rewards Tab Content */}
           <TabsContent value="rewards" className="flex-1 flex flex-col overflow-hidden mt-0">
+            {/* Budget Indicator */}
+            {budget && (
+              <div className="px-4 py-2 bg-muted/30 border-b flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">{t("rewardsTab.budget")}:</span>
+                <div className="flex items-center gap-2">
+                  <span className={`font-medium ${budget.remaining === 0 ? "text-red-600" : ""}`}>
+                    {budget.used}/{budget.limit}
+                  </span>
+                  {budget.remaining === 0 && (
+                    <span className="text-xs text-red-500 font-medium px-1.5 py-0.5 bg-red-100 rounded">
+                      {t("rewardsTab.budgetExceeded")}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
             <ScrollArea className="flex-1 py-4">
               {isLoadingRules ? (
                 <div className="flex items-center justify-center p-8">
@@ -574,62 +621,73 @@ export function StudentActionSheet({
                   <p className="text-sm">{t("rewardsTab.noRewardsHint")}</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3 p-1">
-                  {rewardRules.map((rule) => (
-                    <div key={rule.id} className="space-y-2">
-                      <Button
-                        variant={selectedRule === rule.id ? "default" : "outline"}
-                        className={`w-full h-auto flex-col py-4 px-3 ${
-                          awardingRuleId === rule.id ? "opacity-50" : ""
-                        }`}
-                        disabled={awardingRuleId !== null}
-                        onClick={() =>
-                          handleAwardReward(rule.id, rule.isCustomEntry, rule.maxCustomValue)
-                        }
-                      >
-                        {awardingRuleId === rule.id ? (
-                          <Loader2 className="h-5 w-5 animate-spin mb-1" />
-                        ) : (
-                          <Gift className="h-5 w-5 mb-1" />
-                        )}
-                        <span className="text-sm font-medium line-clamp-2">
-                          {rule.description}
-                        </span>
-                        <span className="text-xs mt-1 opacity-70">
-                          {rule.isCustomEntry
-                            ? t("rewardsTab.upTo", { max: rule.maxCustomValue ?? 0 })
-                            : `+${rule.points} ${tCommon("points")}`}
-                        </span>
-                      </Button>
+                <div className="grid grid-cols-2 gap-3 p-4 pt-1">
+                  {rewardRules.map((rule) => {
+                    const isNegative = rule.points < 0;
+                    const isBudgetBlocked = !isNegative && budget?.remaining === 0;
+                    
+                    return (
+                      <div key={rule.id} className="space-y-2">
+                        <Button
+                          variant={selectedRule === rule.id ? "default" : "outline"}
+                          className={`w-full h-auto flex-col py-4 px-3 ${
+                            awardingRuleId === rule.id ? "opacity-50" : ""
+                          } ${
+                            isNegative 
+                              ? "border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800 hover:border-red-300"
+                              : ""
+                          }`}
+                          disabled={awardingRuleId !== null || (isBudgetBlocked && !isNegative)}
+                          onClick={() =>
+                            handleAwardReward(rule.id, rule.isCustomEntry, rule.maxCustomValue)
+                          }
+                        >
+                          {awardingRuleId === rule.id ? (
+                            <Loader2 className="h-5 w-5 animate-spin mb-1" />
+                          ) : isNegative ? (
+                            <AlertTriangle className="h-5 w-5 mb-1 text-red-500" />
+                          ) : (
+                            <Gift className="h-5 w-5 mb-1" />
+                          )}
+                          <span className="text-sm font-medium line-clamp-2">
+                            {rule.description}
+                          </span>
+                          <span className={`text-xs mt-1 ${isNegative ? "text-red-500 font-bold" : "opacity-70"}`}>
+                            {rule.isCustomEntry
+                              ? t("rewardsTab.upTo", { max: rule.maxCustomValue ?? 0 })
+                              : `${rule.points > 0 ? "+" : ""}${rule.points} ${tCommon("points")}`}
+                          </span>
+                        </Button>
 
-                      {/* Custom amount input */}
-                      {rule.isCustomEntry && selectedRule === rule.id && (
-                        <div className="flex gap-2">
-                          <Input
-                            type="number"
-                            min={1}
-                            max={rule.maxCustomValue ?? 100}
-                            value={customAmount || ""}
-                            onChange={(e) =>
-                              setCustomAmount(parseInt(e.target.value, 10) || 0)
-                            }
-                            placeholder={t("rewardsTab.amount")}
-                            className="h-10"
-                          />
-                          <Button
-                            size="sm"
-                            className="h-10 px-4"
-                            disabled={awardReward.isPending || customAmount <= 0}
-                            onClick={() =>
-                              handleAwardReward(rule.id, true, rule.maxCustomValue)
-                            }
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                        {/* Custom amount input */}
+                        {rule.isCustomEntry && selectedRule === rule.id && (
+                          <div className="flex gap-2">
+                            <Input
+                              type="number"
+                              min={1}
+                              max={rule.maxCustomValue ?? 100}
+                              value={customAmount || ""}
+                              onChange={(e) =>
+                                setCustomAmount(parseInt(e.target.value, 10) || 0)
+                              }
+                              placeholder={t("rewardsTab.amount")}
+                              className="h-10"
+                            />
+                            <Button
+                              size="sm"
+                              className="h-10 px-4"
+                              disabled={awardReward.isPending || customAmount <= 0}
+                              onClick={() =>
+                                handleAwardReward(rule.id, true, rule.maxCustomValue)
+                              }
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </ScrollArea>

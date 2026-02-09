@@ -34,7 +34,8 @@
     "create": "Create",
     "update": "Update",
     "phoneInvalid": "Phone number can only contain digits and + - ( ) symbols",
-    "processing": "Processing..."
+    "processing": "Processing...",
+    "undo": "Undo"
   },
   "Nav": {
     "overview": "Overview",
@@ -127,7 +128,10 @@
       "exceedsMax": "Amount cannot exceed {max} points",
       "awarded": "Reward Awarded!",
       "awardedDesc": "Student received {points} points ({name})",
-      "awardFailed": "Failed to award reward"
+      "awardFailed": "Failed to award reward",
+      "budget": "Weekly Budget",
+      "budgetExceeded": "Budget Exceeded",
+      "undoSuccess": "Transaction undone successfully"
     }
   },
   "Header": {

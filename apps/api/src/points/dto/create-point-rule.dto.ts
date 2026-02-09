@@ -32,7 +32,7 @@ export class CreatePointRuleDto {
     maximum: 100,
   })
   @IsInt()
-  @Min(0)
+  // @Min(0) - Allow negative points for deductions
   @Max(100)
   points!: number;
 

@@ -41,6 +41,42 @@ export function useTeacherRewards() {
 }
 
 /**
+ * Hook to fetch teacher's budget for a session
+ */
+export function useTeacherBudget(sessionId: string) {
+  return useQuery({
+    queryKey: ["points", "budget", sessionId],
+    queryFn: async () => {
+      const response = await api.get<{ used: number; limit: number; remaining: number }>(
+        "/points/budget",
+        { params: { sessionId } },
+      );
+      return response.data;
+    },
+    enabled: !!sessionId && sessionId !== "undefined",
+  });
+}
+
+/**
+ * Hook to add manual points (used for Undo)
+ */
+export function useAddManualPoints() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (dto: { studentId: string; amount: number; reason: string; sessionId: string }) => {
+      const response = await api.post("/points/manual", dto);
+      return response.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["points", "history", variables.studentId] });
+      queryClient.invalidateQueries({ queryKey: ["student", variables.studentId] });
+      queryClient.invalidateQueries({ queryKey: ["points", "budget", variables.sessionId] });
+    },
+  });
+}
+
+/**
  * Hook to award points by rule
  */
 export function useAwardReward() {
@@ -55,6 +91,8 @@ export function useAwardReward() {
       // Invalidate student points
       queryClient.invalidateQueries({ queryKey: ["points", "history", variables.studentId] });
       queryClient.invalidateQueries({ queryKey: ["student", variables.studentId] });
+      // Invalidate budget
+      queryClient.invalidateQueries({ queryKey: ["points", "budget", variables.sessionId] });
     },
   });
 }

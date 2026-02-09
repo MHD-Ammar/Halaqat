@@ -235,6 +235,7 @@ export class PointsService {
     mosqueId: string,
     sessionId: string,
     reason?: string,
+    multiplier: number = 1,
   ): Promise<PointTransaction | null> {
     // Look up the rule for this specific mosque
     const rule = await this.findRuleByKey(ruleKey, mosqueId);
@@ -256,7 +257,7 @@ export class PointsService {
     // Create transaction
     const transaction = this.transactionRepository.create({
       studentId,
-      amount: rule.points,
+      amount: multiplier * rule.points,
       reason: reason || rule.description,
       sourceType,
       sessionId,
@@ -314,19 +315,21 @@ export class PointsService {
       pointsToAward = rule.points;
     }
 
-    // Check teacher budget
-    const currentUsage = await this.getTeacherSessionBudgetUsage(
-      teacherId,
-      dto.sessionId,
-    );
-
-    const newTotal = currentUsage + pointsToAward;
-
-    if (newTotal > MANUAL_POINTS_BUDGET_PER_SESSION) {
-      throw new BadRequestException(
-        `You have exceeded your manual points budget for this session. ` +
-          `Budget: ${MANUAL_POINTS_BUDGET_PER_SESSION}, Used: ${currentUsage}, Requested: ${pointsToAward}`,
+    // Check teacher budget (only for rewards)
+    if (pointsToAward > 0) {
+      const currentUsage = await this.getTeacherSessionBudgetUsage(
+        teacherId,
+        dto.sessionId,
       );
+
+      const newTotal = currentUsage + pointsToAward;
+
+      if (newTotal > MANUAL_POINTS_BUDGET_PER_SESSION) {
+        throw new BadRequestException(
+          `You have exceeded your manual points budget for this session. ` +
+            `Budget: ${MANUAL_POINTS_BUDGET_PER_SESSION}, Used: ${currentUsage}, Requested: ${pointsToAward}`,
+        );
+      }
     }
 
     // Create transaction
@@ -361,19 +364,21 @@ export class PointsService {
     dto: AddManualPointsDto,
     teacherId: string,
   ): Promise<PointTransaction> {
-    // Calculate current budget usage for this teacher in this session
-    const currentUsage = await this.getTeacherSessionBudgetUsage(
-      teacherId,
-      dto.sessionId,
-    );
-
-    const newTotal = currentUsage + Math.abs(dto.amount);
-
-    if (newTotal > MANUAL_POINTS_BUDGET_PER_SESSION) {
-      throw new BadRequestException(
-        `You have exceeded your manual points budget for this session. ` +
-          `Budget: ${MANUAL_POINTS_BUDGET_PER_SESSION}, Used: ${currentUsage}, Requested: ${Math.abs(dto.amount)}`,
+    // Calculate current budget usage for this teacher in this session (only if positive)
+    if (dto.amount > 0) {
+      const currentUsage = await this.getTeacherSessionBudgetUsage(
+        teacherId,
+        dto.sessionId,
       );
+
+      const newTotal = currentUsage + dto.amount;
+
+      if (newTotal > MANUAL_POINTS_BUDGET_PER_SESSION) {
+        throw new BadRequestException(
+          `You have exceeded your manual points budget for this session. ` +
+            `Budget: ${MANUAL_POINTS_BUDGET_PER_SESSION}, Used: ${currentUsage}, Requested: ${dto.amount}`,
+        );
+      }
     }
 
     // Determine source type
@@ -413,7 +418,7 @@ export class PointsService {
   ): Promise<number> {
     const result = await this.transactionRepository
       .createQueryBuilder("pt")
-      .select("COALESCE(SUM(ABS(pt.amount)), 0)", "total")
+      .select("COALESCE(SUM(CASE WHEN pt.amount > 0 THEN pt.amount ELSE 0 END), 0)", "total")
       .where("pt.awarded_by_id = :teacherId", { teacherId })
       .andWhere("pt.session_id = :sessionId", { sessionId })
       .andWhere("pt.source_type IN (:...types)", {
