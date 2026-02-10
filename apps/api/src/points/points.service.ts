@@ -16,7 +16,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Repository, MoreThanOrEqual } from "typeorm";
 
 import { AddManualPointsDto } from "./dto/add-manual-points.dto";
 import { AwardByRuleDto } from "./dto/award-by-rule.dto";
@@ -25,13 +25,12 @@ import { CreatePointRuleDto } from "./dto/create-point-rule.dto";
 import { UpdatePointRuleDto } from "./dto/update-point-rule.dto";
 import { PointRule } from "./entities/point-rule.entity";
 import { PointTransaction } from "./entities/point-transaction.entity";
+import { Mosque } from "../mosques/entities/mosque.entity";
 import { Student } from "../students/entities/student.entity";
 
 /**
  * Maximum manual points a teacher can award per session
  */
-const MANUAL_POINTS_BUDGET_PER_SESSION = 20;
-
 @Injectable()
 export class PointsService {
   constructor(
@@ -41,6 +40,8 @@ export class PointsService {
     private transactionRepository: Repository<PointTransaction>,
     @InjectRepository(Student)
     private studentRepository: Repository<Student>,
+    @InjectRepository(Mosque)
+    private mosqueRepository: Repository<Mosque>,
   ) {}
 
   // ==================== POINT RULES ====================
@@ -315,19 +316,23 @@ export class PointsService {
       pointsToAward = rule.points;
     }
 
-    // Check teacher budget (only for rewards)
+    // Check teacher weekly budget (only for MANUAL rewards)
     if (pointsToAward > 0) {
-      const currentUsage = await this.getTeacherSessionBudgetUsage(
+      // Get config for mosque
+      const mosque = await this.mosqueRepository.findOne({ where: { id: mosqueId } });
+      const limit = mosque?.manualPointLimit ?? 20;
+
+      const currentUsage = await this.getTeacherWeeklyBudgetUsage(
         teacherId,
-        dto.sessionId,
+        mosqueId,
       );
 
       const newTotal = currentUsage + pointsToAward;
 
-      if (newTotal > MANUAL_POINTS_BUDGET_PER_SESSION) {
+      if (newTotal > limit) {
         throw new BadRequestException(
-          `You have exceeded your manual points budget for this session. ` +
-            `Budget: ${MANUAL_POINTS_BUDGET_PER_SESSION}, Used: ${currentUsage}, Requested: ${pointsToAward}`,
+          `You have exceeded your weekly manual points limit. ` +
+            `Limit: ${limit}, Used: ${currentUsage}, Requested: ${pointsToAward}`,
         );
       }
     }
@@ -358,25 +363,41 @@ export class PointsService {
 
   /**
    * Add manual points with budget enforcement
-   * Teachers are limited to MANUAL_POINTS_BUDGET_PER_SESSION per session
+   * Teachers are limited to manualPointLimit per week
    */
   async addManualPoints(
     dto: AddManualPointsDto,
     teacherId: string,
   ): Promise<PointTransaction> {
-    // Calculate current budget usage for this teacher in this session (only if positive)
+      // Get student's mosque to check limit
+      // Assuming teacher is authorized to award to this student (checked by guard/roles)
+      const student = await this.studentRepository.findOne({
+        where: { id: dto.studentId },
+        relations: ["mosque"],
+      });
+      
+      if (!student) {
+        throw new NotFoundException("Student not found");
+      }
+
+      const mosqueId = student.mosque.id;
+
+    // Calculate current budget usage for this teacher in this week (only if positive reward)
     if (dto.amount > 0) {
-      const currentUsage = await this.getTeacherSessionBudgetUsage(
+      const mosque = await this.mosqueRepository.findOne({ where: { id: mosqueId } });
+      const limit = mosque?.manualPointLimit ?? 20;
+
+      const currentUsage = await this.getTeacherWeeklyBudgetUsage(
         teacherId,
-        dto.sessionId,
+        mosqueId,
       );
 
       const newTotal = currentUsage + dto.amount;
 
-      if (newTotal > MANUAL_POINTS_BUDGET_PER_SESSION) {
+      if (newTotal > limit) {
         throw new BadRequestException(
-          `You have exceeded your manual points budget for this session. ` +
-            `Budget: ${MANUAL_POINTS_BUDGET_PER_SESSION}, Used: ${currentUsage}, Requested: ${dto.amount}`,
+          `You have exceeded your weekly manual points limit. ` +
+            `Limit: ${limit}, Used: ${currentUsage}, Requested: ${dto.amount}`,
         );
       }
     }
@@ -410,23 +431,35 @@ export class PointsService {
   }
 
   /**
-   * Get teacher's manual points budget usage for a session
+   * Get teacher's manual points budget usage for the current week (Sunday-Saturday)
    */
-  async getTeacherSessionBudgetUsage(
+  async getTeacherWeeklyBudgetUsage(
     teacherId: string,
-    sessionId: string,
+    _mosqueId: string, // Not strictly used for filtering transactions, but good for context if needed later
   ): Promise<number> {
-    const result = await this.transactionRepository
-      .createQueryBuilder("pt")
-      .select("COALESCE(SUM(CASE WHEN pt.amount > 0 THEN pt.amount ELSE 0 END), 0)", "total")
-      .where("pt.awarded_by_id = :teacherId", { teacherId })
-      .andWhere("pt.session_id = :sessionId", { sessionId })
-      .andWhere("pt.source_type IN (:...types)", {
-        types: [PointSourceType.MANUAL_REWARD, PointSourceType.MANUAL_PENALTY],
-      })
-      .getRawOne();
+    // Calculate start of week (Sunday 00:00:00)
+    const now = new Date();
+    const day = now.getDay(); // 0 (Sunday) to 6 (Saturday)
+    const diff = now.getDate() - day; // adjust when day is sunday
+    const startOfWeek = new Date(now.setDate(diff));
+    startOfWeek.setHours(0, 0, 0, 0);
 
-    return parseInt(result?.total || "0", 10);
+    const budgetTransactions = await this.transactionRepository.find({
+      where: {
+        awardedById: teacherId,
+        createdAt: MoreThanOrEqual(startOfWeek),
+        sourceType: PointSourceType.MANUAL_REWARD,
+      },
+    });
+
+    const total = budgetTransactions.reduce(
+      (sum, tx) => sum + tx.amount,
+      0,
+    );
+    
+    return total;
+
+
   }
 
   // ==================== POINT HISTORY ====================

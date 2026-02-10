@@ -16,6 +16,7 @@ export interface Mosque {
   id: string;
   name: string;
   code: string;
+  manualPointLimit?: number;
 }
 
 export interface PointRule {
@@ -37,6 +38,7 @@ export interface PointRule {
 
 export interface UpdateMosqueDto {
   name: string;
+  manualPointLimit?: number;
 }
 
 export interface BulkUpdatePointRulesDto {

@@ -131,6 +131,7 @@
       "awardFailed": "Failed to award reward",
       "budget": "Weekly Budget",
       "budgetExceeded": "Budget Exceeded",
+      "budgetExceededError": "You have exceeded your weekly manual points limit",
       "undoSuccess": "Transaction undone successfully"
     }
   },
@@ -491,10 +492,12 @@
   "Settings": {
     "title": "Settings",
     "description": "Manage mosque settings and point rules",
-    "mosqueProfile": "Mosque Profile",
-    "mosqueProfileDesc": "Update mosque name and basic information",
+    "mosqueProfile": "Mosque Identity",
+    "mosqueProfileDesc": "Manage your mosque's public information.",
     "mosqueName": "Mosque Name",
-    "mosqueNamePlaceholder": "Enter mosque name",
+    "mosqueNamePlaceholder": "e.g., Al-Nour Mosque",
+    "manualPointLimit": "Teacher Weekly Manual Point Limit",
+    "perWeek": "points/week",
     "inviteCode": "Invite Code",
     "pointRules": "Point Rules",
     "pointRulesDesc": "Configure how many points students earn for each activity",

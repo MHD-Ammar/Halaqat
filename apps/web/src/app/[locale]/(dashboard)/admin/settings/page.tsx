@@ -50,12 +50,16 @@ export default function AdminSettingsPage() {
   const { data: mosque, isLoading: isMosqueLoading } = useMosqueSettings();
   const updateMosqueMutation = useUpdateMosque();
   const [mosqueName, setMosqueName] = useState("");
+  const [manualPointLimit, setManualPointLimit] = useState(20);
 
   useEffect(() => {
-    if (mosque?.name) {
+    if (mosque) {
       setMosqueName(mosque.name);
+      if (mosque.manualPointLimit !== undefined) {
+        setManualPointLimit(mosque.manualPointLimit);
+      }
     }
-  }, [mosque?.name]);
+  }, [mosque]);
 
   const handleSaveMosque = async () => {
     if (!mosqueName.trim()) {
@@ -68,7 +72,10 @@ export default function AdminSettingsPage() {
     }
 
     try {
-      await updateMosqueMutation.mutateAsync({ name: mosqueName });
+      await updateMosqueMutation.mutateAsync({
+        name: mosqueName,
+        manualPointLimit,
+      });
       toast({
         title: t("messages.success"),
         description: t("messages.mosqueUpdated"),
@@ -187,15 +194,31 @@ export default function AdminSettingsPage() {
             </div>
           ) : (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="mosque-name">{t("mosqueName")}</Label>
-                <Input
-                  id="mosque-name"
-                  value={mosqueName}
-                  onChange={(e) => setMosqueName(e.target.value)}
-                  placeholder={t("mosqueNamePlaceholder")}
-                  className="max-w-md"
-                />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="mosque-name">{t("mosqueName")}</Label>
+                  <Input
+                    id="mosque-name"
+                    value={mosqueName}
+                    onChange={(e) => setMosqueName(e.target.value)}
+                    placeholder={t("mosqueNamePlaceholder")}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="manual-limit">
+                    {t("manualPointLimit")}
+                    <span className="text-xs text-muted-foreground ml-2 font-normal">
+                      ({t("perWeek")})
+                    </span>
+                  </Label>
+                  <Input
+                    id="manual-limit"
+                    type="number"
+                    min="0"
+                    value={manualPointLimit}
+                    onChange={(e) => setManualPointLimit(parseInt(e.target.value) || 0)}
+                  />
+                </div>
               </div>
 
               <div className="flex items-center gap-2 text-sm text-muted-foreground">

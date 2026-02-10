@@ -58,4 +58,11 @@ export class Mosque extends BaseEntity {
    */
   @OneToMany(() => Exam, (exam) => exam.mosque)
   exams!: Exam[];
+
+  /**
+   * Weekly limit for manual points a teacher can award
+   * Applies only to discretionary rewards (not system rules like Recitation)
+   */
+  @Column({ default: 20 })
+  manualPointLimit!: number;
 }

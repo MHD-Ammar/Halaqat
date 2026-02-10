@@ -264,7 +264,12 @@ export function StudentActionSheet({
   };
 
   // Handle awarding a reward
-  const handleAwardReward = async (ruleId: number, isCustomEntry: boolean, maxCustomValue: number | null) => {
+  const handleAwardReward = async (
+    ruleId: number,
+    isCustomEntry: boolean,
+    maxCustomValue: number | null,
+    customAmountOverride?: number 
+  ) => {
     if (!sessionId || sessionId === "undefined") {
       toast({
         variant: "destructive",
@@ -303,55 +308,76 @@ export function StudentActionSheet({
 
     setAwardingRuleId(ruleId);
 
-    try {
-      await awardReward.mutateAsync({
-        ruleId,
-        studentId: student.id,
-        sessionId,
-        customAmount: isCustomEntry ? customAmount : undefined,
-      });
+    const finalAmount = customAmountOverride ?? (isCustomEntry ? customAmount : 0);
+    
+    const payload: any = {
+      studentId: student.id,
+      sessionId,
+      ruleId,
+    };
 
-      const rule = rewardRules.find((r) => r.id === ruleId);
-      const pointsAwarded = isCustomEntry ? customAmount : rule?.points || 0;
-
-      toast({
-        title: t("rewardsTab.awarded"),
-        description: t("rewardsTab.awardedDesc", {
-          name: rule?.description || "",
-          points: pointsAwarded,
-        }),
-        action: (
-          <ToastAction
-            altText={tCommon("undo")}
-            onClick={() => {
-              addManualPoints.mutate({
-                studentId: student.id,
-                sessionId,
-                amount: -pointsAwarded,
-                reason: `Undo: ${rule?.description}`,
-              }, {
-                onSuccess: () => {
-                   toast({ description: t("rewardsTab.undoSuccess") });
-                }
-              });
-            }}
-          >
-            {tCommon("undo")}
-          </ToastAction>
-        ),
-      });
-
-      setSelectedRule(null);
-      setCustomAmount(0);
-    } catch {
-      toast({
-        variant: "destructive",
-        title: tCommon("error"),
-        description: t("rewardsTab.awardFailed"),
-      });
-    } finally {
-      setAwardingRuleId(null);
+    if (finalAmount > 0) {
+      payload.customAmount = finalAmount;
     }
+
+    awardReward.mutate(payload, {
+      onSuccess: () => {
+        const rule = rewardRules.find((r) => r.id === ruleId);
+        const pointsAwarded = isCustomEntry ? customAmount : rule?.points || 0;
+
+        toast({
+          title: t("rewardsTab.awarded"),
+          description: t("rewardsTab.awardedDesc", {
+            name: rule?.description || "",
+            points: pointsAwarded,
+          }),
+          action: (
+            <ToastAction
+              altText={tCommon("undo")}
+              onClick={() => {
+                const undoReason = `Undo: ${rule?.description}`;
+                addManualPoints.mutate(
+                  {
+                    studentId: student.id,
+                    sessionId,
+                    amount: -pointsAwarded,
+                    reason: undoReason,
+                  },
+                  {
+                    onSuccess: () => {
+                      toast({ description: t("rewardsTab.undoSuccess") });
+                    },
+                  }
+                );
+              }}
+            >
+              {tCommon("undo")}
+            </ToastAction>
+          ),
+        });
+        setAwardingRuleId(null);
+        if (isCustomEntry) {
+          setCustomAmount(0);
+          setSelectedRule(null);
+        }
+      },
+      onError: (error: any) => {
+        const errorMessage = error.response?.data?.message || error.message;
+        let displayMessage = errorMessage || t("saveFailed");
+
+        // improved error mapping for budget limit
+        if (errorMessage && errorMessage.includes("limit")) {
+             displayMessage = t("rewardsTab.budgetExceededError");
+        }
+
+        toast({
+          variant: "destructive",
+          title: tCommon("error"),
+          description: displayMessage,
+        });
+        setAwardingRuleId(null);
+      },
+    });
   };
 
   /**
@@ -624,7 +650,7 @@ export function StudentActionSheet({
                 <div className="grid grid-cols-2 gap-3 p-4 pt-1">
                   {rewardRules.map((rule) => {
                     const isNegative = rule.points < 0;
-                    const isBudgetBlocked = !isNegative && budget?.remaining === 0;
+                    const isBudgetBlocked = !isNegative && budget && budget.remaining === 0;
                     
                     return (
                       <div key={rule.id} className="space-y-2">
@@ -665,8 +691,8 @@ export function StudentActionSheet({
                             <Input
                               type="number"
                               min={1}
-                              max={rule.maxCustomValue ?? 100}
-                              value={customAmount || ""}
+                              max={Math.min(rule.maxCustomValue ?? 100, budget?.remaining ?? 100)}
+                              value={customAmount}
                               onChange={(e) =>
                                 setCustomAmount(parseInt(e.target.value, 10) || 0)
                               }
@@ -675,13 +701,26 @@ export function StudentActionSheet({
                             />
                             <Button
                               size="sm"
-                              className="h-10 px-4"
-                              disabled={awardReward.isPending || customAmount <= 0}
+                              className="h-10 px-4 min-w-[3rem]"
+                              disabled={
+                                awardReward.isPending || 
+                                customAmount <= 0 || 
+                                (budget && customAmount > budget.remaining)
+                              }
                               onClick={() =>
-                                handleAwardReward(rule.id, true, rule.maxCustomValue)
+                                handleAwardReward(
+                                  rule.id,
+                                  true, // isCustomEntry
+                                  rule.maxCustomValue,
+                                  customAmount
+                                )
                               }
                             >
-                              <Check className="h-4 w-4" />
+                              {awardReward.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Check className="h-4 w-4" />
+                              )}
                             </Button>
                           </div>
                         )}

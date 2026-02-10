@@ -61,7 +61,7 @@ export class MosquesService {
    */
   async updateMosque(
     id: string,
-    dto: { name: string },
+    dto: { name: string; manualPointLimit?: number },
   ): Promise<Mosque> {
     const mosque = await this.mosqueRepository.findOne({
       where: { id },
@@ -72,6 +72,10 @@ export class MosquesService {
     }
 
     mosque.name = dto.name;
+    if (dto.manualPointLimit !== undefined) {
+      mosque.manualPointLimit = dto.manualPointLimit;
+    }
+    
     return this.mosqueRepository.save(mosque);
   }
 }

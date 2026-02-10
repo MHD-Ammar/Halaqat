@@ -14,9 +14,13 @@ import { PointsController } from "./points.controller";
 import { PointsService } from "./points.service";
 import { Mosque } from "../mosques/entities/mosque.entity";
 import { Student } from "../students/entities/student.entity";
+import { UsersModule } from "../users/users.module";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PointRule, PointTransaction, Student, Mosque])],
+  imports: [
+    TypeOrmModule.forFeature([PointRule, PointTransaction, Student, Mosque]),
+    UsersModule,
+  ],
   controllers: [PointsController],
   providers: [PointsService, PointsSeederService],
   exports: [PointsService],

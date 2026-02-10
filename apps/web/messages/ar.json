@@ -131,6 +131,7 @@
       "awardFailed": "فشل في منح المكافأة",
       "budget": "الميزانية الأسبوعية",
       "budgetExceeded": "تم تجاوز الميزانية",
+      "budgetExceededError": "لقد تجاوزت الحد الأسبوعي للنقاط اليدوية",
       "undoSuccess": "تم التراجع عن العملية بنجاح"
     }
   },
@@ -491,10 +492,12 @@
   "Settings": {
     "title": "الإعدادات",
     "description": "إدارة إعدادات المسجد ونظام النقاط",
-    "mosqueProfile": "ملف المسجد",
-    "mosqueProfileDesc": "تعديل اسم المسجد ومعلوماته الأساسية",
+    "mosqueProfile": "هوية المسجد",
+    "mosqueProfileDesc": "إدارة المعلومات العامة لمسجدك.",
     "mosqueName": "اسم المسجد",
-    "mosqueNamePlaceholder": "أدخل اسم المسجد",
+    "mosqueNamePlaceholder": "مثال: مسجد النور",
+    "manualPointLimit": "الحد الأسبوعي للنقاط اليدوية للمعلم",
+    "perWeek": "نقاط/أسبوع",
     "inviteCode": "رمز الدعوة",
     "pointRules": "قواعد النقاط",
     "pointRulesDesc": "تحديد عدد النقاط التي يحصل عليها الطالب لكل نشاط",

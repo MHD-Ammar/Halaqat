@@ -5,7 +5,7 @@
  */
 
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsInt, IsNotEmpty, IsOptional, IsString, Min } from "class-validator";
 
 export class UpdateMosqueDto {
   @ApiProperty({
@@ -14,5 +14,16 @@ export class UpdateMosqueDto {
   })
   @IsString()
   @IsNotEmpty({ message: "Mosque name is required" })
+  @IsNotEmpty({ message: "Mosque name is required" })
   name!: string;
+
+  @ApiProperty({
+    description: "Weekly limit for manual points per teacher",
+    example: 20,
+    required: false,
+  })
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  manualPointLimit?: number;
 }

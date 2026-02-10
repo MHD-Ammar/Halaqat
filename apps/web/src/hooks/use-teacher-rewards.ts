@@ -47,6 +47,7 @@ export function useTeacherBudget(sessionId: string) {
   return useQuery({
     queryKey: ["points", "budget", sessionId],
     queryFn: async () => {
+      // API now returns weekly budget, but we still trigger it per session view
       const response = await api.get<{ used: number; limit: number; remaining: number }>(
         "/points/budget",
         { params: { sessionId } },

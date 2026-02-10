@@ -40,6 +40,7 @@ import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
+import { UsersService } from "../users/users.service";
 
 @ApiTags("Points")
 @ApiBearerAuth("JWT-auth")
@@ -47,7 +48,10 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 export class PointsController {
-  constructor(private readonly pointsService: PointsService) {}
+  constructor(
+    private readonly pointsService: PointsService,
+    private readonly usersService: UsersService,
+  ) {}
 
   // ==================== POINT RULES (Admin) ====================
 
@@ -226,22 +230,27 @@ export class PointsController {
   @Get("budget")
   @ApiOperation({
     summary: "Get budget usage",
-    description: "Get teacher's manual points budget usage for a session",
+    description: "Get teacher's manual points budget usage for the current week",
   })
-  @ApiQuery({ name: "sessionId", description: "Session UUID" })
   @ApiResponse({ status: 200, description: "Budget usage details" })
-  async getBudgetUsage(
-    @Query("sessionId", ParseUUIDPipe) sessionId: string,
-    @CurrentUser() user: { sub: string },
-  ) {
-    const used = await this.pointsService.getTeacherSessionBudgetUsage(
+  async getBudgetUsage(@CurrentUser() user: { sub: string }) {
+    // We need the user's mosqueId to get the limit
+    const userProfile = await this.usersService.findProfile(user.sub);
+    const mosqueId = userProfile?.mosqueId;
+    const limit = userProfile?.mosque?.manualPointLimit ?? 20;
+
+    // Use dummy mosqueId if not found (shouldn't happen for active users)
+    const effectiveMosqueId = mosqueId || "unknown";
+
+    const used = await this.pointsService.getTeacherWeeklyBudgetUsage(
       user.sub,
-      sessionId,
+      effectiveMosqueId,
     );
+
     return {
       used,
-      limit: 20, // Should match MANUAL_POINTS_BUDGET_PER_SESSION constant
-      remaining: Math.max(0, 20 - used),
+      limit,
+      remaining: Math.max(0, limit - used),
     };
   }
 
