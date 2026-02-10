@@ -10,6 +10,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
 
+import { useAuth } from "./use-auth";
+
 export interface TeacherRewardRule {
   id: number;
   key: string;
@@ -40,12 +42,16 @@ export function useTeacherRewards() {
   });
 }
 
+
+
 /**
  * Hook to fetch teacher's budget for a session
  */
 export function useTeacherBudget(sessionId: string) {
+  const { user } = useAuth();
+  
   return useQuery({
-    queryKey: ["points", "budget", sessionId],
+    queryKey: ["points", "budget", sessionId, user?.id],
     queryFn: async () => {
       // API now returns weekly budget, but we still trigger it per session view
       const response = await api.get<{ used: number; limit: number; remaining: number }>(
@@ -54,7 +60,7 @@ export function useTeacherBudget(sessionId: string) {
       );
       return response.data;
     },
-    enabled: !!sessionId && sessionId !== "undefined",
+    enabled: !!sessionId && sessionId !== "undefined" && !!user?.id,
   });
 }
 

@@ -452,6 +452,7 @@ export class PointsService {
       },
     });
 
+
     const total = budgetTransactions.reduce(
       (sum, tx) => sum + tx.amount,
       0,

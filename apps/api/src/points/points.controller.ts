@@ -195,9 +195,9 @@ export class PointsController {
   @ApiResponse({ status: 404, description: "Rule not found" })
   awardByRule(
     @Body() dto: AwardByRuleDto,
-    @CurrentUser() user: { sub: string; mosqueId: string },
+    @CurrentUser() user: { id: string; mosqueId: string },
   ) {
-    return this.pointsService.awardPointsByRule(dto, user.sub, user.mosqueId);
+    return this.pointsService.awardPointsByRule(dto, user.id, user.mosqueId);
   }
 
   // ==================== MANUAL POINTS ====================
@@ -218,9 +218,9 @@ export class PointsController {
   })
   addManualPoints(
     @Body() dto: AddManualPointsDto,
-    @CurrentUser() user: { sub: string },
+    @CurrentUser() user: { id: string },
   ) {
-    return this.pointsService.addManualPoints(dto, user.sub);
+    return this.pointsService.addManualPoints(dto, user.id);
   }
 
   /**
@@ -233,9 +233,9 @@ export class PointsController {
     description: "Get teacher's manual points budget usage for the current week",
   })
   @ApiResponse({ status: 200, description: "Budget usage details" })
-  async getBudgetUsage(@CurrentUser() user: { sub: string }) {
+  async getBudgetUsage(@CurrentUser() user: { id: string }) {
     // We need the user's mosqueId to get the limit
-    const userProfile = await this.usersService.findProfile(user.sub);
+    const userProfile = await this.usersService.findProfile(user.id);
     const mosqueId = userProfile?.mosqueId;
     const limit = userProfile?.mosque?.manualPointLimit ?? 20;
 
@@ -243,7 +243,7 @@ export class PointsController {
     const effectiveMosqueId = mosqueId || "unknown";
 
     const used = await this.pointsService.getTeacherWeeklyBudgetUsage(
-      user.sub,
+      user.id,
       effectiveMosqueId,
     );
 

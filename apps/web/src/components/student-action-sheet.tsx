@@ -51,6 +51,7 @@ import {
   useAwardReward,
   useTeacherBudget,
   useAddManualPoints,
+  type AwardByRuleDto,
 } from "@/hooks/use-teacher-rewards";
 import { useToast } from "@/hooks/use-toast";
 
@@ -310,7 +311,7 @@ export function StudentActionSheet({
 
     const finalAmount = customAmountOverride ?? (isCustomEntry ? customAmount : 0);
     
-    const payload: any = {
+    const payload: AwardByRuleDto = {
       studentId: student.id,
       sessionId,
       ruleId,
