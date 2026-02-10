@@ -4,36 +4,43 @@
  * REST API endpoints for managing points and point rules.
  */
 
+import { UserRole } from "@halaqat/types";
 import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Param,
   Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Put,
   Query,
   UseGuards,
-  ParseUUIDPipe,
   UseInterceptors,
   ClassSerializerInterceptor,
 } from "@nestjs/common";
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
+  ApiOperation,
   ApiParam,
   ApiQuery,
+  ApiResponse,
+  ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@halaqat/types";
 
-import { PointsService } from "./points.service";
 import { AddManualPointsDto } from "./dto/add-manual-points.dto";
+import { AwardByRuleDto } from "./dto/award-by-rule.dto";
+import { BulkUpdatePointRulesDto } from "./dto/bulk-update-point-rules.dto";
+import { CreatePointRuleDto } from "./dto/create-point-rule.dto";
 import { UpdatePointRuleDto } from "./dto/update-point-rule.dto";
+import { PointsService } from "./points.service";
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { UsersService } from "../users/users.service";
 
 @ApiTags("Points")
 @ApiBearerAuth("JWT-auth")
@@ -41,12 +48,15 @@ import { CurrentUser } from "../auth/decorators/current-user.decorator";
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 export class PointsController {
-  constructor(private readonly pointsService: PointsService) {}
+  constructor(
+    private readonly pointsService: PointsService,
+    private readonly usersService: UsersService,
+  ) {}
 
   // ==================== POINT RULES (Admin) ====================
 
   /**
-   * Get all point rules
+   * Get all point rules for the current user's mosque
    * GET /api/points/rules
    */
   @Get("rules")
@@ -54,12 +64,71 @@ export class PointsController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: "Get all point rules",
-    description: "Get all point rules (Admin only)",
+    description: "Get all point rules for the current user's mosque (Admin only)",
   })
   @ApiResponse({ status: 200, description: "List of point rules" })
   @ApiResponse({ status: 403, description: "Forbidden - requires ADMIN role" })
-  findAllRules() {
-    return this.pointsService.findAllRules();
+  findAllRules(@CurrentUser() user: { mosqueId: string }) {
+    return this.pointsService.findAllRules(user.mosqueId);
+  }
+
+  /**
+   * Get teacher-visible rules for Quick Reward menu
+   * GET /api/points/rules/teacher
+   */
+  @Get("rules/teacher")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.TEACHER, UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Get teacher-visible rules",
+    description: "Get reward rules visible to teachers for Quick Reward menu",
+  })
+  @ApiResponse({ status: 200, description: "List of teacher-visible rules" })
+  findTeacherRules(@CurrentUser() user: { mosqueId: string }) {
+    return this.pointsService.findTeacherVisibleRules(user.mosqueId);
+  }
+
+  /**
+   * Create a custom reward rule
+   * POST /api/points/rules
+   */
+  @Post("rules")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Create custom rule",
+    description: "Create a new custom reward rule (Admin only)",
+  })
+  @ApiResponse({ status: 201, description: "Rule created successfully" })
+  @ApiResponse({ status: 403, description: "Forbidden - requires ADMIN role" })
+  createRule(
+    @Body() dto: CreatePointRuleDto,
+    @CurrentUser() user: { mosqueId: string },
+  ) {
+    return this.pointsService.createCustomRule(user.mosqueId, dto);
+  }
+
+  /**
+   * Delete a custom rule (non-system rules only)
+   * DELETE /api/points/rules/:id
+   */
+  @Delete("rules/:id")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Delete custom rule",
+    description: "Delete a custom reward rule (Admin only, system rules cannot be deleted)",
+  })
+  @ApiParam({ name: "id", description: "Rule ID" })
+  @ApiResponse({ status: 200, description: "Rule deleted successfully" })
+  @ApiResponse({ status: 403, description: "Cannot delete system rules" })
+  @ApiResponse({ status: 404, description: "Rule not found" })
+  async deleteRule(
+    @Param("id", ParseIntPipe) id: number,
+    @CurrentUser() user: { mosqueId: string },
+  ) {
+    await this.pointsService.deleteCustomRule(id, user.mosqueId);
+    return { message: "Rule deleted successfully" };
   }
 
   /**
@@ -76,8 +145,59 @@ export class PointsController {
   @ApiParam({ name: "key", description: "Point rule key" })
   @ApiResponse({ status: 200, description: "Point rule updated" })
   @ApiResponse({ status: 404, description: "Rule not found" })
-  updateRule(@Param("key") key: string, @Body() dto: UpdatePointRuleDto) {
-    return this.pointsService.updateRule(key, dto);
+  updateRule(
+    @Param("key") key: string,
+    @Body() dto: UpdatePointRuleDto,
+    @CurrentUser() user: { mosqueId: string },
+  ) {
+    return this.pointsService.updateRule(key, user.mosqueId, dto);
+  }
+
+  /**
+   * Bulk update point rules
+   * PUT /api/points/rules
+   */
+  @Put("rules")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Bulk update point rules",
+    description: "Update multiple point rules at once (Admin only)",
+  })
+  @ApiResponse({ status: 200, description: "Point rules updated" })
+  @ApiResponse({ status: 403, description: "Forbidden - requires ADMIN role" })
+  async bulkUpdateRules(
+    @Body() dto: BulkUpdatePointRulesDto,
+    @CurrentUser() user: { mosqueId: string },
+  ) {
+    const updatedRules = await this.pointsService.bulkUpdateRules(user.mosqueId, dto);
+    return {
+      message: "Point rules updated successfully",
+      data: updatedRules,
+    };
+  }
+
+  // ==================== QUICK REWARD (Teacher) ====================
+
+  /**
+   * Award points by rule (for Quick Reward)
+   * POST /api/points/award-by-rule
+   */
+  @Post("award-by-rule")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.TEACHER, UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Award points by rule",
+    description: "Award points to a student using a specific reward rule",
+  })
+  @ApiResponse({ status: 201, description: "Points awarded successfully" })
+  @ApiResponse({ status: 400, description: "Validation error or budget exceeded" })
+  @ApiResponse({ status: 404, description: "Rule not found" })
+  awardByRule(
+    @Body() dto: AwardByRuleDto,
+    @CurrentUser() user: { id: string; mosqueId: string },
+  ) {
+    return this.pointsService.awardPointsByRule(dto, user.id, user.mosqueId);
   }
 
   // ==================== MANUAL POINTS ====================
@@ -98,9 +218,40 @@ export class PointsController {
   })
   addManualPoints(
     @Body() dto: AddManualPointsDto,
-    @CurrentUser() user: { sub: string },
+    @CurrentUser() user: { id: string },
   ) {
-    return this.pointsService.addManualPoints(dto, user.sub);
+    return this.pointsService.addManualPoints(dto, user.id);
+  }
+
+  /**
+   * Get teacher's budget usage for a session
+   * GET /api/points/budget?sessionId=...
+   */
+  @Get("budget")
+  @ApiOperation({
+    summary: "Get budget usage",
+    description: "Get teacher's manual points budget usage for the current week",
+  })
+  @ApiResponse({ status: 200, description: "Budget usage details" })
+  async getBudgetUsage(@CurrentUser() user: { id: string }) {
+    // We need the user's mosqueId to get the limit
+    const userProfile = await this.usersService.findProfile(user.id);
+    const mosqueId = userProfile?.mosqueId;
+    const limit = userProfile?.mosque?.manualPointLimit ?? 20;
+
+    // Use dummy mosqueId if not found (shouldn't happen for active users)
+    const effectiveMosqueId = mosqueId || "unknown";
+
+    const used = await this.pointsService.getTeacherWeeklyBudgetUsage(
+      user.id,
+      effectiveMosqueId,
+    );
+
+    return {
+      used,
+      limit,
+      remaining: Math.max(0, limit - used),
+    };
   }
 
   // ==================== POINT HISTORY ====================

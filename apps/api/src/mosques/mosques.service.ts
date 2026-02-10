@@ -52,4 +52,30 @@ export class MosquesService {
       order: { name: "ASC" },
     });
   }
+
+  /**
+   * Update a mosque by ID
+   * @param id - The mosque ID
+   * @param dto - The update data
+   * @returns The updated mosque
+   */
+  async updateMosque(
+    id: string,
+    dto: { name: string; manualPointLimit?: number },
+  ): Promise<Mosque> {
+    const mosque = await this.mosqueRepository.findOne({
+      where: { id },
+    });
+
+    if (!mosque) {
+      throw new NotFoundException("Mosque not found");
+    }
+
+    mosque.name = dto.name;
+    if (dto.manualPointLimit !== undefined) {
+      mosque.manualPointLimit = dto.manualPointLimit;
+    }
+    
+    return this.mosqueRepository.save(mosque);
+  }
 }

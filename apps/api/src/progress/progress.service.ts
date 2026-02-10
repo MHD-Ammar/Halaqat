@@ -7,16 +7,17 @@
  * Auto-links pages to their corresponding Surahs.
  */
 
+import { RecitationQuality } from "@halaqat/types";
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { RecitationQuality } from "@halaqat/types";
 
-import { Recitation } from "./entities/recitation.entity";
-import { RecordRecitationDto } from "./dto/record-recitation.dto";
-import { BulkRecitationDto } from "./dto/bulk-recitation.dto";
-import { PointsService } from "../points/points.service";
 import { CurriculumService } from "../curriculum/curriculum.service";
+import { PointsService } from "../points/points.service";
+import { BulkRecitationDto } from "./dto/bulk-recitation.dto";
+import { RecordRecitationDto } from "./dto/record-recitation.dto";
+import { Recitation } from "./entities/recitation.entity";
+import { Student } from "../students/entities/student.entity";
 
 /**
  * Mapping from RecitationQuality to PointRule key
@@ -43,6 +44,8 @@ export class ProgressService {
   constructor(
     @InjectRepository(Recitation)
     private recitationRepository: Repository<Recitation>,
+    @InjectRepository(Student)
+    private studentRepository: Repository<Student>,
     private pointsService: PointsService,
     private curriculumService: CurriculumService,
   ) {}
@@ -69,13 +72,22 @@ export class ProgressService {
 
     await this.recitationRepository.save(recitation);
 
+    // Get student's mosqueId for point rule lookup
+    const student = await this.studentRepository.findOne({
+      where: { id: dto.studentId },
+      select: ["mosqueId"],
+    });
+
     // Award points based on quality
-    const ruleKey = QUALITY_TO_RULE_KEY[dto.quality];
-    await this.pointsService.calculateAndAwardPoints(
-      dto.studentId,
-      ruleKey,
-      dto.sessionId,
-    );
+    if (student?.mosqueId) {
+      const ruleKey = QUALITY_TO_RULE_KEY[dto.quality];
+      await this.pointsService.calculateAndAwardPoints(
+        dto.studentId,
+        ruleKey,
+        student.mosqueId,
+        dto.sessionId,
+      );
+    }
 
     // Load full recitation with relations
     return this.findOne(recitation.id);
@@ -90,6 +102,12 @@ export class ProgressService {
   ): Promise<BulkRecitationResult> {
     const recitations: Recitation[] = [];
     let totalPointsAwarded = 0;
+
+    // Get student's mosqueId once for all point calculations
+    const student = await this.studentRepository.findOne({
+      where: { id: dto.studentId },
+      select: ["mosqueId"],
+    });
 
     // Process each page individually
     for (const detail of dto.details) {
@@ -114,15 +132,18 @@ export class ProgressService {
       recitations.push(recitation);
 
       // Award points for this specific page
-      const ruleKey = QUALITY_TO_RULE_KEY[detail.quality];
-      const pointTransaction = await this.pointsService.calculateAndAwardPoints(
-        dto.studentId,
-        ruleKey,
-        dto.sessionId,
-      );
+      if (student?.mosqueId) {
+        const ruleKey = QUALITY_TO_RULE_KEY[detail.quality];
+        const pointTransaction = await this.pointsService.calculateAndAwardPoints(
+          dto.studentId,
+          ruleKey,
+          student.mosqueId,
+          dto.sessionId,
+        );
 
-      if (pointTransaction) {
-        totalPointsAwarded += pointTransaction.amount;
+        if (pointTransaction) {
+          totalPointsAwarded += pointTransaction.amount;
+        }
       }
     }
 

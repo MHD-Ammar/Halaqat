@@ -5,16 +5,18 @@
  * Features "Smart Initialization" - auto-creates attendance records for all students.
  */
 
+import { AttendanceStatus, SessionStatus } from "@halaqat/types";
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { AttendanceStatus, SessionStatus } from "@halaqat/types";
 
-import { Session } from "./entities/session.entity";
-import { Attendance } from "./entities/attendance.entity";
 import { BulkAttendanceDto } from "./dto/bulk-attendance.dto";
-import { StudentsService } from "../students/students.service";
+import { Attendance } from "./entities/attendance.entity";
+import { Session } from "./entities/session.entity";
 import { CirclesService } from "../circles/circles.service";
+import { PointsService } from "../points/points.service";
+import { StudentsService } from "../students/students.service";
+
 
 @Injectable()
 export class SessionsService {
@@ -25,6 +27,7 @@ export class SessionsService {
     private attendanceRepository: Repository<Attendance>,
     private studentsService: StudentsService,
     private circlesService: CirclesService,
+    private pointsService: PointsService,
   ) {}
 
   /**
@@ -154,11 +157,105 @@ export class SessionsService {
     sessionId: string,
     bulkDto: BulkAttendanceDto,
   ): Promise<Session> {
-    // Verify session exists
-    await this.findOne(sessionId);
+    // Verify session exists and get current state
+    const session = await this.findOne(sessionId);
 
-    // Update each attendance record
+    // Map current attendances for easy lookup
+    const attendanceMap = new Map(session.attendances.map((a) => [a.studentId, a]));
+
+    // Process updates
     for (const update of bulkDto.updates) {
+      const currentRecord = attendanceMap.get(update.studentId);
+
+      // Only perform logic if status is actively changing
+      if (currentRecord && currentRecord.status !== update.status) {
+        const studentId = update.studentId;
+        const mosqueId = session.mosqueId;
+
+        // 1. Handle NEW Status = PRESENT
+        if (update.status === AttendanceStatus.PRESENT) {
+          // If previously LATE -> Revert LATE points (-2), Award PRESENT (ON_TIME) points
+          if (currentRecord.status === AttendanceStatus.LATE) {
+            await this.pointsService.calculateAndAwardPoints(
+              studentId,
+              "ATTENDANCE_LATE",
+              mosqueId,
+              sessionId,
+              "Correction: Changed from Late to Present",
+              -1, // Deduct keys
+            );
+            await this.pointsService.calculateAndAwardPoints(
+              studentId,
+              "ATTENDANCE_ON_TIME",
+              mosqueId,
+              sessionId,
+            );
+          }
+          // If previously ABSENT/Null -> Just Award PRESENT (ON_TIME)
+          else {
+            await this.pointsService.calculateAndAwardPoints(
+              studentId,
+              "ATTENDANCE_ON_TIME",
+              mosqueId,
+              sessionId,
+            );
+          }
+        }
+        // 2. Handle NEW Status = LATE
+        else if (update.status === AttendanceStatus.LATE) {
+          // If previously PRESENT -> Revert PRESENT (ON_TIME) points (-5), Award LATE points
+          if (currentRecord.status === AttendanceStatus.PRESENT) {
+            await this.pointsService.calculateAndAwardPoints(
+              studentId,
+              "ATTENDANCE_ON_TIME",
+              mosqueId,
+              sessionId,
+              "Correction: Changed from Present to Late",
+              -1, // Deduct keys
+            );
+            await this.pointsService.calculateAndAwardPoints(
+              studentId,
+              "ATTENDANCE_LATE",
+              mosqueId,
+              sessionId,
+            );
+          }
+          // If previously ABSENT/Null -> Just Award LATE
+          else {
+            await this.pointsService.calculateAndAwardPoints(
+              studentId,
+              "ATTENDANCE_LATE",
+              mosqueId,
+              sessionId,
+            );
+          }
+        }
+        // 3. Handle NEW Status = ABSENT
+        else if (update.status === AttendanceStatus.ABSENT) {
+          // Revert whatever was there
+          if (currentRecord.status === AttendanceStatus.PRESENT) {
+            await this.pointsService.calculateAndAwardPoints(
+              studentId,
+              "ATTENDANCE_ON_TIME",
+              mosqueId,
+              sessionId,
+              "Correction: Marked Absent",
+              -1,
+            );
+          } else if (currentRecord.status === AttendanceStatus.LATE) {
+            await this.pointsService.calculateAndAwardPoints(
+              studentId,
+              "ATTENDANCE_LATE",
+              mosqueId,
+              sessionId,
+              "Correction: Marked Absent",
+              -1,
+            );
+          }
+        }
+      }
+
+      // Update the record in DB
       await this.attendanceRepository.update(
         { sessionId, studentId: update.studentId },
         { status: update.status },

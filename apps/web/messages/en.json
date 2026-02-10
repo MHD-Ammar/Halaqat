@@ -34,7 +34,8 @@
     "create": "Create",
     "update": "Update",
     "phoneInvalid": "Phone number can only contain digits and + - ( ) symbols",
-    "processing": "Processing..."
+    "processing": "Processing...",
+    "undo": "Undo"
   },
   "Nav": {
     "overview": "Overview",
@@ -44,7 +45,8 @@
     "profile": "Profile",
     "studentPortal": "My Portal",
     "exams": "Exams",
-    "usersManagement": "Users"
+    "usersManagement": "Users",
+    "settings": "Settings"
   },
   "Auth": {
     "welcomeBack": "Welcome back",
@@ -108,10 +110,30 @@
     "acceptableShort": "Acc",
     "poor": "Poor",
     "poorShort": "Poor",
+    "notAccepted": "Not Accepted",
+    "notAcceptedShort": "Not Acc",
     "saveAll": "Save All ({count} pages)",
     "recitationRecorded": "Recitation Recorded!",
     "recitationSavedDescription": "{pageCount} pages saved. +{points} points awarded.",
-    "saveFailed": "Failed to save recitation. Please try again."
+    "saveFailed": "Failed to save recitation. Please try again.",
+    "recitationTab": "Recitation",
+    "rewardsTab": {
+      "title": "Rewards",
+      "description": "Select a reward to award the student",
+      "noRewards": "No rewards available",
+      "noRewardsHint": "Ask an admin to add reward categories",
+      "upTo": "Up to {max} pts",
+      "amount": "Amount",
+      "enterAmount": "Please enter the points amount",
+      "exceedsMax": "Amount cannot exceed {max} points",
+      "awarded": "Reward Awarded!",
+      "awardedDesc": "Student received {points} points ({name})",
+      "awardFailed": "Failed to award reward",
+      "budget": "Weekly Budget",
+      "budgetExceeded": "Budget Exceeded",
+      "budgetExceededError": "You have exceeded your weekly manual points limit",
+      "undoSuccess": "Transaction undone successfully"
+    }
   },
   "Header": {
     "halaqat": "Halaqat",
@@ -466,6 +488,83 @@
     "startNow": "Start Teaching Now",
     "circleLabel": "Circle",
     "studentsLabel": "Students"
+  },
+  "Settings": {
+    "title": "Settings",
+    "description": "Manage mosque settings and point rules",
+    "mosqueProfile": "Mosque Identity",
+    "mosqueProfileDesc": "Manage your mosque's public information.",
+    "mosqueName": "Mosque Name",
+    "mosqueNamePlaceholder": "e.g., Al-Nour Mosque",
+    "manualPointLimit": "Teacher Weekly Manual Point Limit",
+    "perWeek": "points/week",
+    "inviteCode": "Invite Code",
+    "pointRules": "Point Rules",
+    "pointRulesDesc": "Configure how many points students earn for each activity",
+    "pointsSuffix": "points",
+    "saveChanges": "Save Changes",
+    "dangerZone": "Danger Zone",
+    "general": "General",
+    "integrations": "Integrations",
+    "notifications": "Notifications",
+    "save": "Save Settings",
+    "messages": {
+      "success": "Saved",
+      "mosqueUpdated": "Mosque information updated successfully",
+      "rulesUpdated": "Point rules updated successfully",
+      "error": "Error",
+      "mosqueUpdateFailed": "Failed to update mosque",
+      "rulesUpdateFailed": "Failed to update point rules",
+      "mosqueNameRequired": "Please enter mosque name"
+    },
+    "PointRules": {
+      "RECITATION_PAGE": "Points per Page",
+      "RECITATION_EXCELLENT": "Excellent Recitation",
+      "RECITATION_VERY_GOOD": "Very Good Recitation",
+      "RECITATION_GOOD": "Good Recitation",
+      "RECITATION_ACCEPTABLE": "Acceptable Recitation",
+      "RECITATION_POOR": "Poor Recitation",
+      "ATTENDANCE_PRESENT": "Attendance",
+      "ATTENDANCE_ON_TIME": "On Time",
+      "EXAM_EXCELLENT": "Excellent Exam",
+      "EXAM_GOOD": "Good Exam"
+    },
+    "PointRulesDesc": {
+      "RECITATION_PAGE": "Memorizing a new page",
+      "RECITATION_EXCELLENT": "Excellent recitation quality",
+      "RECITATION_VERY_GOOD": "Very good recitation quality",
+      "RECITATION_GOOD": "Good recitation quality",
+      "RECITATION_ACCEPTABLE": "Acceptable recitation quality",
+      "RECITATION_POOR": "Poor recitation quality",
+      "ATTENDANCE_PRESENT": "Attending a session",
+      "ATTENDANCE_ON_TIME": "Arriving on time",
+      "EXAM_EXCELLENT": "Excellent exam score",
+      "EXAM_GOOD": "Good exam score"
+    },
+    "customRules": {
+      "title": "Custom Reward Categories",
+      "desc": "Create custom reward categories for teachers to use in Quick Reward",
+      "add": "Add Category",
+      "addTitle": "Add New Reward Category",
+      "addDesc": "Create a custom reward category that will appear in teachers' Quick Reward menu",
+      "label": "Category Label",
+      "labelPlaceholder": "e.g., Good Behavior, Helping Others",
+      "labelRequired": "Please enter a category label",
+      "defaultPoints": "Default Points",
+      "variableInput": "Variable Input",
+      "variableInputDesc": "Allow teachers to enter points manually",
+      "maxPoints": "Maximum Points",
+      "created": "Reward category created successfully",
+      "createFailed": "Failed to create reward category",
+      "deleted": "Reward category deleted",
+      "deleteFailed": "Failed to delete reward category",
+      "deleteTitle": "Delete Reward Category",
+      "deleteDesc": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+      "empty": "No custom reward categories",
+      "emptyHint": "Add a reward category to appear in teachers' Quick Reward menu",
+      "variable": "variable",
+      "maxValue": "Up to {max} points"
+    }
   }
 }
 

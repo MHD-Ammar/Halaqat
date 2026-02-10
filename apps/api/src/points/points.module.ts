@@ -7,15 +7,20 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
-import { PointsController } from "./points.controller";
-import { PointsService } from "./points.service";
-import { PointsSeederService } from "./points-seeder.service";
 import { PointRule } from "./entities/point-rule.entity";
 import { PointTransaction } from "./entities/point-transaction.entity";
+import { PointsSeederService } from "./points-seeder.service";
+import { PointsController } from "./points.controller";
+import { PointsService } from "./points.service";
+import { Mosque } from "../mosques/entities/mosque.entity";
 import { Student } from "../students/entities/student.entity";
+import { UsersModule } from "../users/users.module";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PointRule, PointTransaction, Student])],
+  imports: [
+    TypeOrmModule.forFeature([PointRule, PointTransaction, Student, Mosque]),
+    UsersModule,
+  ],
   controllers: [PointsController],
   providers: [PointsService, PointsSeederService],
   exports: [PointsService],

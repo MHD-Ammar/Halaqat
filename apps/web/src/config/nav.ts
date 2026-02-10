@@ -14,6 +14,7 @@ import {
   GraduationCap,
   ClipboardCheck,
   UserCog,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
 
@@ -86,6 +87,13 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/admin/users",
     icon: UserCog,
     description: "Manage users and roles",
+    roles: ["ADMIN"],
+  },
+  {
+    titleKey: "settings",
+    href: "/admin/settings",
+    icon: Settings,
+    description: "Mosque and points configuration",
     roles: ["ADMIN"],
   },
   {

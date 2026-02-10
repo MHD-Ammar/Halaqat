@@ -2,6 +2,7 @@
  * Points Seeder Service
  *
  * Seeds the database with default point rules on application bootstrap.
+ * Creates rules per mosque for multi-tenancy support.
  * @module points
  */
 
@@ -9,8 +10,9 @@ import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
-import { PointRule } from "./entities/point-rule.entity";
 import { POINT_RULE_DATA } from "./data/point-rule.data";
+import { PointRule } from "./entities/point-rule.entity";
+import { Mosque } from "../mosques/entities/mosque.entity";
 
 @Injectable()
 export class PointsSeederService implements OnApplicationBootstrap {
@@ -19,6 +21,8 @@ export class PointsSeederService implements OnApplicationBootstrap {
   constructor(
     @InjectRepository(PointRule)
     private pointRuleRepository: Repository<PointRule>,
+    @InjectRepository(Mosque)
+    private mosqueRepository: Repository<Mosque>,
   ) {}
 
   /**
@@ -29,30 +33,51 @@ export class PointsSeederService implements OnApplicationBootstrap {
   }
 
   /**
-   * Seed default point rules
-   * Uses upsert to avoid duplicates
+   * Seed default point rules for all mosques
+   * Creates rules per mosque if they don't exist
    */
   async seedPointRules(): Promise<void> {
     this.logger.log("Starting Point Rules seeding...");
 
     try {
-      for (const ruleData of POINT_RULE_DATA) {
-        // Check if rule exists
-        const existing = await this.pointRuleRepository.findOne({
-          where: { key: ruleData.key },
-        });
+      // Get all mosques
+      const mosques = await this.mosqueRepository.find();
 
-        if (!existing) {
-          await this.pointRuleRepository.save(
-            this.pointRuleRepository.create(ruleData),
-          );
-          this.logger.log(`Created point rule: ${ruleData.key}`);
-        }
+      if (mosques.length === 0) {
+        this.logger.warn("No mosques found, skipping point rules seeding");
+        return;
       }
 
-      this.logger.log(`Point Rules seeding complete`);
+      for (const mosque of mosques) {
+        await this.seedRulesForMosque(mosque.id);
+      }
+
+      this.logger.log(`Point Rules seeding complete for ${mosques.length} mosque(s)`);
     } catch (error) {
       this.logger.error("Failed to seed Point Rules", error);
+    }
+  }
+
+  /**
+   * Seed default rules for a specific mosque
+   * @param mosqueId - The mosque to seed rules for
+   */
+  async seedRulesForMosque(mosqueId: string): Promise<void> {
+    for (const ruleData of POINT_RULE_DATA) {
+      // Check if rule exists for this mosque
+      const existing = await this.pointRuleRepository.findOne({
+        where: { key: ruleData.key, mosqueId },
+      });
+
+      if (!existing) {
+        await this.pointRuleRepository.save(
+          this.pointRuleRepository.create({
+            ...ruleData,
+            mosqueId,
+          }),
+        );
+        this.logger.log(`Created point rule: ${ruleData.key} for mosque ${mosqueId}`);
+      }
     }
   }
 }

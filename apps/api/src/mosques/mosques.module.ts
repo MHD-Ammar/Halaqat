@@ -8,11 +8,13 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
-import { MosquesService } from "./mosques.service";
 import { Mosque } from "./entities/mosque.entity";
+import { MosquesController } from "./mosques.controller";
+import { MosquesService } from "./mosques.service";
 
 @Module({
   imports: [TypeOrmModule.forFeature([Mosque])],
+  controllers: [MosquesController],
   providers: [MosquesService],
   exports: [MosquesService],
 })

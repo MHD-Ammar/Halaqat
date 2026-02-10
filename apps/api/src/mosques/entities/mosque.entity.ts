@@ -7,12 +7,12 @@
 
 import { Entity, Column, Index, OneToMany } from "typeorm";
 
-import { BaseEntity } from "../../common/entities/base.entity";
-import { User } from "../../users/entities/user.entity";
 import { Circle } from "../../circles/entities/circle.entity";
-import { Student } from "../../students/entities/student.entity";
+import { BaseEntity } from "../../common/entities/base.entity";
 import { Exam } from "../../exams/entities/exam.entity";
 import { Session } from "../../sessions/entities/session.entity";
+import { Student } from "../../students/entities/student.entity";
+import { User } from "../../users/entities/user.entity";
 
 @Entity("mosque")
 export class Mosque extends BaseEntity {
@@ -58,4 +58,11 @@ export class Mosque extends BaseEntity {
    */
   @OneToMany(() => Exam, (exam) => exam.mosque)
   exams!: Exam[];
+
+  /**
+   * Weekly limit for manual points a teacher can award
+   * Applies only to discretionary rewards (not system rules like Recitation)
+   */
+  @Column({ default: 20 })
+  manualPointLimit!: number;
 }
