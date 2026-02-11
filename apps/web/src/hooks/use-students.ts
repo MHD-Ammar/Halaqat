@@ -162,6 +162,12 @@ export function useDeleteStudent() {
   });
 }
 
+export interface StudentCredentials {
+  username: string;
+  password?: string;
+  userId: string;
+}
+
 /**
  * Generate credentials for a student
  */
@@ -170,7 +176,7 @@ export function useGenerateCredentials() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.post<any>(`/students/${id}/credentials`);
+      const response = await api.post<StudentCredentials>(`/students/${id}/credentials`);
       return response.data;
     },
     onSuccess: () => {

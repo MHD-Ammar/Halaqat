@@ -527,7 +527,9 @@
       "ATTENDANCE_PRESENT": "الحضور",
       "ATTENDANCE_ON_TIME": "الحضور في الموعد",
       "EXAM_EXCELLENT": "اختبار ممتاز (علامة كاملة)",
-      "EXAM_GOOD": "اختبار جيد"
+      "EXAM_GOOD": "اختبار جيد",
+      "ATTENDANCE_LATE": "حضور متأخر",
+      "BEHAVIOR_BAD": "سلوك سيء"
     },
     "PointRulesDesc": {
       "RECITATION_PAGE": "حفظ صفحة جديدة",
@@ -539,7 +541,9 @@
       "ATTENDANCE_PRESENT": "حضور الحلقة",
       "ATTENDANCE_ON_TIME": "الحضور في الوقت المحدد",
       "EXAM_EXCELLENT": "الحصول على درجة ممتازة في الاختبار",
-      "EXAM_GOOD": "الحصول على درجة جيدة في الاختبار"
+      "EXAM_GOOD": "الحصول على درجة جيدة في الاختبار",
+      "ATTENDANCE_LATE": "الحضور بعد وقت البدء",
+      "BEHAVIOR_BAD": "خصم نقاط بسبب سوء السلوك"
     },
     "customRules": {
       "title": "فئات المكافآت المخصصة",

@@ -527,7 +527,9 @@
       "ATTENDANCE_PRESENT": "Attendance",
       "ATTENDANCE_ON_TIME": "On Time",
       "EXAM_EXCELLENT": "Excellent Exam",
-      "EXAM_GOOD": "Good Exam"
+      "EXAM_GOOD": "Good Exam",
+      "ATTENDANCE_LATE": "Late Attendance",
+      "BEHAVIOR_BAD": "Bad Behavior"
     },
     "PointRulesDesc": {
       "RECITATION_PAGE": "Memorizing a new page",
@@ -539,7 +541,9 @@
       "ATTENDANCE_PRESENT": "Attending a session",
       "ATTENDANCE_ON_TIME": "Arriving on time",
       "EXAM_EXCELLENT": "Excellent exam score",
-      "EXAM_GOOD": "Good exam score"
+      "EXAM_GOOD": "Good exam score",
+      "ATTENDANCE_LATE": "Arriving after start time",
+      "BEHAVIOR_BAD": "Points deduction for bad behavior"
     },
     "customRules": {
       "title": "Custom Reward Categories",
