@@ -101,6 +101,8 @@ export function useCreateStudent() {
       queryClient.invalidateQueries({ queryKey: ["students", "by-circle", variables.circleId] });
       // Invalidate circles to update student counts
       queryClient.invalidateQueries({ queryKey: ["circles"] });
+      // Invalidate today's session to show new student
+      queryClient.invalidateQueries({ queryKey: ["today-session"] });
     },
   });
 }

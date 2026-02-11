@@ -36,6 +36,7 @@ export function useAssignStudentToCircle() {
         queryKey: ["circles", variables.circleId],
       });
       queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["today-session"] });
     },
   });
 }

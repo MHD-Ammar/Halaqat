@@ -77,6 +77,8 @@ export function useCreateCircle() {
     onSuccess: () => {
       // Invalidate circles list to refetch
       queryClient.invalidateQueries({ queryKey: ["circles"] });
+      // Invalidate user profile to update my-circle list
+      queryClient.invalidateQueries({ queryKey: ["user", "profile"] });
     },
   });
 }

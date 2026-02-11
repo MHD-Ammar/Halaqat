@@ -69,11 +69,25 @@ export class PointsSeederService implements OnApplicationBootstrap {
         where: { key: ruleData.key, mosqueId },
       });
 
-      if (!existing) {
+      if (existing) {
+        // Update flags for existing rules to ensure they match desired state
+        if (
+          existing.isSystem !== ruleData.isSystem ||
+          existing.isVisibleToTeacher !== ruleData.isVisibleToTeacher
+        ) {
+          existing.isSystem = ruleData.isSystem ?? false;
+          existing.isVisibleToTeacher = ruleData.isVisibleToTeacher ?? true;
+          await this.pointRuleRepository.save(existing);
+          this.logger.log(`Updated point rule flags: ${ruleData.key} for mosque ${mosqueId}`);
+        }
+      } else {
         await this.pointRuleRepository.save(
           this.pointRuleRepository.create({
             ...ruleData,
             mosqueId,
+            // Default values if not specified in data
+            isSystem: ruleData.isSystem ?? false,
+            isVisibleToTeacher: ruleData.isVisibleToTeacher ?? true,
           }),
         );
         this.logger.log(`Created point rule: ${ruleData.key} for mosque ${mosqueId}`);
