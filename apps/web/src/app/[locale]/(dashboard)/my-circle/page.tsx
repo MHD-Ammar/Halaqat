@@ -37,7 +37,6 @@ import {
   useUpdateAttendance,
 } from "@/hooks/use-today-session";
 import { useUserProfile } from "@/hooks/use-user-profile";
-import { Link } from "@/i18n/routing";
 
 /**
  * Status cycle order for toggling
@@ -398,9 +397,9 @@ export default function DashboardPage() {
                       href={`/students/${attendance.student.id}`}
                       onClick={(e) => e.stopPropagation()}
                     > */}
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold hover:bg-primary/20 transition-colors">
-                        {getInitials(attendance.student.name)}
-                      </div>
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold hover:bg-primary/20 transition-colors">
+                      {getInitials(attendance.student.name)}
+                    </div>
                     {/* </Link> */}
                     {/* Name - Links to student profile */}
                     <div className="min-w-0">
@@ -409,7 +408,7 @@ export default function DashboardPage() {
                         className="font-medium truncate hover:text-primary hover:underline block"
                         onClick={(e) => e.stopPropagation()}
                       > */}
-                        {attendance.student.name}
+                      {attendance.student.name}
                       {/* </Link> */}
                     </div>
                   </div>
