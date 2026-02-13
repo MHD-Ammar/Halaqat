@@ -132,8 +132,11 @@
       "budget": "الميزانية الأسبوعية",
       "budgetExceeded": "تم تجاوز الميزانية",
       "budgetExceededError": "لقد تجاوزت الحد الأسبوعي للنقاط اليدوية",
-      "undoSuccess": "تم التراجع عن العملية بنجاح"
-    }
+      "undoSuccess": "تم التراجع عن العملية بنجاح",
+      "pointsPlaceholder": "أدخل النقاط"
+    },
+    "startPagePlaceholder": "صفحة البداية",
+    "endPagePlaceholder": "صفحة النهاية"
   },
   "Header": {
     "halaqat": "حلقات",

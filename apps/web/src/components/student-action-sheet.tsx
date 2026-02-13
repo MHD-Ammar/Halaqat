@@ -169,6 +169,17 @@ export function StudentActionSheet({
     setAwardingRuleId(null);
   };
 
+  // Helper for handling numeric input
+  const handleNumericInput = <T extends number | "">(
+    value: string,
+    setter: (value: T | number) => void,
+    emptyValue: T,
+  ) => {
+    if (value === "" || /^\d+$/.test(value)) {
+      setter(value === "" ? emptyValue : parseInt(value, 10));
+    }
+  };
+
   // Handle open change
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -436,15 +447,13 @@ export function StudentActionSheet({
                     <Label htmlFor="startPage">{t("startPage")}</Label>
                     <Input
                       id="startPage"
-                      type="number"
-                      min={1}
-                      max={604}
-                      placeholder="1"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder={t("startPagePlaceholder")}
                       value={startPage}
                       onChange={(e) =>
-                        setStartPage(
-                          e.target.value === "" ? "" : parseInt(e.target.value, 10),
-                        )
+                        handleNumericInput(e.target.value, setStartPage, "")
                       }
                       className="h-12 text-lg"
                     />
@@ -453,15 +462,13 @@ export function StudentActionSheet({
                     <Label htmlFor="endPage">{t("endPage")}</Label>
                     <Input
                       id="endPage"
-                      type="number"
-                      min={1}
-                      max={604}
-                      placeholder="604"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder={t("endPagePlaceholder")}
                       value={endPage}
                       onChange={(e) =>
-                        setEndPage(
-                          e.target.value === "" ? "" : parseInt(e.target.value, 10),
-                        )
+                        handleNumericInput(e.target.value, setEndPage, "")
                       }
                       className="h-12 text-lg"
                     />
@@ -690,14 +697,14 @@ export function StudentActionSheet({
                         {rule.isCustomEntry && selectedRule === rule.id && (
                           <div className="flex gap-2">
                             <Input
-                              type="number"
-                              min={1}
-                              max={Math.min(rule.maxCustomValue ?? 100, budget?.remaining ?? 100)}
-                              value={customAmount}
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              value={customAmount || ""}
                               onChange={(e) =>
-                                setCustomAmount(parseInt(e.target.value, 10) || 0)
+                                handleNumericInput(e.target.value, setCustomAmount, 0)
                               }
-                              placeholder={t("rewardsTab.amount")}
+                              placeholder={t("rewardsTab.pointsPlaceholder")}
                               className="h-10"
                             />
                             <Button

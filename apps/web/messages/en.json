@@ -132,8 +132,11 @@
       "budget": "Weekly Budget",
       "budgetExceeded": "Budget Exceeded",
       "budgetExceededError": "You have exceeded your weekly manual points limit",
-      "undoSuccess": "Transaction undone successfully"
-    }
+      "undoSuccess": "Transaction undone successfully",
+      "pointsPlaceholder": "Enter points"
+    },
+    "startPagePlaceholder": "Start page",
+    "endPagePlaceholder": "End page"
   },
   "Header": {
     "halaqat": "Halaqat",

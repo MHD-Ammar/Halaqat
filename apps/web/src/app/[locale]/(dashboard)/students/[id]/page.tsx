@@ -179,7 +179,7 @@ export default function StudentProfilePage() {
           iconColor="text-sky-500"
         />
         <StatsCard
-          title={tDash("totalStudents")}
+          title={tCommon("points")}
           value={stats.totalPoints}
           icon={Award}
           iconColor="text-amber-500"

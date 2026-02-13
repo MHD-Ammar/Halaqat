@@ -394,23 +394,23 @@ export default function DashboardPage() {
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
                     {/* Avatar - Links to student profile */}
-                    <Link
+                    {/* <Link
                       href={`/students/${attendance.student.id}`}
                       onClick={(e) => e.stopPropagation()}
-                    >
+                    > */}
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold hover:bg-primary/20 transition-colors">
                         {getInitials(attendance.student.name)}
                       </div>
-                    </Link>
+                    {/* </Link> */}
                     {/* Name - Links to student profile */}
                     <div className="min-w-0">
-                      <Link
+                      {/* <Link
                         href={`/students/${attendance.student.id}`}
                         className="font-medium truncate hover:text-primary hover:underline block"
                         onClick={(e) => e.stopPropagation()}
-                      >
+                      > */}
                         {attendance.student.name}
-                      </Link>
+                      {/* </Link> */}
                     </div>
                   </div>
 
