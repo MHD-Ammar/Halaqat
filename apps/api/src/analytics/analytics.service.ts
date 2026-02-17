@@ -1,19 +1,21 @@
 /**
  * Analytics Service
  *
- * Provides aggregated statistics for the Admin/Supervisor dashboard.
+ * Provides aggregated statistics for the Admin/Supervisor dashboard
+ * and teacher-specific dashboard with date range support.
  */
 
+import { AttendanceStatus } from "@halaqat/types";
 import { Injectable, ForbiddenException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, MoreThanOrEqual } from "typeorm";
+import { Repository, MoreThanOrEqual, Between } from "typeorm";
 
-import { Student } from "../students/entities/student.entity";
-import { Session } from "../sessions/entities/session.entity";
-import { PointTransaction } from "../points/entities/point-transaction.entity";
 import { Circle } from "../circles/entities/circle.entity";
+import { PointTransaction } from "../points/entities/point-transaction.entity";
+import { Recitation } from "../progress/entities/recitation.entity";
+import { Session } from "../sessions/entities/session.entity";
+import { Student } from "../students/entities/student.entity";
 import { User } from "../users/entities/user.entity";
-import { AttendanceStatus } from "@halaqat/types";
 
 interface DailyOverview {
   totalStudents: number;
@@ -31,6 +33,21 @@ interface TeacherPerformance {
   isActive: boolean;
 }
 
+interface RawPointsResult {
+  studentId: string;
+  totalPoints: string;
+}
+
+interface RawPagesResult {
+  studentId: string;
+  pages: string;
+}
+
+interface RawCountResult {
+  sessionId: string;
+  count: string;
+}
+
 @Injectable()
 export class AnalyticsService {
   constructor(
@@ -44,6 +61,8 @@ export class AnalyticsService {
     private readonly circleRepository: Repository<Circle>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Recitation)
+    private readonly recitationRepository: Repository<Recitation>,
   ) {}
 
   /**
@@ -129,7 +148,7 @@ export class AnalyticsService {
 
     // Get circles belonging to this teacher
     // Security: Verify mosqueId if provided
-    const where: any = { teacherId };
+    const where: Record<string, unknown> = { teacherId };
     if (mosqueId) {
       where.mosqueId = mosqueId;
     }
@@ -221,7 +240,7 @@ export class AnalyticsService {
     threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
     // 1. Get ALL teachers in the mosque
-    const teacherWhere: any = { role: "TEACHER" };
+    const teacherWhere: Record<string, unknown> = { role: "TEACHER" };
     if (mosqueId) {
       teacherWhere.mosqueId = mosqueId;
     }
@@ -232,7 +251,7 @@ export class AnalyticsService {
     });
 
     // 2. Get all circles with relationships to map them to teachers
-    const circleWhere: any = {};
+    const circleWhere: Record<string, unknown> = {};
     if (mosqueId) {
       circleWhere.mosqueId = mosqueId;
     }
@@ -317,7 +336,7 @@ export class AnalyticsService {
 
     // Admin: Mosque-wide stats
     if (role === "ADMIN" || role === "SUPERVISOR") {
-      const whereClause: any = {};
+      const whereClause: Record<string, unknown> = {};
       if (mosqueId) {
         whereClause.mosqueId = mosqueId;
       }
@@ -367,6 +386,279 @@ export class AnalyticsService {
 
     // Fallback: If role doesn't match any known type, access is denied
     throw new ForbiddenException("Invalid role for analytics access");
+  }
+
+  /**
+   * Get comprehensive teacher dashboard data for a date range
+   */
+  async getTeacherDashboard(
+    teacherId: string,
+    mosqueId: string | undefined,
+    from: Date,
+    to: Date,
+  ) {
+    // Get circles belonging to this teacher
+    const where: Record<string, unknown> = { teacherId };
+    if (mosqueId) {
+      where.mosqueId = mosqueId;
+    }
+
+    const teacherCircles = await this.circleRepository.find({
+      where,
+      relations: ["students"],
+    });
+
+    const circleIds = teacherCircles.map((c) => c.id);
+    const studentIds = teacherCircles.flatMap(
+      (c) => c.students?.map((s) => s.id) || [],
+    );
+    const totalStudents = studentIds.length;
+
+    if (circleIds.length === 0) {
+      return {
+        totalStudents: 0,
+        totalSessions: 0,
+        averageAttendanceRate: 0,
+        totalRecitations: 0,
+        totalPagesRecited: 0,
+        totalPointsAwarded: 0,
+        attendanceTrend: [],
+        topStudents: [],
+        recentSessions: [],
+      };
+    }
+
+    // Fetch sessions in date range for teacher's circles
+    const sessions = await this.sessionRepository.find({
+      where: circleIds.map((circleId) => ({
+        circleId,
+        date: Between(from, to),
+      })),
+      relations: ["attendances"],
+      order: { date: "DESC" },
+    });
+
+    const totalSessions = sessions.length;
+    const sessionIds = sessions.map((s) => s.id);
+
+    // --- Attendance trend (grouped by date) ---
+    const attendanceByDate: Record<
+      string,
+      { present: number; absent: number; late: number; total: number }
+    > = {};
+
+    let totalPresent = 0;
+    let totalAttendanceRecords = 0;
+
+    for (const session of sessions) {
+      const dateStr: string =
+        session.date instanceof Date
+          ? (session.date.toISOString().split("T")[0] ?? "")
+          : String(session.date);
+
+      if (!attendanceByDate[dateStr]) {
+        attendanceByDate[dateStr] = { present: 0, absent: 0, late: 0, total: 0 };
+      }
+
+      for (const att of session.attendances || []) {
+        attendanceByDate[dateStr].total++;
+        totalAttendanceRecords++;
+
+        if (att.status === AttendanceStatus.PRESENT) {
+          attendanceByDate[dateStr].present++;
+          totalPresent++;
+        } else if (att.status === AttendanceStatus.ABSENT) {
+          attendanceByDate[dateStr].absent++;
+        } else if (att.status === AttendanceStatus.LATE) {
+          attendanceByDate[dateStr].late++;
+          totalPresent++; // late counts as present for rate
+        }
+      }
+    }
+
+    const averageAttendanceRate =
+      totalAttendanceRecords > 0
+        ? Math.round((totalPresent / totalAttendanceRecords) * 100)
+        : 0;
+
+    const attendanceTrend = Object.entries(attendanceByDate)
+      .map(([date, data]) => ({ date, ...data }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // --- Recitations ---
+    let totalRecitations = 0;
+    let totalPagesRecited = 0;
+
+    if (sessionIds.length > 0) {
+      const recitationResult = await this.recitationRepository
+        .createQueryBuilder("r")
+        .select("COUNT(*)", "count")
+        .addSelect("COUNT(DISTINCT r.pageNumber)", "pages")
+        .where("r.sessionId IN (:...sessionIds)", { sessionIds })
+        .getRawOne();
+
+      totalRecitations = parseInt(recitationResult?.count || "0", 10);
+      totalPagesRecited = parseInt(recitationResult?.pages || "0", 10);
+    }
+
+    // --- Points awarded ---
+    let totalPointsAwarded = 0;
+    if (studentIds.length > 0) {
+      const pointsResult = await this.pointTransactionRepository
+        .createQueryBuilder("pt")
+        .select("COALESCE(SUM(pt.amount), 0)", "total")
+        .where("pt.createdAt >= :from", { from })
+        .andWhere("pt.createdAt <= :toEnd", {
+          toEnd: new Date(to.getTime() + 24 * 60 * 60 * 1000),
+        })
+        .andWhere("pt.studentId IN (:...studentIds)", { studentIds })
+        .getRawOne();
+
+      totalPointsAwarded = parseInt(pointsResult?.total || "0", 10);
+    }
+
+    // --- Top students by points ---
+    let topStudents: Array<{
+      studentId: string;
+      studentName: string;
+      totalPoints: number;
+      totalPages: number;
+      attendanceRate: number;
+    }> = [];
+
+    if (studentIds.length > 0) {
+      // Get points per student
+      const pointsByStudent: RawPointsResult[] = await this.pointTransactionRepository
+        .createQueryBuilder("pt")
+        .select("pt.studentId", "studentId")
+        .addSelect("COALESCE(SUM(pt.amount), 0)", "totalPoints")
+        .where("pt.createdAt >= :from", { from })
+        .andWhere("pt.createdAt <= :toEnd", {
+          toEnd: new Date(to.getTime() + 24 * 60 * 60 * 1000),
+        })
+        .andWhere("pt.studentId IN (:...studentIds)", { studentIds })
+        .groupBy("pt.studentId")
+        .orderBy('"totalPoints"', "DESC")
+        .limit(5)
+        .getRawMany();
+
+      // Build student map for names
+      const allStudents = teacherCircles.flatMap((c) => c.students || []);
+      const studentMap = new Map(allStudents.map((s) => [s.id, s.name]));
+
+      // Calculate attendance per student
+      const studentAttendance: Record<
+        string,
+        { present: number; total: number }
+      > = {};
+      for (const session of sessions) {
+        for (const att of session.attendances || []) {
+          const sid = att.studentId;
+          if (!studentAttendance[sid]) {
+            studentAttendance[sid] = { present: 0, total: 0 };
+          }
+          const record = studentAttendance[sid];
+          record.total++;
+          if (
+            att.status === AttendanceStatus.PRESENT ||
+            att.status === AttendanceStatus.LATE
+          ) {
+            record.present++;
+          }
+        }
+      }
+
+      // Get pages per student
+      let pagesByStudent: Record<string, number> = {};
+      if (sessionIds.length > 0) {
+        const pagesResult: RawPagesResult[] = await this.recitationRepository
+          .createQueryBuilder("r")
+          .select("r.studentId", "studentId")
+          .addSelect("COUNT(DISTINCT r.pageNumber)", "pages")
+          .where("r.sessionId IN (:...sessionIds)", { sessionIds })
+          .groupBy("r.studentId")
+          .getRawMany();
+
+        pagesByStudent = Object.fromEntries(
+          pagesResult.map((r) => [r.studentId, parseInt(r.pages || "0", 10)]),
+        );
+      }
+
+      topStudents = pointsByStudent.map((row) => {
+        const sa = studentAttendance[row.studentId];
+        return {
+          studentId: row.studentId,
+          studentName: studentMap.get(row.studentId) || "Unknown",
+          totalPoints: parseInt(row.totalPoints || "0", 10),
+          totalPages: pagesByStudent[row.studentId] || 0,
+          attendanceRate: sa
+            ? Math.round((sa.present / sa.total) * 100)
+            : 0,
+        };
+      });
+    }
+
+    // --- Recent sessions ---
+    const recentSessions = sessions.slice(0, 5).map((s) => {
+      let presentCount = 0;
+      let absentCount = 0;
+      for (const att of s.attendances || []) {
+        if (
+          att.status === AttendanceStatus.PRESENT ||
+          att.status === AttendanceStatus.LATE
+        ) {
+          presentCount++;
+        } else {
+          absentCount++;
+        }
+      }
+
+      return {
+        id: s.id,
+        date:
+          s.date instanceof Date
+            ? (s.date.toISOString().split("T")[0] ?? "")
+            : String(s.date),
+        presentCount,
+        absentCount,
+        recitationCount: 0, // Will be enriched below
+      };
+    });
+
+    // Enrich recent sessions with recitation counts
+    if (recentSessions.length > 0) {
+      const recentIds = recentSessions.map((s) => s.id);
+      const recitationCounts: RawCountResult[] = await this.recitationRepository
+        .createQueryBuilder("r")
+        .select("r.sessionId", "sessionId")
+        .addSelect("COUNT(*)", "count")
+        .where("r.sessionId IN (:...recentIds)", { recentIds })
+        .groupBy("r.sessionId")
+        .getRawMany();
+
+      const countMap = new Map(
+        recitationCounts.map((r) => [
+          r.sessionId,
+          parseInt(r.count || "0", 10),
+        ]),
+      );
+
+      for (const rs of recentSessions) {
+        rs.recitationCount = countMap.get(rs.id) || 0;
+      }
+    }
+
+    return {
+      totalStudents,
+      totalSessions,
+      averageAttendanceRate,
+      totalRecitations,
+      totalPagesRecited,
+      totalPointsAwarded,
+      attendanceTrend,
+      topStudents,
+      recentSessions,
+    };
   }
 }
 

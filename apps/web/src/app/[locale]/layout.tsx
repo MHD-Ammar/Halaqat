@@ -99,8 +99,8 @@ export default async function LocaleLayout({
       : `${geistSans.variable} ${geistMono.variable}`;
 
   return (
-    <html lang={locale} dir={dir}>
-      <body className={`${fontClass} antialiased`}>
+    <html lang={locale} dir={dir} suppressHydrationWarning>
+      <body className={`${fontClass} antialiased`} suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>{children}</QueryProvider>
         </NextIntlClientProvider>

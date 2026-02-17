@@ -4,6 +4,7 @@
  * Business logic for managing study circles.
  */
 
+import { UserRole } from "@halaqat/types";
 import {
   Injectable,
   NotFoundException,
@@ -11,13 +12,12 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { UserRole } from "@halaqat/types";
 
-import { Circle } from "./entities/circle.entity";
 import { CreateCircleDto } from "./dto/create-circle.dto";
 import { UpdateCircleDto } from "./dto/update-circle.dto";
-import { User } from "../users/entities/user.entity";
+import { Circle } from "./entities/circle.entity";
 import { Student } from "../students/entities/student.entity";
+import { User } from "../users/entities/user.entity";
 
 @Injectable()
 export class CirclesService {
@@ -77,15 +77,17 @@ export class CirclesService {
    * Get all circles with teacher information (tenancy-aware)
    */
   async findAll(mosqueId?: string | null): Promise<Circle[]> {
-    const where: Record<string, string> = {};
+    const query = this.circlesRepository
+      .createQueryBuilder("circle")
+      .leftJoinAndSelect("circle.teacher", "teacher")
+      .loadRelationCountAndMap("circle.studentCount", "circle.students")
+      .orderBy("circle.createdAt", "DESC");
+
     if (mosqueId) {
-      where.mosqueId = mosqueId;
+      query.where("circle.mosqueId = :mosqueId", { mosqueId });
     }
-    return this.circlesRepository.find({
-      where,
-      relations: ["teacher"],
-      order: { createdAt: "DESC" },
-    });
+
+    return query.getMany();
   }
 
   /**

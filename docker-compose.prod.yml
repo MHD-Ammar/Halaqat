@@ -55,7 +55,7 @@ services:
   # 3. Frontend (Next.js)
   web:
     build:
-      context: .             # Same thing, Context is the root of the project to look for packages
+      context: .
       dockerfile: apps/web/Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}

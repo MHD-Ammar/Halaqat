@@ -9,20 +9,22 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
-import { envValidationSchema, typeOrmConfig } from "@/config";
+import { AnalyticsModule } from "./analytics/analytics.module";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
-import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
 import { CirclesModule } from "./circles/circles.module";
-import { StudentsModule } from "./students/students.module";
+import { envValidationSchema, typeOrmConfig } from "./config";
 import { CurriculumModule } from "./curriculum/curriculum.module";
-import { SessionsModule } from "./sessions/sessions.module";
-import { PointsModule } from "./points/points.module";
-import { ProgressModule } from "./progress/progress.module";
-import { AnalyticsModule } from "./analytics/analytics.module";
+import { DailyChallengeModule } from "./daily-challenge/daily-challenge.module";
 import { ExamsModule } from "./exams/exams.module";
 import { MosquesModule } from "./mosques/mosques.module";
+import { PointsModule } from "./points/points.module";
+import { ProgressModule } from "./progress/progress.module";
+import { SessionsModule } from "./sessions/sessions.module";
+import { StudentsModule } from "./students/students.module";
+import { UsersModule } from "./users/users.module";
+
 
 @Module({
   imports: [
@@ -52,6 +54,7 @@ import { MosquesModule } from "./mosques/mosques.module";
     AnalyticsModule,
     ExamsModule,
     MosquesModule,
+    DailyChallengeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

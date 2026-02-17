@@ -10,9 +10,19 @@
 import { BookOpen, Users, MoreVertical, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { CreateCircleDialog } from "@/components/create-circle-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -43,6 +53,11 @@ export default function CirclesPage() {
   const router = useRouter();
   const t = useTranslations("Circles");
   const tCommon = useTranslations("Common");
+  const [circleToDelete, setCircleToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Protect the page - redirect non-admins
   useEffect(() => {
@@ -53,15 +68,22 @@ export default function CirclesPage() {
 
   if (authLoading) return null;
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(t("deleteConfirmation"))) return;
+  const handleDeleteClick = (id: string, name: string) => {
+    setCircleToDelete({ id, name });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!circleToDelete) return;
 
     try {
-      await deleteMutation.mutateAsync(id);
+      await deleteMutation.mutateAsync(circleToDelete.id);
       toast({
         title: tCommon("success"),
-        description: tCommon("delete") + " " + name,
+        description: tCommon("delete") + " " + circleToDelete.name,
       });
+      setDeleteDialogOpen(false);
+      setCircleToDelete(null);
     } catch {
       toast({
         variant: "destructive",
@@ -149,7 +171,7 @@ export default function CirclesPage() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
                         className="text-destructive"
-                        onClick={() => handleDelete(circle.id, circle.name)}
+                        onClick={() => handleDeleteClick(circle.id, circle.name)}
                       >
                         <Trash2 className="h-4 w-4 me-2" />
                         {t("deleteCircle")}
@@ -163,13 +185,8 @@ export default function CirclesPage() {
                   <div className="flex items-center gap-1">
                     <Users className="h-4 w-4" />
                     <span>
-                      {circle._count?.students || 0}{" "}
-                      {
-                        tCommon("loading").replace(
-                          "...",
-                          "",
-                        ) /* Hacky way to get 'students' context if generic */
-                      }
+                      {circle.studentCount || 0}{" "}
+                      {tCommon("students")}
                     </span>
                   </div>
                   {circle.teacher && <span>{circle.teacher.fullName}</span>}
@@ -191,6 +208,26 @@ export default function CirclesPage() {
           </CardContent>
         </Card>
       )}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("deleteCircle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("deleteConfirmation")}
+              {circleToDelete && ` (${circleToDelete.name})`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={confirmDelete}
+            >
+              {tCommon("delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
