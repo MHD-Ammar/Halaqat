@@ -24,7 +24,7 @@ export interface ChallengeStudentInfo {
 export interface SubmitChallengeDto {
   studentId: string;
   campaignKey: string;
-  submissionData: Record<string, any>;
+  submissionData: Record<string, unknown>;
   localDate: string;
 }
 

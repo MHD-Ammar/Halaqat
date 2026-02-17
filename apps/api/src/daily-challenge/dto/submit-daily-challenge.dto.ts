@@ -39,5 +39,5 @@ export class SubmitDailyChallengeDto {
   })
   @IsObject()
   @IsNotEmpty()
-  submissionData!: Record<string, any>;
+  submissionData!: Record<string, unknown>;
 }
