@@ -84,8 +84,18 @@ export function middleware(request: NextRequest) {
     (route) => pathnameWithoutLocale === route,
   );
 
+  // Check if this is a public key route (e.g., /ramadan)
+  const isPublicKey = (path: string) => {
+    return (
+      path === "/login" ||
+      path === "/register" ||
+      path === "/forgot-password" ||
+      path.startsWith("/ramadan")
+    );
+  };
+
   // Protected route without token → redirect to login
-  if (isProtectedRoute && !token) {
+  if (isProtectedRoute && !token && !isPublicKey(pathnameWithoutLocale)) {
     const loginUrl = new URL(`/${currentLocale}/login`, request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
