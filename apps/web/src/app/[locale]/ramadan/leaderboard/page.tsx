@@ -5,15 +5,19 @@ import { useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useRamadanLeaderboard } from "@/hooks/use-ramadan";
+import { useDailyChallengeLeaderboard } from "@/hooks/use-daily-challenge";
 import { Link } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
 export default function LeaderboardPage() {
   const searchParams = useSearchParams();
   const mosqueId = searchParams.get("mosqueId") || undefined;
+  const CAMPAIGN_KEY = "ramadan";
 
-  const { data: leaderboard, isLoading } = useRamadanLeaderboard(mosqueId);
+  const { data: leaderboard, isLoading } = useDailyChallengeLeaderboard(
+    mosqueId,
+    CAMPAIGN_KEY,
+  );
 
   // Top 3
   const top3 = leaderboard?.slice(0, 3) || [];

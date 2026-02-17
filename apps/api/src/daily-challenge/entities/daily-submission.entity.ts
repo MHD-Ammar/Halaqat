@@ -1,8 +1,8 @@
 /**
- * Ramadan Submission Entity
+ * Daily Submission Entity
  *
- * Stores daily Ramadan challenge submissions.
- * One submission per student per day.
+ * Stores daily challenge submissions for various campaigns (Ramadan, Summer, etc.)
+ * One submission per student per day per campaign.
  */
 
 import {
@@ -18,9 +18,9 @@ import { BaseEntity } from "../../common/entities/base.entity";
 import { Mosque } from "../../mosques/entities/mosque.entity";
 import { Student } from "../../students/entities/student.entity";
 
-@Entity("ramadan_submission")
-@Unique(["studentId", "submissionDate"])
-export class RamadanSubmission extends BaseEntity {
+@Entity("daily_submission")
+@Unique(["studentId", "submissionDate", "campaignKey"])
+export class DailySubmission extends BaseEntity {
   /**
    * Date of the submission (YYYY-MM-DD)
    * We store as date type to easily enforce one-per-day
@@ -28,6 +28,13 @@ export class RamadanSubmission extends BaseEntity {
   @Column({ name: "submission_date", type: "date" })
   @Index()
   submissionDate!: string;
+
+  /**
+   * Campaign Key to distinguish events (e.g. 'ramadan', 'summer_2025')
+   */
+  @Column({ name: "campaign_key", type: "varchar", length: 50 })
+  @Index()
+  campaignKey!: string;
 
   /**
    * Raw form data stored as JSON

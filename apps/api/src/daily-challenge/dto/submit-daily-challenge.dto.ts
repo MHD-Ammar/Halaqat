@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsObject, IsUUID } from "class-validator";
+import { IsNotEmpty, IsObject, IsString, IsUUID, IsOptional } from "class-validator";
 
-export class SubmitRamadanDto {
+export class SubmitDailyChallengeDto {
   @ApiProperty({
     description: "Student ID (UUID)",
     example: "123e4567-e89b-12d3-a456-426614174000",
@@ -9,6 +9,16 @@ export class SubmitRamadanDto {
   @IsUUID()
   @IsNotEmpty()
   studentId!: string;
+
+  @ApiProperty({
+    description: "Campaign Key (e.g. 'ramadan')",
+    example: "ramadan",
+    default: "ramadan",
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional() // Optional for backward compatibility/defaults
+  campaignKey: string = "ramadan";
 
   @ApiProperty({
     description: "Form submission data (JSON)",

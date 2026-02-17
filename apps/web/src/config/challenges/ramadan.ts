@@ -25,7 +25,6 @@ export const RAMADAN_FORM: FormQuestion[] = [
       { label: "جماعة في المسجد", value: "mosque", xp: 10 },
       { label: "جماعة في المنزل", value: "home_group", xp: 7 },
       { label: "فرد", value: "solo", xp: 3 },
-      { label: "فاتتني", value: "missed", xp: 0 },
     ],
   },
   {

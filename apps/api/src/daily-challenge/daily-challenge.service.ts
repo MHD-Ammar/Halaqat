@@ -6,18 +6,18 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
-import { SubmitRamadanDto } from "./dto/submit-ramadan.dto";
-import { RamadanSubmission } from "./entities/ramadan-submission.entity";
-import { RAMADAN_FORM_CONFIG } from "./ramadan-form.config";
+import { SubmitDailyChallengeDto } from "./dto/submit-daily-challenge.dto";
+import { DailySubmission } from "./entities/daily-submission.entity";
+import { getCampaignConfig } from "./form-config.registry";
 import { Circle } from "../circles/entities/circle.entity";
 import { Mosque } from "../mosques/entities/mosque.entity";
 import { Student } from "../students/entities/student.entity";
 
 @Injectable()
-export class RamadanService {
+export class DailyChallengeService {
   constructor(
-    @InjectRepository(RamadanSubmission)
-    private submissionRepo: Repository<RamadanSubmission>,
+    @InjectRepository(DailySubmission)
+    private submissionRepo: Repository<DailySubmission>,
     @InjectRepository(Student)
     private studentRepo: Repository<Student>,
     @InjectRepository(Circle)
@@ -27,9 +27,16 @@ export class RamadanService {
   ) {}
 
   /**
-   * Submit daily Ramadan form
+   * Submit daily challenge
    */
-  async submit(dto: SubmitRamadanDto) {
+  async submit(dto: SubmitDailyChallengeDto) {
+    const { campaignKey = "ramadan" } = dto;
+    const config = getCampaignConfig(campaignKey);
+
+    if (!config) {
+        throw new BadRequestException("Invalid campaign key");
+    }
+
     const student = await this.studentRepo.findOne({
       where: { id: dto.studentId },
       relations: ["mosque"],
@@ -42,14 +49,15 @@ export class RamadanService {
     const today = new Date().toISOString().split("T")[0];
 
     if (!today) {
-      throw new BadRequestException("Invalid date");
+        throw new BadRequestException("Invalid date");
     }
 
-    // Check for existing submission today
+    // Check for existing submission today for this campaign
     const existing = await this.submissionRepo.findOne({
       where: {
         studentId: dto.studentId,
         submissionDate: today,
+        campaignKey,
       },
     });
 
@@ -58,10 +66,10 @@ export class RamadanService {
     }
 
     // Calculate XP
-    const xpEarned = this.calculateXP(dto.submissionData);
+    const xpEarned = this.calculateXP(dto.submissionData, config);
 
     // Calculate Streak
-    const streak = await this.calculateStreak(dto.studentId, today);
+    const streak = await this.calculateStreak(dto.studentId, today, campaignKey);
 
     // Create Submission
     const submission = this.submissionRepo.create({
@@ -71,39 +79,39 @@ export class RamadanService {
       submissionData: dto.submissionData,
       xpEarned,
       streak,
+      campaignKey,
     });
 
     return this.submissionRepo.save(submission);
   }
 
   /**
-   * Calculate XP based on form data
+   * Calculate XP based on form data and campaign config
    */
-  private calculateXP(data: any): number {
-    let totalXp = RAMADAN_FORM_CONFIG.submitted_xp;
+  private calculateXP(data: any, config: any): number {
+    let totalXp = config.submitted_xp || 0;
 
     // 1. Prayers Grid
-    if (data.prayers) {
+    if (data.prayers && config.prayers) {
       Object.values(data.prayers).forEach((val: any) => {
-        if (val === "mosque") totalXp += RAMADAN_FORM_CONFIG.prayers.mosque;
-        if (val === "home_group")
-          totalXp += RAMADAN_FORM_CONFIG.prayers.home_group;
-        if (val === "solo") totalXp += RAMADAN_FORM_CONFIG.prayers.solo;
+        if (config.prayers[val]) {
+            totalXp += config.prayers[val];
+        }
       });
     }
 
     // 2. Quran Pages
-    if (data.quran_pages) {
+    if (data.quran_pages && config.quran) {
       const pages = Math.min(
         Number(data.quran_pages),
-        RAMADAN_FORM_CONFIG.quran.max_pages,
+        config.quran.max_pages,
       );
-      totalXp += pages * RAMADAN_FORM_CONFIG.quran.multiplier;
+      totalXp += pages * config.quran.multiplier;
     }
 
     // 3. Taraweeh
-    if (data.taraweeh === true) {
-      totalXp += RAMADAN_FORM_CONFIG.taraweeh.yes;
+    if (data.taraweeh === true && config.taraweeh) {
+      totalXp += config.taraweeh.yes;
     }
 
     return totalXp;
@@ -116,6 +124,7 @@ export class RamadanService {
   private async calculateStreak(
     studentId: string,
     todayStr: string,
+    campaignKey: string,
   ): Promise<number> {
     const yesterdayDate = new Date(todayStr);
     yesterdayDate.setDate(yesterdayDate.getDate() - 1);
@@ -125,6 +134,7 @@ export class RamadanService {
       where: {
         studentId,
         submissionDate: yesterdayStr,
+        campaignKey,
       },
     });
 
@@ -157,7 +167,7 @@ export class RamadanService {
    * Get student basic info + current streak (Public)
    * Used for "Welcome back!" screen
    */
-  async getStudentInfo(studentId: string) {
+  async getStudentInfo(studentId: string, campaignKey: string = "ramadan") {
     const student = await this.studentRepo.findOne({
       where: { id: studentId },
       select: ["id", "name"],
@@ -165,16 +175,11 @@ export class RamadanService {
 
     if (!student) throw new NotFoundException("Student not found");
 
-    // Get last submission
+    // Get last submission for this campaign
     const lastSubmission = await this.submissionRepo.findOne({
-      where: { studentId },
+      where: { studentId, campaignKey },
       order: { submissionDate: "DESC" },
     });
-
-    // Simple streak logic: if last submission was today or yesterday, show that streak.
-    // If older, streak is broken (0).
-    // Note: The `submit` logic calculates the *new* streak. Here we just want to show *current* active streak.
-    // Actually simpler: just return the streak from the last submission if it was recent.
 
     let currentStreak = 0;
     if (lastSubmission) {
@@ -197,7 +202,6 @@ export class RamadanService {
     };
   }
 
-
   /**
    * Find the first mosque ID (fallback for dev/testing)
    */
@@ -211,38 +215,30 @@ export class RamadanService {
 
   /**
    * Get Leaderboard (Public)
-   * Aggregates total XP per student
+   * Aggregates total XP per student for a specific campaign
    */
-  async getLeaderboard(mosqueId: string) {
-    // Top 50 students by total XP
+  async getLeaderboard(mosqueId: string, campaignKey: string = "ramadan") {
+    // Top 50 students by total XP in this campaign
     const results = await this.submissionRepo
       .createQueryBuilder("submission")
       .select("submission.studentId", "studentId")
       .addSelect("SUM(submission.xpEarned)", "totalXp")
-      .addSelect("MAX(submission.streak)", "maxStreak") // Show their best streak or current? Let's show max for now or logic to show current.
-      // Actually sidebar spec says "Streak: 🔥 [Number]". This usually implies current active streak.
-      // For query simplicity, let's just grab the latest streak from the latest submission for each student?
-      // Grouping by student ID.
+      .addSelect("MAX(submission.streak)", "maxStreak")
       .innerJoin("submission.student", "student")
       .addSelect("student.name", "name")
       .where("submission.mosqueId = :mosqueId", { mosqueId })
+      .andWhere("submission.campaignKey = :campaignKey", { campaignKey })
       .groupBy("submission.studentId")
       .addGroupBy("student.name")
       .orderBy("SUM(submission.xpEarned)", "DESC")
       .limit(50)
       .getRawMany();
 
-    // The Streak in the leaderboard should likely be the *current* streak.
-    // The aggregation above gives us stats. `MAX(streak)` gives the highest streak they achieved this month.
-    // For now, let's use MAX streak as the "Badge of Honor" streak on the leaderboard.
-    // Or we can do a subquery, but that's expensive.
-    // Let's stick to total XP as the ranking metric.
-
     return results.map((r) => ({
       studentId: r.studentId,
       name: r.name,
       totalXp: Number(r.totalXp),
-      streak: Number(r.maxStreak), // Simplified: showing max streak achieved
+      streak: Number(r.maxStreak), 
     }));
   }
 }

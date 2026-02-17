@@ -15,18 +15,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RAMADAN_FORM } from "@/config/ramadan-form";
+import { RAMADAN_FORM } from "@/config/challenges/ramadan";
 import {
-  useRamadanCircles,
-  useRamadanStudentInfo,
-  useRamadanStudents,
-  useRamadanSubmit,
-} from "@/hooks/use-ramadan";
+  useDailyChallengeCircles,
+  useDailyChallengeStudentInfo,
+  useDailyChallengeStudents,
+  useDailyChallengeSubmit,
+} from "@/hooks/use-daily-challenge";
 import { Link } from "@/i18n/routing";
 
 export default function RamadanPage() {
   const searchParams = useSearchParams();
   const mosqueId = searchParams.get("mosqueId") || undefined;
+  const CAMPAIGN_KEY = "ramadan";
 
   // State
   const [step, setStep] = useState<"CIRCLE" | "STUDENT" | "FORM" | "SUCCESS">(
@@ -38,12 +39,12 @@ export default function RamadanPage() {
 
   // Queries
   const { data: circles, isLoading: loadingCircles } =
-    useRamadanCircles(mosqueId);
+    useDailyChallengeCircles(mosqueId);
   const { data: students, isLoading: loadingStudents } =
-    useRamadanStudents(circleId);
+    useDailyChallengeStudents(circleId);
   const { data: studentInfo, isLoading: loadingInfo } =
-    useRamadanStudentInfo(studentId);
-  const submitMutation = useRamadanSubmit();
+    useDailyChallengeStudentInfo(studentId, CAMPAIGN_KEY);
+  const submitMutation = useDailyChallengeSubmit();
 
   // Handlers
   const handleCircleSelect = (id: string) => {
@@ -60,7 +61,7 @@ export default function RamadanPage() {
     if (!studentId) return;
 
     submitMutation.mutate(
-      { studentId, submissionData: data },
+      { studentId, submissionData: data, campaignKey: CAMPAIGN_KEY },
       {
         onSuccess: (result) => {
           setSubmissionResult(result);
@@ -201,14 +202,6 @@ export default function RamadanPage() {
                   شاهد الترتيب
                 </Button>
               </Link>
-              
-              <Button 
-                variant="outline" 
-                className="w-full h-12 text-lg"
-                onClick={handleReset}
-              >
-                تسجيل لطالب آخر
-              </Button>
             </div>
           </CardContent>
         </Card>

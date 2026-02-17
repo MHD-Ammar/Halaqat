@@ -16,11 +16,11 @@ import { AuthModule } from "./auth/auth.module";
 import { CirclesModule } from "./circles/circles.module";
 import { envValidationSchema, typeOrmConfig } from "./config";
 import { CurriculumModule } from "./curriculum/curriculum.module";
+import { DailyChallengeModule } from "./daily-challenge/daily-challenge.module";
 import { ExamsModule } from "./exams/exams.module";
 import { MosquesModule } from "./mosques/mosques.module";
 import { PointsModule } from "./points/points.module";
 import { ProgressModule } from "./progress/progress.module";
-import { RamadanModule } from "./ramadan/ramadan.module";
 import { SessionsModule } from "./sessions/sessions.module";
 import { StudentsModule } from "./students/students.module";
 import { UsersModule } from "./users/users.module";
@@ -54,7 +54,7 @@ import { UsersModule } from "./users/users.module";
     AnalyticsModule,
     ExamsModule,
     MosquesModule,
-    RamadanModule,
+    DailyChallengeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
