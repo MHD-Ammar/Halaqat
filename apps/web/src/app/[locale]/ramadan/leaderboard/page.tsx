@@ -2,6 +2,7 @@
 
 import { ChevronRight, Crown, Medal, Trophy } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +10,8 @@ import { useDailyChallengeLeaderboard } from "@/hooks/use-daily-challenge";
 import { Link } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
-export default function LeaderboardPage() {
+
+function LeaderboardContent() {
   const searchParams = useSearchParams();
   const mosqueId = searchParams.get("mosqueId") || undefined;
   const CAMPAIGN_KEY = "ramadan";
@@ -169,5 +171,13 @@ export default function LeaderboardPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function LeaderboardPage() {
+  return (
+    <Suspense fallback={<div className="text-center p-12 text-white/50">جاري التحميل...</div>}>
+      <LeaderboardContent />
+    </Suspense>
   );
 }

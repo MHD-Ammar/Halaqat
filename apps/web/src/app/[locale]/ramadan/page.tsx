@@ -2,7 +2,7 @@
 
 import { CheckCircle2, ChevronRight, Trophy } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState , Suspense } from "react";
 import Confetti from "react-confetti";
 
 import { DynamicFormRenderer } from "@/components/ramadan/dynamic-form-renderer";
@@ -24,7 +24,9 @@ import {
 } from "@/hooks/use-daily-challenge";
 import { Link } from "@/i18n/routing";
 
-export default function RamadanPage() {
+
+
+function RamadanContent() {
   const searchParams = useSearchParams();
   const mosqueId = searchParams.get("mosqueId") || undefined;
   const CAMPAIGN_KEY = "ramadan";
@@ -42,7 +44,7 @@ export default function RamadanPage() {
     useDailyChallengeCircles(mosqueId);
   const { data: students, isLoading: loadingStudents } =
     useDailyChallengeStudents(circleId);
-  const { data: studentInfo, isLoading: loadingInfo } =
+  const { data: studentInfo } =
     useDailyChallengeStudentInfo(studentId, CAMPAIGN_KEY);
   const submitMutation = useDailyChallengeSubmit();
 
@@ -284,5 +286,13 @@ export default function RamadanPage() {
         isSubmitting={submitMutation.isPending}
       />
     </div>
+  );
+}
+
+export default function RamadanPage() {
+  return (
+    <Suspense fallback={<div className="text-center p-8">جاري التحميل...</div>}>
+      <RamadanContent />
+    </Suspense>
   );
 }
