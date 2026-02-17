@@ -60,15 +60,19 @@ export default function RamadanPage() {
   const handleSubmit = (data: Record<string, any>) => {
     if (!studentId) return;
 
+    const localDate = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format (local time)
+
+    // The submitMutation.mutate function now expects a SubmitChallengeDto
     submitMutation.mutate(
-      { studentId, submissionData: data, campaignKey: CAMPAIGN_KEY },
+      { studentId, submissionData: data, campaignKey: CAMPAIGN_KEY, localDate },
       {
         onSuccess: (result) => {
           setSubmissionResult(result);
           setStep("SUCCESS");
         },
         onError: (err: any) => {
-          alert(err.response?.data?.message || "Something went wrong");
+          // alert(err.response?.data?.message || "Something went wrong");
+          console.error(err);
         },
       },
     );
@@ -206,6 +210,54 @@ export default function RamadanPage() {
           </CardContent>
         </Card>
       </div>
+    );
+  }
+
+  // ALREADY SUBMITTED STATE
+  if (studentInfo?.hasSubmittedToday) {
+    return (
+      <Card className="bg-background/95 backdrop-blur shadow-xl border-0 animate-in fade-in zoom-in-95 duration-500">
+        <CardHeader className="text-center pb-2">
+          <div className="mx-auto w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+            <CheckCircle2 className="w-10 h-10 text-amber-600" />
+          </div>
+          <CardTitle className="text-2xl text-primary font-bold">
+            مرحباً {studentInfo.name.split(" ")[0]}!
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center space-y-6">
+          <div className="space-y-2">
+            <p className="text-muted-foreground text-lg">
+              لقد قمت بإرسال التحدي اليومي بالفعل.
+              <br />
+              عد غداً للمزيد من النقاط!
+            </p>
+          </div>
+
+          <div className="bg-muted/50 p-4 rounded-xl flex items-center justify-between">
+            <span className="text-muted-foreground">التتابع الحالي</span>
+            <div className="flex items-center gap-2 font-bold text-xl">
+              🔥 {studentInfo.currentStreak} يوم
+            </div>
+          </div>
+
+          <div className="grid gap-3 pt-4">
+            <Link href={`/ramadan/leaderboard?mosqueId=${mosqueId || ""}`}>
+              <Button className="w-full h-12 text-lg" variant="default">
+                <Trophy className="mr-2 w-5 h-5" />
+                شاهد الترتيب
+              </Button>
+            </Link>
+            <Button
+              variant="outline"
+              className="w-full h-12"
+              onClick={handleReset}
+            >
+              شخص آخر؟
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 

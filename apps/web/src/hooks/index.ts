@@ -57,6 +57,13 @@ export {
 } from "./use-unassigned-students";
 export { useAssignStudentToCircle } from "./use-assign-student-to-circle";
 export { useTeacherStats, type TeacherStats } from "./use-teacher-stats";
+export {
+  useTeacherDashboard,
+  type TeacherDashboardData,
+  type AttendanceTrendItem,
+  type TopStudent,
+  type RecentSession,
+} from "./use-teacher-dashboard";
 export { useStudentPortal, type StudentPortalData } from "./use-student-portal";
 export {
   useStudentExams,

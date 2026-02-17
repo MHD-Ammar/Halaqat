@@ -18,12 +18,14 @@ export interface ChallengeStudentInfo {
   name: string;
   currentStreak: number;
   lastSubmissionDate: string | null;
+  hasSubmittedToday: boolean;
 }
 
 export interface SubmitChallengeDto {
   studentId: string;
   campaignKey: string;
   submissionData: Record<string, any>;
+  localDate: string;
 }
 
 export interface ChallengeLeaderboardEntry {

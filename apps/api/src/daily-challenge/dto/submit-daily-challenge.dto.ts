@@ -21,6 +21,15 @@ export class SubmitDailyChallengeDto {
   campaignKey: string = "ramadan";
 
   @ApiProperty({
+    description: "Client Local Date (YYYY-MM-DD)",
+    example: "2026-03-10",
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  localDate?: string;
+
+  @ApiProperty({
     description: "Form submission data (JSON)",
     example: {
       prayers: { fajr: "mosque", dhuhr: "home_group" },

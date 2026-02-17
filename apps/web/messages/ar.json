@@ -3,7 +3,7 @@
     "save": "حفظ",
     "cancel": "إلغاء",
     "logout": "تسجيل الخروج",
-    "loading": "جاري التحميل...",
+    "loading": "جاري التحميل",
     "profile": "الملف الشخصي",
     "settings": "الإعدادات",
     "myAccount": "حسابي",
@@ -18,6 +18,7 @@
     "page": "صفحة",
     "selected": "محدد",
     "actions": "إجراءات",
+    "students": "طلاب",
     "edit": "تعديل",
     "delete": "حذف",
     "add": "إضافة",
@@ -273,7 +274,8 @@
     "present": "حاضر",
     "absent": "غائب",
     "late": "متأخر",
-    "excused": "معذور"
+    "excused": "معذور",
+    "status": "الحالة"
   },
   "Profile": {
     "title": "الملف الشخصي",
@@ -572,6 +574,36 @@
       "variable": "متغير",
       "maxValue": "حتى {max} نقطة"
     }
+  },
+  "TeacherDashboard": {
+    "title": "لوحة التحكم",
+    "subtitle": "نظرة عامة على حلقاتك وطلابك",
+    "today": "اليوم",
+    "last7Days": "آخر 7 أيام",
+    "last30Days": "آخر 30 يوم",
+    "thisMonth": "هذا الشهر",
+    "selectDateRange": "اختر نطاق التاريخ",
+    "totalStudents": "إجمالي الطلاب",
+    "totalSessions": "الحلقات",
+    "averageAttendance": "معدل الحضور",
+    "totalRecitations": "التسميعات",
+    "pagesRecited": "الصفحات المسمّعة",
+    "pointsAwarded": "النقاط الممنوحة",
+    "attendanceTrend": "اتجاه الحضور",
+    "present": "حاضر",
+    "absent": "غائب",
+    "late": "متأخر",
+    "topStudents": "أفضل الطلاب",
+    "studentName": "الطالب",
+    "points": "النقاط",
+    "pages": "الصفحات",
+    "attendance": "الحضور",
+    "recentSessions": "الحلقات الأخيرة",
+    "showSummary": "عرض الملخص اليومي",
+    "noSessions": "لا توجد حلقات",
+    "noStudents": "لا يوجد طلاب",
+    "noData": "لا توجد بيانات للفترة المحددة",
+    "loading": "جاري تحميل لوحة التحكم..."
   }
 }
 

@@ -20,6 +20,7 @@ import {
 import { useTranslations, useFormatter } from "next-intl";
 import { useState, useMemo, useCallback } from "react";
 
+import { CircleSessionSummaryButton } from "@/components/dashboards/circle-session-summary-button";
 import { StudentActionSheet } from "@/components/student-action-sheet";
 import { Button } from "@/components/ui/button";
 import {
@@ -97,7 +98,7 @@ export default function DashboardPage() {
       });
       // Force refetch session
       refetch();
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: tCommon("error"),
@@ -294,16 +295,26 @@ export default function DashboardPage() {
     <div className="p-4 md:p-6 pb-24">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">
-          {session
-            ? format.dateTime(new Date(session.date), {
-                weekday: "long",
-                day: "numeric",
-                month: "short",
-              })
-            : t("todaySession")}
-        </h1>
-        <p className="text-muted-foreground">{session?.circle?.name}</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              {session
+                ? format.dateTime(new Date(session.date), {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "short",
+                  })
+                : t("todaySession")}
+            </h1>
+            <p className="text-muted-foreground">{session?.circle?.name}</p>
+          </div>
+          {circleId && session?.circle?.name && (
+            <CircleSessionSummaryButton
+              circleId={circleId}
+              circleName={session.circle.name}
+            />
+          )}
+        </div>
       </div>
 
       {/* Start Session Card */}

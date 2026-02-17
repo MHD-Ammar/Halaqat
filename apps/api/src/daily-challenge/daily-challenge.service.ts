@@ -8,7 +8,7 @@ import { Repository } from "typeorm";
 
 import { SubmitDailyChallengeDto } from "./dto/submit-daily-challenge.dto";
 import { DailySubmission } from "./entities/daily-submission.entity";
-import { getCampaignConfig } from "./form-config.registry";
+import { getCampaignConfig, CampaignConfig, QuestionConfig } from "./form-config.registry";
 import { Circle } from "../circles/entities/circle.entity";
 import { Mosque } from "../mosques/entities/mosque.entity";
 import { Student } from "../students/entities/student.entity";
@@ -46,7 +46,8 @@ export class DailyChallengeService {
       throw new NotFoundException("Student not found");
     }
 
-    const today = new Date().toISOString().split("T")[0];
+    // Use client's local date if provided (to handle timezones), otherwise fallback to server UTC date
+    const today = dto.localDate || new Date().toISOString().split("T")[0];
 
     if (!today) {
         throw new BadRequestException("Invalid date");
@@ -86,32 +87,34 @@ export class DailyChallengeService {
   }
 
   /**
-   * Calculate XP based on form data and campaign config
+   * Calculate XP based on form data and campaign config (generic)
    */
-  private calculateXP(data: any, config: any): number {
+  private calculateXP(data: any, config: CampaignConfig): number {
     let totalXp = config.submitted_xp || 0;
+    const questions = config.questions || {};
 
-    // 1. Prayers Grid
-    if (data.prayers && config.prayers) {
-      Object.values(data.prayers).forEach((val: any) => {
-        if (config.prayers[val]) {
-            totalXp += config.prayers[val];
+    for (const [key, qConfig] of Object.entries<QuestionConfig>(questions)) {
+      const val = data[key];
+      if (val === undefined || val === null) continue;
+
+      switch (qConfig.type) {
+        case "GRID":
+          // val is { row: colValue, ... }
+          if (typeof val === "object" && qConfig.xpMap) {
+            Object.values(val).forEach((colVal: any) => {
+              totalXp += qConfig.xpMap?.[colVal] || 0;
+            });
+          }
+          break;
+        case "BOOLEAN":
+          totalXp += val === true ? (qConfig.xpYes || 0) : (qConfig.xpNo || 0);
+          break;
+        case "NUMBER": {
+          const num = Math.min(Number(val) || 0, qConfig.max || Infinity);
+          totalXp += num * (qConfig.multiplier || 0);
+          break;
         }
-      });
-    }
-
-    // 2. Quran Pages
-    if (data.quran_pages && config.quran) {
-      const pages = Math.min(
-        Number(data.quran_pages),
-        config.quran.max_pages,
-      );
-      totalXp += pages * config.quran.multiplier;
-    }
-
-    // 3. Taraweeh
-    if (data.taraweeh === true && config.taraweeh) {
-      totalXp += config.taraweeh.yes;
+      }
     }
 
     return totalXp;
@@ -182,8 +185,11 @@ export class DailyChallengeService {
     });
 
     let currentStreak = 0;
+    let hasSubmittedToday = false;
+
     if (lastSubmission) {
       const today = new Date();
+      const todayStr = today.toISOString().split("T")[0];
       const lastDate = new Date(lastSubmission.submissionDate);
       const diffDays = Math.floor(
         (today.getTime() - lastDate.getTime()) / (1000 * 3600 * 24),
@@ -193,12 +199,16 @@ export class DailyChallengeService {
       if (diffDays <= 1) {
         currentStreak = lastSubmission.streak;
       }
+
+      // Check if already submitted today
+      hasSubmittedToday = lastSubmission.submissionDate === todayStr;
     }
 
     return {
       ...student,
       currentStreak,
       lastSubmissionDate: lastSubmission?.submissionDate || null,
+      hasSubmittedToday,
     };
   }
 

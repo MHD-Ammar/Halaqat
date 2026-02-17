@@ -2,8 +2,8 @@ import { Loader2, Send } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormQuestion } from "@/config/ramadan-form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormQuestion } from "@/config/challenges/ramadan";
 
 import { BooleanQuestion } from "./boolean-question";
 import { NumberStepper } from "./number-stepper";
@@ -95,6 +95,11 @@ export function DynamicFormRenderer({
                 {index + 1} / {questions.length}
               </span>
             </CardTitle>
+            {q.description && (
+              <CardDescription className="text-sm text-muted-foreground mt-1">
+                {q.description}
+              </CardDescription>
+            )}
           </CardHeader>
           <CardContent>
             {q.type === "GRID" && (

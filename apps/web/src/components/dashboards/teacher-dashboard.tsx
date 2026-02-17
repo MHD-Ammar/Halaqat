@@ -1,260 +1,329 @@
 "use client";
 
+/**
+ * TeacherDashboard Component
+ *
+ * Comprehensive dashboard for teachers with date range filtering,
+ * attendance trends, top students, and recent sessions.
+ */
+
+import { format, subDays } from "date-fns";
 import {
   Users,
-  Percent,
+  Calendar,
+  TrendingUp,
+  BookOpen,
   Star,
-  Activity,
-  UserPlus,
-  ChevronRight,
-  PlayCircle,
-  Clock,
-  CalendarCheck,
+  FileText,
+  UserCheck,
+  UserX,
+
+  Loader2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { type DateRange } from "react-day-picker";
 
-import { CreateStudentDialog } from "@/components/create-student-dialog";
 import { StatsCard } from "@/components/stats-card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  useTeacherStats,
-  useCircle,
-  useUserProfile,
-  useTodaySession,
-  useStartSession,
-} from "@/hooks";
-import { useToast } from "@/hooks/use-toast";
-import { Link } from "@/i18n/routing";
-
-
-import { DailySummaryModal } from "../daily-summary-modal";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { useTeacherDashboard } from "@/hooks/use-teacher-dashboard";
 
 /**
- * Get initials from name
+ * Format date to YYYY-MM-DD for the API
  */
-function getInitials(name?: string): string {
-  if (!name) return "?";
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+function toDateString(date: Date): string {
+  return format(date, "yyyy-MM-dd");
+}
+
+/**
+ * Attendance trend bar for a single day
+ */
+function AttendanceBar({
+  present,
+  absent,
+  late,
+  total,
+  date,
+  t,
+}: {
+  present: number;
+  absent: number;
+  late: number;
+  total: number;
+  date: string;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  if (total === 0) return null;
+  const presentPct = (present / total) * 100;
+  const latePct = (late / total) * 100;
+  const absentPct = (absent / total) * 100;
+
+  // Format date for display (e.g. "02/15")
+  const displayDate = date.slice(5).replace("-", "/");
+
+  return (
+    <div className="flex flex-col items-center gap-1 flex-1 min-w-[32px]">
+      <div
+        className="w-full rounded-md overflow-hidden flex flex-col-reverse"
+        style={{ height: "80px" }}
+        title={`${t("present")}: ${present}, ${t("late")}: ${late}, ${t("absent")}: ${absent}`}
+      >
+        <div
+          className="bg-emerald-500 transition-all"
+          style={{ height: `${presentPct}%` }}
+        />
+        <div
+          className="bg-amber-400 transition-all"
+          style={{ height: `${latePct}%` }}
+        />
+        <div
+          className="bg-red-400 transition-all"
+          style={{ height: `${absentPct}%` }}
+        />
+      </div>
+      <span className="text-[10px] text-muted-foreground leading-none">
+        {displayDate}
+      </span>
+    </div>
+  );
 }
 
 export function TeacherDashboard() {
-  const { data: profile } = useUserProfile();
-  const t = useTranslations("Dashboard");
-  const tCommon = useTranslations("Common");
-  const tSession = useTranslations("DailySession");
-  const { toast } = useToast();
-  const [summaryOpen, setSummaryOpen] = useState(false);
+  const t = useTranslations("TeacherDashboard");
 
-  // Get teacher's first circle ID
-  const teacherCircleId = profile?.circles?.[0]?.id;
-
-  const { data: stats, isLoading: statsLoading } = useTeacherStats({
-    enabled: true,
+  // Default date range: last 7 days
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return { from: subDays(today, 6), to: today };
   });
 
-  const { data: circleDetails, isLoading: circleLoading } = useCircle(
-    teacherCircleId || undefined,
-    { enabled: !!teacherCircleId },
+  const fromStr = useMemo(
+    () => (dateRange?.from ? toDateString(dateRange.from) : ""),
+    [dateRange?.from],
+  );
+  const toStr = useMemo(
+    () => (dateRange?.to ? toDateString(dateRange.to) : ""),
+    [dateRange?.to],
   );
 
-  const { data: session, isLoading: sessionLoading } =
-    useTodaySession(teacherCircleId);
+  const { data, isLoading } = useTeacherDashboard(fromStr, toStr);
 
-  const startSessionMutation = useStartSession();
-
-  const handleStartSession = async () => {
-    if (!teacherCircleId) return;
-
-    try {
-      await startSessionMutation.mutateAsync(teacherCircleId);
-      toast({
-        title: tSession("sessionStarted"),
-        description: tSession("sessionStartedDesc"),
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: tCommon("error"),
-        description: "Failed to start session",
-      });
-    }
-  };
-
-  const students = circleDetails?.students || [];
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ms-3 text-muted-foreground">{t("loading")}</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header with Summary Button */}
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            {t("myPerformance")}
-          </h1>
-          <p className="text-muted-foreground">{t("teacherDescription")}</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-muted-foreground text-sm">{t("subtitle")}</p>
         </div>
-
-        {/* Only show Summary button if session exists */}
-        {session && (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setSummaryOpen(true)}
-              className="gap-2"
-            >
-              <CalendarCheck className="h-4 w-4" />
-              {tSession("showSummary")}
-            </Button>
-            <DailySummaryModal
-              open={summaryOpen}
-              onOpenChange={setSummaryOpen}
-              circleName={circleDetails?.name}
-              students={students}
-              attendances={session.attendances}
-              recitations={session.recitations}
-              pointTransactions={session.pointTransactions}
-              sessionDate={session.date}
-            />
-          </div>
-        )}
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <DateRangePicker
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+            className="w-full sm:w-auto"
+          />
+        </div>
       </div>
 
-      {/* Session Status Card */}
-      {teacherCircleId && !sessionLoading && !session && (
-        <Card className="bg-primary/5 border-primary/20 border-dashed">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-primary">
-              <Clock className="h-5 w-5" />
-              {tSession("title")}
-            </CardTitle>
-            <CardDescription>{tSession("startSessionDesc")}</CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button
-              onClick={handleStartSession}
-              disabled={startSessionMutation.isPending}
-              className="w-full sm:w-auto gap-2"
-            >
-              {startSessionMutation.isPending ? (
-                tCommon("loading")
-              ) : (
-                <>
-                  <PlayCircle className="h-4 w-4" />
-                  {tSession("startAction")}
-                </>
-              )}
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <StatsCard
-          title={t("myStudents")}
-          value={stats?.totalStudents ?? 0}
+          title={t("totalStudents")}
+          value={data?.totalStudents ?? 0}
           icon={Users}
-          iconColor="text-blue-500"
-          isLoading={statsLoading}
+          isLoading={isLoading}
         />
         <StatsCard
-          title={t("attendanceRate")}
-          value={`${stats?.attendanceRate ?? 0}%`}
-          icon={Percent}
-          iconColor="text-green-500"
-          isLoading={statsLoading}
+          title={t("totalSessions")}
+          value={data?.totalSessions ?? 0}
+          icon={Calendar}
+          isLoading={isLoading}
         />
         <StatsCard
-          title={t("pointsToday")}
-          value={stats?.pointsAwardedToday ?? 0}
+          title={t("averageAttendance")}
+          value={`${data?.averageAttendanceRate ?? 0}%`}
+          icon={TrendingUp}
+          isLoading={isLoading}
+        />
+        <StatsCard
+          title={t("totalRecitations")}
+          value={data?.totalRecitations ?? 0}
+          icon={BookOpen}
+          isLoading={isLoading}
+        />
+        <StatsCard
+          title={t("pagesRecited")}
+          value={data?.totalPagesRecited ?? 0}
+          icon={FileText}
+          isLoading={isLoading}
+        />
+        <StatsCard
+          title={t("pointsAwarded")}
+          value={data?.totalPointsAwarded ?? 0}
           icon={Star}
-          iconColor="text-yellow-500"
-          isLoading={statsLoading}
-        />
-        <StatsCard
-          title={t("myCircles")}
-          value={profile?.circles?.length ?? 0}
-          icon={Activity}
-          iconColor="text-purple-500"
-          isLoading={statsLoading}
+          isLoading={isLoading}
         />
       </div>
 
-      {/* Students List */}
+      {/* Attendance Trend + Top Students */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Attendance Trend Chart */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold">
+              {t("attendanceTrend")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {data?.attendanceTrend && data.attendanceTrend.length > 0 ? (
+              <>
+                <div className="flex gap-1 items-end w-full">
+                  {data.attendanceTrend.map((day) => (
+                    <AttendanceBar
+                      key={day.date}
+                      present={day.present}
+                      absent={day.absent}
+                      late={day.late}
+                      total={day.total}
+                      date={day.date}
+                      t={t}
+                    />
+                  ))}
+                </div>
+                {/* Legend */}
+                <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <div className="h-2.5 w-2.5 rounded-sm bg-emerald-500" />
+                    {t("present")}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-2.5 w-2.5 rounded-sm bg-amber-400" />
+                    {t("late")}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-2.5 w-2.5 rounded-sm bg-red-400" />
+                    {t("absent")}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground py-6 text-center">
+                {t("noData")}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Top Students */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold">
+              {t("topStudents")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {data?.topStudents && data.topStudents.length > 0 ? (
+              <div className="space-y-0">
+                {/* Table Header */}
+                <div className="grid grid-cols-4 gap-2 text-xs font-medium text-muted-foreground pb-2 border-b">
+                  <span>{t("studentName")}</span>
+                  <span className="text-center">{t("points")}</span>
+                  <span className="text-center">{t("pages")}</span>
+                  <span className="text-center">{t("attendance")}</span>
+                </div>
+                {/* Rows */}
+                {data.topStudents.map((student, i) => (
+                  <div
+                    key={student.studentId}
+                    className="grid grid-cols-4 gap-2 py-2.5 text-sm items-center border-b last:border-b-0"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="flex items-center justify-center h-5 w-5 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">
+                        {i + 1}
+                      </span>
+                      <span className="truncate font-medium">
+                        {student.studentName}
+                      </span>
+                    </div>
+                    <span className="text-center font-semibold text-primary">
+                      {student.totalPoints}
+                    </span>
+                    <span className="text-center">
+                      {student.totalPages}
+                    </span>
+                    <span className="text-center">
+                      {student.attendanceRate}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground py-6 text-center">
+                {t("noStudents")}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Sessions */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            {t("myStudents")}
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base font-semibold">
+            {t("recentSessions")}
           </CardTitle>
-          {teacherCircleId && (
-            <CreateStudentDialog defaultCircleId={teacherCircleId}>
-              <button className="flex items-center gap-2 text-sm font-medium text-primary hover:underline">
-                <UserPlus className="h-4 w-4" />
-                {t("addStudent")}
-              </button>
-            </CreateStudentDialog>
-          )}
         </CardHeader>
         <CardContent>
-          {circleLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-14 w-full" />
-              ))}
-            </div>
-          ) : students.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>{t("noStudents")}</p>
-              {teacherCircleId && (
-                <CreateStudentDialog defaultCircleId={teacherCircleId}>
-                  <button className="mt-3 text-primary hover:underline text-sm">
-                    {t("addFirstStudent")}
-                  </button>
-                </CreateStudentDialog>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {students.map((student) => (
-                <Link
-                  key={student.id}
-                  href={`/students/${student.id}`}
-                  className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent transition-colors group"
+          {data?.recentSessions && data.recentSessions.length > 0 ? (
+            <div className="space-y-0">
+              {data.recentSessions.map((session) => (
+                <div
+                  key={session.id}
+                  className="flex items-center justify-between py-3 border-b last:border-b-0"
                 >
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        {getInitials(student.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{student.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {student.totalPoints ?? 0} {tCommon("points")}
-                      </p>
+                    <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-primary/10">
+                      <Calendar className="h-4 w-4 text-primary" />
+                    </div>
+                    <span className="text-sm font-medium">{session.date}</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1" title={t("present")}>
+                      <UserCheck className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>{session.presentCount}</span>
+                    </div>
+                    <div className="flex items-center gap-1" title={t("absent")}>
+                      <UserX className="h-3.5 w-3.5 text-red-400" />
+                      <span>{session.absentCount}</span>
+                    </div>
+                    <div className="flex items-center gap-1" title={t("totalRecitations")}>
+                      <BookOpen className="h-3.5 w-3.5 text-blue-500" />
+                      <span>{session.recitationCount}</span>
                     </div>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </Link>
+                </div>
               ))}
             </div>
+          ) : (
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              {t("noSessions")}
+            </p>
           )}
         </CardContent>
       </Card>

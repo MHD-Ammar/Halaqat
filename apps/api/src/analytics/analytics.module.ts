@@ -7,12 +7,13 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
-import { AnalyticsService } from "./analytics.service";
 import { AnalyticsController } from "./analytics.controller";
-import { Student } from "../students/entities/student.entity";
-import { Session } from "../sessions/entities/session.entity";
-import { PointTransaction } from "../points/entities/point-transaction.entity";
+import { AnalyticsService } from "./analytics.service";
 import { Circle } from "../circles/entities/circle.entity";
+import { PointTransaction } from "../points/entities/point-transaction.entity";
+import { Recitation } from "../progress/entities/recitation.entity";
+import { Session } from "../sessions/entities/session.entity";
+import { Student } from "../students/entities/student.entity";
 import { User } from "../users/entities/user.entity";
 
 @Module({
@@ -23,6 +24,7 @@ import { User } from "../users/entities/user.entity";
       PointTransaction,
       Circle,
       User,
+      Recitation,
     ]),
   ],
   controllers: [AnalyticsController],

@@ -19,9 +19,7 @@ export interface Circle {
     id: string;
     fullName: string;
   };
-  _count?: {
-    students: number;
-  };
+  studentCount?: number;
   createdAt: string;
 }
 
