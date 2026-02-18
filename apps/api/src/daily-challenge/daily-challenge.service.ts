@@ -251,4 +251,96 @@ export class DailyChallengeService {
       streak: Number(r.maxStreak), 
     }));
   }
+
+  /**
+   * Get Weekly Submissions for a Circle (Teacher View)
+   */
+  async getWeeklySubmissions(
+    circleId: string,
+    startDateStr: string,
+    campaignKey: string = "ramadan",
+  ) {
+    // 1. Get all students in circle
+    const students = await this.studentRepo.find({
+      where: { circleId },
+      select: ["id", "name"],
+      order: { name: "ASC" },
+    });
+
+    if (!students.length) {
+      return [];
+    }
+
+    // 2. Calculate date range (start date + 6 days)
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 6);
+
+    const endDateStr = endDate.toISOString().split("T")[0];
+
+    // 3. Fetch submissions for these students in range
+    const submissions = await this.submissionRepo
+      .createQueryBuilder("submission")
+      .select([
+        "submission.id",
+        "submission.studentId",
+        "submission.submissionDate",
+        "submission.xpEarned",
+        "submission.streak",
+      ])
+      .where("submission.studentId IN (:...studentIds)", {
+        studentIds: students.map((s) => s.id),
+      })
+      .andWhere("submission.campaignKey = :campaignKey", { campaignKey })
+      .andWhere("submission.submissionDate >= :startDate", {
+        startDate: startDateStr,
+      })
+      .andWhere("submission.submissionDate <= :endDate", { endDate: endDateStr })
+      .getMany();
+
+    // 4. Map results
+    // Output: [ { studentId, name, submissions: { '2024-03-10': { ... }, ... } } ]
+    return students.map((student) => {
+      const studentSubmissions: Record<string, any> = {};
+
+      // Fill submissions map
+      submissions
+        .filter((sub) => sub.studentId === student.id)
+        .forEach((sub) => {
+          studentSubmissions[sub.submissionDate] = {
+            id: sub.id,
+            xp: sub.xpEarned,
+            streak: sub.streak,
+          };
+        });
+
+      return {
+        studentId: student.id,
+        name: student.name,
+        submissions: studentSubmissions,
+      };
+    });
+  }
+
+  /**
+   * Get single submission by ID with full data
+   */
+  async getSubmissionById(id: string) {
+    const submission = await this.submissionRepo.findOne({
+      where: { id },
+      relations: ["student"],
+    });
+
+    if (!submission) {
+      throw new NotFoundException("Submission not found");
+    }
+
+    return {
+      id: submission.id,
+      studentName: submission.student.name,
+      date: submission.submissionDate,
+      totalXp: submission.xpEarned,
+      details: submission.submissionData, // The raw JSON form data
+    };
+  }
 }

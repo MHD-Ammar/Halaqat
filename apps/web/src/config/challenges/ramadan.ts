@@ -37,7 +37,7 @@ export const RAMADAN_FORM: FormQuestion[] = [
   {
     id: "wird",
     title: "هل أنهيت وردك اليوم؟",
-    description: "100 أستغفار - 200 صلاة على النبي - 1000 تهليل",
+    description: "100 أستغفار - 200 صلاة على النبي صلى الله عليه وسلم - 1000 لا إله إلا الله",
     type: "BOOLEAN",
     xpYes: 25,
     xpNo: 0,

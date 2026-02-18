@@ -95,3 +95,9 @@ export {
   type UpdateMosqueDto,
   type BulkUpdatePointRulesDto,
 } from "./use-settings";
+export {
+  useWeeklySubmissions,
+  useSubmissionDetail,
+  type StudentWeeklySubmissions,
+  type SubmissionDetail,
+} from "./use-weekly-submissions";

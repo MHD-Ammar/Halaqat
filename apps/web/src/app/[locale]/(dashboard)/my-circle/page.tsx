@@ -38,6 +38,7 @@ import {
   useUpdateAttendance,
 } from "@/hooks/use-today-session";
 import { useUserProfile } from "@/hooks/use-user-profile";
+import { Link } from "@/i18n/routing";
 
 /**
  * Status cycle order for toggling
@@ -309,10 +310,17 @@ export default function DashboardPage() {
             <p className="text-muted-foreground">{session?.circle?.name}</p>
           </div>
           {circleId && session?.circle?.name && (
-            <CircleSessionSummaryButton
-              circleId={circleId}
-              circleName={session.circle.name}
-            />
+            <div className="flex gap-2">
+              <Link href="/my-circle/challenges">
+                <Button variant="outline">
+                  {t("challengesDashboard")}
+                </Button>
+              </Link>
+              <CircleSessionSummaryButton
+                circleId={circleId}
+                circleName={session.circle.name}
+              />
+            </div>
           )}
         </div>
       </div>

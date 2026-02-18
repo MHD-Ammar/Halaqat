@@ -300,7 +300,8 @@
     "absent": "غائب",
     "late": "متأخر",
     "excused": "معذور",
-    "saveChanges": "حفظ التغييرات"
+    "saveChanges": "حفظ التغييرات",
+    "challengesDashboard": "لوحة التحديات"
   },
   "StudentPortal": {
     "title": "بوابتي",
@@ -610,6 +611,20 @@
     "noStudents": "لا يوجد طلاب",
     "noData": "لا توجد بيانات للفترة المحددة",
     "loading": "جاري تحميل لوحة التحكم..."
+  },
+  "ChallengesDashboard": {
+    "title": "لوحة متابعة التحديات",
+    "subtitle": "متابعة أداء الطلاب في التحديات اليومية",
+    "weekOf": "أسبوع {date}",
+    "previousWeek": "الأسبوع السابق",
+    "nextWeek": "الأسبوع التالي",
+    "currentWeek": "الأسبوع الحالي",
+    "student": "الطالب",
+    "totalXp": "مجموع النقاط",
+    "submissionDetails": "تفاصيل المشاركة",
+    "didNotSubmit": "لم يشارك",
+    "viewDetails": "عرض التفاصيل",
+    "close": "إغلاق"
   }
 }
 

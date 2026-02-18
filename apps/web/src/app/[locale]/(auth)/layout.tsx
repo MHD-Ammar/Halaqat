@@ -5,7 +5,6 @@
  * Features a clean gradient background.
  */
 
-import { useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { ReactNode } from "react";
 
@@ -27,8 +26,6 @@ export default async function AuthLayout({
 }
 
 function AuthLayoutContent({ children }: { children: ReactNode }) {
-  const t = useTranslations("Header");
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-accent/20 to-primary/10 p-4">
       <div className="w-full max-w-md">

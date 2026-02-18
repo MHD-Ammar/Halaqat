@@ -299,7 +299,8 @@
     "absent": "Absent",
     "late": "Late",
     "excused": "Excused",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "challengesDashboard": "Challenges Dashboard"
   },
   "StudentPortal": {
     "title": "My Portal",
@@ -609,6 +610,20 @@
     "noStudents": "No students found",
     "noData": "No data for the selected period",
     "loading": "Loading dashboard..."
+  },
+  "ChallengesDashboard": {
+    "title": "Challenges Dashboard",
+    "subtitle": "Monitor student progress in daily challenges",
+    "weekOf": "Week of {date}",
+    "previousWeek": "Previous Week",
+    "nextWeek": "Next Week",
+    "currentWeek": "Current Week",
+    "student": "Student",
+    "totalXp": "Total XP",
+    "submissionDetails": "Submission Details",
+    "didNotSubmit": "Did not submit",
+    "viewDetails": "View Details",
+    "close": "Close"
   }
 }
 

@@ -54,6 +54,28 @@ export class DailyChallengeController {
     return this.challengeService.submit(dto);
   }
 
+  @Get("submissions/weekly")
+  @ApiOperation({
+    summary: "Get weekly submissions for a circle (Teacher)",
+    description: "Returns all students in circle with their submissions for the specified date range",
+  })
+  async getWeeklySubmissions(
+    @Query("circleId") circleId: string,
+    @Query("startDate") startDate: string,
+    @Query("campaign") campaign: string = "ramadan",
+  ) {
+    if (!circleId || !startDate) {
+      throw new NotFoundException("circleId and startDate are required");
+    }
+    return this.challengeService.getWeeklySubmissions(circleId, startDate, campaign);
+  }
+
+  @Get("submission/:id")
+  @ApiOperation({ summary: "Get single submission details (Teacher)" })
+  async getSubmission(@Param("id") id: string) {
+    return this.challengeService.getSubmissionById(id);
+  }
+
   @Get("leaderboard")
   @ApiOperation({
     summary: "Get Leaderboard (Public)",
