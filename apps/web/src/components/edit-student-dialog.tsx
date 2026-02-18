@@ -56,12 +56,14 @@ interface EditStudentDialogProps {
   open: boolean;
   student: Student | null;
   onOpenChange: (open: boolean) => void;
+  readonlyCircle?: boolean;
 }
 
 export function EditStudentDialog({
   open,
   student,
   onOpenChange,
+  readonlyCircle = false,
 }: EditStudentDialogProps) {
   const t = useTranslations("Students");
   const tCommon = useTranslations("Common");
@@ -91,7 +93,7 @@ export function EditStudentDialog({
 
   const updateMutation = useUpdateStudent();
   const { data: circles = [], isLoading: circlesLoading } = useCircles({
-    enabled: open,
+    enabled: open && !readonlyCircle,
   });
 
   const form = useForm<EditStudentFormData>({
@@ -113,10 +115,10 @@ export function EditStudentDialog({
     if (student && open) {
       form.reset({
         name: student.name || "",
-        phone: (student as any).phone || "",
-        dob: student.dateOfBirth?.split("T")[0] || "",
-        address: (student as any).address || "",
-        notes: (student as any).notes || "",
+        phone: student.phone || "",
+        dob: student.dob ? student.dob.split("T")[0] : "",
+        address: student.address || "",
+        notes: student.notes || "",
         guardianName: student.guardianName || "",
         guardianPhone: student.guardianPhone || "",
         circleId: student.circleId || "",
@@ -205,24 +207,40 @@ export function EditStudentDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t("circle")}</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          disabled={updateMutation.isPending || circlesLoading}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t("selectCircle")} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {circles.map((circle) => (
-                              <SelectItem key={circle.id} value={circle.id}>
-                                {circle.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        {readonlyCircle ? (
+                          <div className="bg-primary/5 p-3 rounded-lg border border-primary/10 flex items-center justify-between shadow-sm">
+                            <div className="flex items-center gap-2">
+                              <div className="h-2 w-2 rounded-full bg-primary" />
+                              <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">
+                                {t("circle")}
+                              </span>
+                            </div>
+                            <span className="font-bold text-primary text-sm">
+                              {student?.circle?.name ||
+                                circles.find((c) => c.id === field.value)?.name ||
+                                t("selectCircle")}
+                            </span>
+                          </div>
+                        ) : (
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            disabled={updateMutation.isPending || circlesLoading}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={t("selectCircle")} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {circles.map((circle) => (
+                                <SelectItem key={circle.id} value={circle.id}>
+                                  {circle.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}

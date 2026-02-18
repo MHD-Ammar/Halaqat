@@ -13,7 +13,10 @@ import { api } from "@/lib/api";
 export interface Student {
   id: string;
   name: string;
-  dateOfBirth?: string;
+  dob?: string;
+  phone?: string;
+  address?: string;
+  notes?: string;
   guardianPhone?: string;
   guardianName?: string;
   circleId: string;
@@ -30,7 +33,10 @@ export interface Student {
 export interface CreateStudentDto {
   name: string;
   circleId: string;
-  dateOfBirth?: string;
+  dob?: string;
+  phone?: string;
+  address?: string;
+  notes?: string;
   guardianPhone?: string;
   guardianName?: string;
 }

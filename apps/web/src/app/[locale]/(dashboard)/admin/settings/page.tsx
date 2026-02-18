@@ -111,7 +111,7 @@ export default function AdminSettingsPage() {
 
   const handleRuleChange = (key: string, value: string) => {
     const numValue = parseInt(value, 10);
-    if (!isNaN(numValue) && numValue >= 0) {
+    if (!isNaN(numValue)) {
       setRuleValues((prev) => ({ ...prev, [key]: numValue }));
     }
   };
@@ -160,10 +160,13 @@ export default function AdminSettingsPage() {
     RECITATION_GOOD: "✨",
     RECITATION_ACCEPTABLE: "📝",
     RECITATION_POOR: "📋",
-    ATTENDANCE_PRESENT: "✅",
     ATTENDANCE_ON_TIME: "⏰",
+    ATTENDANCE_LATE: "🕐",
+    ATTENDANCE_ABSENT: "❌",
+    ATTENDANCE_EXCUSED: "📋",
     EXAM_EXCELLENT: "🏆",
     EXAM_GOOD: "🎯",
+    BEHAVIOR_BAD: "⚠️",
   };
 
   return (
@@ -282,7 +285,6 @@ export default function AdminSettingsPage() {
                     <div className="flex items-center gap-2">
                       <Input
                         type="number"
-                        min="0"
                         value={ruleValues[rule.key] ?? rule.points}
                         onChange={(e) => handleRuleChange(rule.key, e.target.value)}
                         className="w-20 text-center"

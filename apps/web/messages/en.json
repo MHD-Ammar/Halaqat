@@ -42,6 +42,7 @@
     "overview": "Overview",
     "circles": "Circles",
     "students": "Students",
+    "myStudents": "My Students",
     "myCircle": "My Circle",
     "profile": "Profile",
     "studentPortal": "My Portal",
@@ -534,6 +535,8 @@
       "EXAM_EXCELLENT": "Excellent Exam",
       "EXAM_GOOD": "Good Exam",
       "ATTENDANCE_LATE": "Late Attendance",
+      "ATTENDANCE_ABSENT": "Absent",
+      "ATTENDANCE_EXCUSED": "Excused Absence",
       "BEHAVIOR_BAD": "Bad Behavior"
     },
     "PointRulesDesc": {
@@ -548,6 +551,8 @@
       "EXAM_EXCELLENT": "Excellent exam score",
       "EXAM_GOOD": "Good exam score",
       "ATTENDANCE_LATE": "Arriving after start time",
+      "ATTENDANCE_ABSENT": "Did not attend session",
+      "ATTENDANCE_EXCUSED": "Absent with valid excuse",
       "BEHAVIOR_BAD": "Points deduction for bad behavior"
     },
     "customRules": {

@@ -7,6 +7,7 @@
  */
 
 import { LogOut, User } from "lucide-react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -53,10 +54,15 @@ export function MobileHeader() {
       <div className="flex items-center justify-between h-14 px-4">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-lg">ح</span>
+          <div className="w-8 h-8 relative flex items-center justify-center">
+            <Image
+              src="/halaqat.png"
+              alt="Halaqat Logo"
+              width={32}
+              height={32}
+              className="object-contain"
+            />
           </div>
-          <span className="text-lg font-semibold text-foreground">Halaqat</span>
         </div>
 
         {/* Right side: Language Switcher + User Avatar */}

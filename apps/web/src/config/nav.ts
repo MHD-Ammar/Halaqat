@@ -9,7 +9,6 @@
 import {
   Users,
   BookOpen,
-  User,
   LayoutDashboard,
   GraduationCap,
   ClipboardCheck,
@@ -69,6 +68,13 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ["TEACHER"],
   },
   {
+    titleKey: "myStudents",
+    href: "/my-students",
+    icon: Users,
+    description: "View and manage your students",
+    roles: ["TEACHER"],
+  },
+  {
     titleKey: "studentPortal",
     href: "/student-portal",
     icon: GraduationCap,
@@ -95,13 +101,6 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Settings,
     description: "Mosque and points configuration",
     roles: ["ADMIN"],
-  },
-  {
-    titleKey: "profile",
-    href: "/profile",
-    icon: User,
-    description: "Your account settings",
-    // Available to all authenticated users
   },
 ];
 

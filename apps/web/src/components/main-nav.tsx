@@ -10,19 +10,29 @@
  * Features role-based navigation filtering with i18n support.
  */
 
-import { LogOut } from "lucide-react";
+import { LogOut, User } from "lucide-react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getNavItemsForRole } from "@/config/nav";
 import { useAuth } from "@/hooks";
-import { usePathname , Link } from "@/i18n/routing";
+import { usePathname, Link, useRouter } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
 export function MainNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout, isLoading } = useAuth();
   const t = useTranslations("Nav");
   const tCommon = useTranslations("Common");
@@ -69,10 +79,14 @@ export function MainNav() {
           {/* Logo */}
           <div className="flex items-center justify-between flex-shrink-0 px-4 mb-8">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">
-                  ح
-                </span>
+              <div className="w-8 h-8 relative flex items-center justify-center">
+                <Image
+                  src="/halaqat.png"
+                  alt="Halaqat Logo"
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                />
               </div>
               <span className="text-xl font-semibold text-foreground">
                 Halaqat
@@ -106,29 +120,64 @@ export function MainNav() {
             })}
           </nav>
 
-          {/* User Info & Logout */}
-          <div className="border-t p-4 space-y-3">
-            {user && (
-              <div className="flex items-center gap-3 px-2">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
-                  {user.name?.charAt(0).toUpperCase() || "U"}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{user.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {user.role}
-                  </p>
-                </div>
-              </div>
+          {/* User Info & Logout (Dropdown) */}
+          <div className="border-t p-4">
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start px-2 hover:bg-accent h-auto py-2"
+                  >
+                    <div className="flex items-center gap-3 w-full text-start">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm shrink-0">
+                        {user.name?.charAt(0).toUpperCase() || "U"}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {user.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {user.role}
+                        </p>
+                      </div>
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56" side="right" sideOffset={10}>
+                  <DropdownMenuLabel>
+                    {tCommon("myAccount")}
+                    {user.email && (
+                      <p className="text-xs font-normal text-muted-foreground truncate">
+                        {user.email}
+                      </p>
+                    )}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push("/profile")}>
+                    <User className="mr-2 h-4 w-4" />
+                    {t("profile")}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={logout}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    {tCommon("logout")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-muted-foreground hover:text-destructive"
+                onClick={logout}
+              >
+                <LogOut className="h-4 w-4 me-3" />
+                {tCommon("logout")}
+              </Button>
             )}
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-muted-foreground hover:text-destructive"
-              onClick={logout}
-            >
-              <LogOut className="h-4 w-4 me-3" />
-              {tCommon("logout")}
-            </Button>
           </div>
         </div>
       </aside>

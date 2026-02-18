@@ -9,6 +9,8 @@ import { useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { ReactNode } from "react";
 
+import { Logo } from "@/components/logo";
+
 interface AuthLayoutProps {
   children: ReactNode;
   params: Promise<{ locale: string }>;
@@ -33,19 +35,7 @@ function AuthLayoutContent({ children }: { children: ReactNode }) {
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shadow-lg">
-              <span className="text-primary-foreground font-bold text-2xl">
-                ح
-              </span>
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">
-                {t("halaqat")}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {t("mosqueManagement")}
-              </p>
-            </div>
+            <Logo width={48} height={48} />
           </div>
         </div>
 

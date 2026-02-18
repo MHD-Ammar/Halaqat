@@ -11,7 +11,7 @@ import {
   IsArray,
   IsInt,
   IsString,
-  Min,
+
   ValidateNested,
 } from "class-validator";
 
@@ -28,7 +28,7 @@ class PointRuleUpdateItem {
     example: 10,
   })
   @IsInt()
-  @Min(0)
+
   points!: number;
 }
 

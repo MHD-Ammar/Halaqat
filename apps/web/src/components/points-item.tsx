@@ -6,12 +6,6 @@
  * Displays a point transaction with color-coded amount.
  */
 
-interface PointsItemProps {
-  amount: number;
-  reason: string;
-  createdAt: string;
-}
-
 import { useTranslations } from "next-intl";
 
 interface PointsItemProps {
@@ -20,7 +14,7 @@ interface PointsItemProps {
   createdAt: string;
 }
 
-// Mapping from backend English descriptions to translation keys
+// Mapping from backend English/Arabic descriptions to translation keys
 const DESCRIPTION_TO_KEY: Record<string, string> = {
   "Memorizing a new page": "RECITATION_PAGE",
   "Excellent recitation quality": "RECITATION_EXCELLENT",
@@ -28,11 +22,14 @@ const DESCRIPTION_TO_KEY: Record<string, string> = {
   "Good recitation quality": "RECITATION_GOOD",
   "Acceptable recitation quality": "RECITATION_ACCEPTABLE",
   "Poor recitation quality": "RECITATION_POOR",
-  "Attending a session": "ATTENDANCE_PRESENT",
+  "Attending a session": "ATTENDANCE_ON_TIME",
   "Arriving on time": "ATTENDANCE_ON_TIME",
+  "Absent": "ATTENDANCE_ABSENT",
+  "Excused absence": "ATTENDANCE_EXCUSED",
   "Excellent exam score": "EXAM_EXCELLENT",
   "Good exam score": "EXAM_GOOD",
-  "Points per page of recitation": "RECITATION_PAGE", // Legacy/Seeder
+  // Seed-data descriptions
+  "Points per page of recitation": "RECITATION_PAGE",
   "Points for excellent recitation with no mistakes": "RECITATION_EXCELLENT",
   "Points for very good recitation with few mistakes": "RECITATION_VERY_GOOD",
   "Points for good recitation": "RECITATION_GOOD",
@@ -40,6 +37,12 @@ const DESCRIPTION_TO_KEY: Record<string, string> = {
   "Points for poor recitation (encouragement only)": "RECITATION_POOR",
   "Points for excellent exam performance (Full Mark)": "EXAM_EXCELLENT",
   "Points for good exam performance": "EXAM_GOOD",
+  // Arabic seed descriptions
+  "حضور في الوقت": "ATTENDANCE_ON_TIME",
+  "حضور متأخر": "ATTENDANCE_LATE",
+  "غياب": "ATTENDANCE_ABSENT",
+  "غياب بعذر": "ATTENDANCE_EXCUSED",
+  "شغب / سوء سلوك": "BEHAVIOR_BAD",
 };
 
 export function PointsItem({ amount, reason, createdAt }: PointsItemProps) {

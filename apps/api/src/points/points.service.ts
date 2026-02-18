@@ -95,16 +95,19 @@ export class PointsService {
    */
   async initializeDefaultRules(mosqueId: string): Promise<PointRule[]> {
     const defaultRules = [
-      { key: "RECITATION_PAGE", description: "Memorizing a new page", points: 10 },
-      { key: "RECITATION_EXCELLENT", description: "Excellent recitation quality", points: 50 },
-      { key: "RECITATION_VERY_GOOD", description: "Very good recitation quality", points: 30 },
-      { key: "RECITATION_GOOD", description: "Good recitation quality", points: 20 },
-      { key: "RECITATION_ACCEPTABLE", description: "Acceptable recitation quality", points: 10 },
-      { key: "RECITATION_POOR", description: "Poor recitation quality", points: 0 },
-      { key: "ATTENDANCE_PRESENT", description: "Attending a session", points: 10 },
-      { key: "ATTENDANCE_ON_TIME", description: "Arriving on time", points: 5 },
-      { key: "EXAM_EXCELLENT", description: "Excellent exam score", points: 100 },
-      { key: "EXAM_GOOD", description: "Good exam score", points: 80 },
+      { key: "RECITATION_PAGE", description: "Points per page of recitation", points: 5 },
+      { key: "RECITATION_EXCELLENT", description: "Points for excellent recitation with no mistakes", points: 5 },
+      { key: "RECITATION_VERY_GOOD", description: "Points for very good recitation with few mistakes", points: 3 },
+      { key: "RECITATION_GOOD", description: "Points for good recitation", points: 1 },
+      { key: "RECITATION_ACCEPTABLE", description: "Points for acceptable recitation", points: 0 },
+      { key: "RECITATION_POOR", description: "Points for poor recitation (encouragement only)", points: 0 },
+      { key: "ATTENDANCE_ON_TIME", description: "حضور في الوقت", points: 5 },
+      { key: "ATTENDANCE_LATE", description: "حضور متأخر", points: 2 },
+      { key: "ATTENDANCE_ABSENT", description: "غياب", points: 0 },
+      { key: "ATTENDANCE_EXCUSED", description: "غياب بعذر", points: 0 },
+      { key: "BEHAVIOR_BAD", description: "شغب / سوء سلوك", points: -5 },
+      { key: "EXAM_EXCELLENT", description: "Points for excellent exam performance (Full Mark)", points: 20 },
+      { key: "EXAM_GOOD", description: "Points for good exam performance", points: 15 },
     ];
 
     const rules = defaultRules.map((rule) =>
@@ -113,7 +116,7 @@ export class PointsService {
         mosqueId,
         isActive: true,
         isSystem: true,
-        isVisibleToTeacher: false, // System rules are not in teacher's Quick Reward
+        isVisibleToTeacher: rule.key === "BEHAVIOR_BAD", // BEHAVIOR_BAD visible to teacher
         isCustomEntry: false,
         maxCustomValue: null,
       }),
@@ -266,11 +269,11 @@ export class PointsService {
 
     await this.transactionRepository.save(transaction);
 
-    // Update student's total points
+    // Update student's total points (use multiplied amount so reversals subtract correctly)
     await this.studentRepository.increment(
       { id: studentId },
       "totalPoints",
-      rule.points,
+      multiplier * rule.points,
     );
 
     return transaction;

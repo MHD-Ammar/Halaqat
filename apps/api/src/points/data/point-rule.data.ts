@@ -75,6 +75,20 @@ export const POINT_RULE_DATA: PointRuleSeedData[] = [
     isSystem: true, 
     isVisibleToTeacher: false 
   },
+  { 
+    key: "ATTENDANCE_ABSENT", 
+    description: "غياب", 
+    points: 0, 
+    isSystem: true, 
+    isVisibleToTeacher: false 
+  },
+  { 
+    key: "ATTENDANCE_EXCUSED", 
+    description: "غياب بعذر", 
+    points: 0, 
+    isSystem: true, 
+    isVisibleToTeacher: false 
+  },
 
   // Manual Behavior Examples (System defined, but visible to teacher)
   { 

@@ -78,12 +78,20 @@ export class ProgressService {
       select: ["mosqueId"],
     });
 
-    // Award points based on quality
+    // Award points based on quality + per-page points
     if (student?.mosqueId) {
       const ruleKey = QUALITY_TO_RULE_KEY[dto.quality];
       await this.pointsService.calculateAndAwardPoints(
         dto.studentId,
         ruleKey,
+        student.mosqueId,
+        dto.sessionId,
+      );
+
+      // Also award per-page points (RECITATION_PAGE rule)
+      await this.pointsService.calculateAndAwardPoints(
+        dto.studentId,
+        "RECITATION_PAGE",
         student.mosqueId,
         dto.sessionId,
       );
@@ -141,8 +149,19 @@ export class ProgressService {
           dto.sessionId,
         );
 
+        // Also award per-page points (RECITATION_PAGE rule)
+        const pagePointTransaction = await this.pointsService.calculateAndAwardPoints(
+          dto.studentId,
+          "RECITATION_PAGE",
+          student.mosqueId,
+          dto.sessionId,
+        );
+
         if (pointTransaction) {
           totalPointsAwarded += pointTransaction.amount;
+        }
+        if (pagePointTransaction) {
+          totalPointsAwarded += pagePointTransaction.amount;
         }
       }
     }

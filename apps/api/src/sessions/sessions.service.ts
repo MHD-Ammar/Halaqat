@@ -18,6 +18,15 @@ import { PointsService } from "../points/points.service";
 import { StudentsService } from "../students/students.service";
 
 
+
+// Map statuses to their corresponding point rule keys
+const STATUS_TO_RULE_KEY: Record<AttendanceStatus, string> = {
+  [AttendanceStatus.PRESENT]: "ATTENDANCE_ON_TIME",
+  [AttendanceStatus.LATE]: "ATTENDANCE_LATE",
+  [AttendanceStatus.ABSENT]: "ATTENDANCE_ABSENT",
+  [AttendanceStatus.EXCUSED]: "ATTENDANCE_EXCUSED",
+};
+
 @Injectable()
 export class SessionsService {
   constructor(
@@ -50,6 +59,11 @@ export class SessionsService {
         "pointTransactions",
       ],
     });
+
+    if (session) {
+      // Ensure all students have attendance records (auto-sync)
+      return this.syncSessionAttendance(session);
+    }
 
     return session;
   }
@@ -94,8 +108,16 @@ export class SessionsService {
       session.attendances = [];
     }
 
+    // Ensure attendance records exist
+    return this.syncSessionAttendance(session);
+  }
+
+  /**
+   * Helper to ensure all students in the circle have attendance records for the session
+   */
+  private async syncSessionAttendance(session: Session): Promise<Session> {
     // Fetch all active students in this circle
-    const students = await this.studentsService.findByCircle(circleId);
+    const students = await this.studentsService.findByCircle(session.circleId);
 
     // Filter students who don't have attendance records yet for this session
     const existingStudentIds = new Set(
@@ -109,7 +131,7 @@ export class SessionsService {
       // Create attendance records for missing students
       const attendanceRecords = missingStudents.map((student) =>
         this.attendanceRepository.create({
-          sessionId: session!.id,
+          sessionId: session.id,
           studentId: student.id,
           status: AttendanceStatus.PRESENT, // Default to PRESENT
         }),
@@ -117,12 +139,21 @@ export class SessionsService {
 
       await this.attendanceRepository.save(attendanceRecords);
 
+      // Award initial points for the default PRESENT status
+      const mosqueId = session.mosqueId;
+      for (const record of attendanceRecords) {
+        if (record.status === AttendanceStatus.PRESENT) {
+          await this.pointsService.calculateAndAwardPoints(
+            record.studentId,
+            "ATTENDANCE_ON_TIME",
+            mosqueId,
+            session.id,
+          );
+        }
+      }
+
       // Reload session with all relations to include new records
       return this.findOne(session.id);
-    }
-
-    if (!session) {
-      throw new Error("Failed to create or find session");
     }
 
     return session;
@@ -172,86 +203,29 @@ export class SessionsService {
         const studentId = update.studentId;
         const mosqueId = session.mosqueId;
 
-        // 1. Handle NEW Status = PRESENT
-        if (update.status === AttendanceStatus.PRESENT) {
-          // If previously LATE -> Revert LATE points (-2), Award PRESENT (ON_TIME) points
-          if (currentRecord.status === AttendanceStatus.LATE) {
-            await this.pointsService.calculateAndAwardPoints(
-              studentId,
-              "ATTENDANCE_LATE",
-              mosqueId,
-              sessionId,
-              "Correction: Changed from Late to Present",
-              -1, // Deduct keys
-            );
-            await this.pointsService.calculateAndAwardPoints(
-              studentId,
-              "ATTENDANCE_ON_TIME",
-              mosqueId,
-              sessionId,
-            );
-          }
-          // If previously ABSENT/Null -> Just Award PRESENT (ON_TIME)
-          else {
-            await this.pointsService.calculateAndAwardPoints(
-              studentId,
-              "ATTENDANCE_ON_TIME",
-              mosqueId,
-              sessionId,
-            );
-          }
+
+        // 1. Revert points for the OLD status
+        const oldRuleKey = STATUS_TO_RULE_KEY[currentRecord.status];
+        if (oldRuleKey) {
+          await this.pointsService.calculateAndAwardPoints(
+            studentId,
+            oldRuleKey,
+            mosqueId,
+            sessionId,
+            `Correction: Changed from ${currentRecord.status} to ${update.status}`,
+            -1, // Revert points
+          );
         }
-        // 2. Handle NEW Status = LATE
-        else if (update.status === AttendanceStatus.LATE) {
-          // If previously PRESENT -> Revert PRESENT (ON_TIME) points (-5), Award LATE points
-          if (currentRecord.status === AttendanceStatus.PRESENT) {
-            await this.pointsService.calculateAndAwardPoints(
-              studentId,
-              "ATTENDANCE_ON_TIME",
-              mosqueId,
-              sessionId,
-              "Correction: Changed from Present to Late",
-              -1, // Deduct keys
-            );
-            await this.pointsService.calculateAndAwardPoints(
-              studentId,
-              "ATTENDANCE_LATE",
-              mosqueId,
-              sessionId,
-            );
-          }
-          // If previously ABSENT/Null -> Just Award LATE
-          else {
-            await this.pointsService.calculateAndAwardPoints(
-              studentId,
-              "ATTENDANCE_LATE",
-              mosqueId,
-              sessionId,
-            );
-          }
-        }
-        // 3. Handle NEW Status = ABSENT
-        else if (update.status === AttendanceStatus.ABSENT) {
-          // Revert whatever was there
-          if (currentRecord.status === AttendanceStatus.PRESENT) {
-            await this.pointsService.calculateAndAwardPoints(
-              studentId,
-              "ATTENDANCE_ON_TIME",
-              mosqueId,
-              sessionId,
-              "Correction: Marked Absent",
-              -1,
-            );
-          } else if (currentRecord.status === AttendanceStatus.LATE) {
-            await this.pointsService.calculateAndAwardPoints(
-              studentId,
-              "ATTENDANCE_LATE",
-              mosqueId,
-              sessionId,
-              "Correction: Marked Absent",
-              -1,
-            );
-          }
+
+        // 2. Award points for the NEW status
+        const newRuleKey = STATUS_TO_RULE_KEY[update.status];
+        if (newRuleKey) {
+          await this.pointsService.calculateAndAwardPoints(
+            studentId,
+            newRuleKey,
+            mosqueId,
+            sessionId,
+          );
         }
       }
 

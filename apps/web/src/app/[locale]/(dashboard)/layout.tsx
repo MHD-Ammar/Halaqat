@@ -13,6 +13,7 @@
 import Cookies from "js-cookie";
 import { ReactNode, useEffect, useState } from "react";
 
+import { Logo } from "@/components/logo";
 import { MainNav } from "@/components/main-nav";
 import { MobileHeader } from "@/components/mobile-header";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -88,10 +89,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="space-y-4 text-center">
-          <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mx-auto">
-            <span className="text-primary-foreground font-bold text-2xl">
-              ح
-            </span>
+          <div className="flex justify-center mx-auto">
+            <Logo width={48} height={48} />
           </div>
           <div className="space-y-2">
             <Skeleton className="h-4 w-32 mx-auto" />

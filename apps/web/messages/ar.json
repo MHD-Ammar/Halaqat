@@ -47,7 +47,8 @@
     "studentPortal": "بوابتي",
     "exams": "الاختبارات",
     "usersManagement": "المستخدمين",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "myStudents": "طلابي"
   },
   "Auth": {
     "welcomeBack": "مرحباً بعودتك",
@@ -210,6 +211,7 @@
   },
   "Students": {
     "title": "الطلاب",
+    "myStudents": "طلابي",
     "totalStudents": "إجمالي {count} طالب",
     "addStudent": "إضافة طالب",
     "noStudents": "لا يوجد طلاب بعد",
@@ -534,7 +536,9 @@
       "EXAM_EXCELLENT": "اختبار ممتاز (علامة كاملة)",
       "EXAM_GOOD": "اختبار جيد",
       "ATTENDANCE_LATE": "حضور متأخر",
-      "BEHAVIOR_BAD": "سلوك سيء"
+      "ATTENDANCE_ABSENT": "غياب",
+      "ATTENDANCE_EXCUSED": "غياب بعذر",
+      "BEHAVIOR_BAD": "سلوك سيء" 
     },
     "PointRulesDesc": {
       "RECITATION_PAGE": "حفظ صفحة جديدة",
@@ -548,6 +552,8 @@
       "EXAM_EXCELLENT": "الحصول على درجة ممتازة في الاختبار",
       "EXAM_GOOD": "الحصول على درجة جيدة في الاختبار",
       "ATTENDANCE_LATE": "الحضور بعد وقت البدء",
+      "ATTENDANCE_ABSENT": "لم يحضر الحلقة",
+      "ATTENDANCE_EXCUSED": "غياب مع عذر مقبول",
       "BEHAVIOR_BAD": "خصم نقاط بسبب سوء السلوك"
     },
     "customRules": {

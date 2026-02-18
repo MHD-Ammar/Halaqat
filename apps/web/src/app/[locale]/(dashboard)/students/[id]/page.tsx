@@ -23,7 +23,7 @@ import { StatsCard } from "@/components/stats-card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStudentProfile } from "@/hooks";
@@ -187,12 +187,9 @@ export default function StudentProfilePage() {
       </div>
 
       {/* Tabbed Content */}
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs defaultValue="recitations" className="w-full">
         <div className="overflow-x-auto">
-          <TabsList className="w-full flex md:grid md:grid-cols-4 min-w-[400px]">
-            <TabsTrigger value="overview" className="flex-1">
-              {tStudentProfile("overview")}
-            </TabsTrigger>
+          <TabsList className="w-full flex md:grid md:grid-cols-3 min-w-[400px]">
             <TabsTrigger value="recitations" className="flex-1">
               {tStudentProfile("recitations")}
             </TabsTrigger>
@@ -204,45 +201,6 @@ export default function StudentProfilePage() {
             </TabsTrigger>
           </TabsList>
         </div>
-
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-4 mt-6">
-          <Card className="overflow-hidden border-none shadow-sm bg-muted/30">
-            <CardHeader className="bg-muted/50 pb-4">
-              <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-widest font-black text-muted-foreground">
-                <BookOpen className="h-4 w-4" />
-                {t("recentActivity")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 space-y-3 pt-6">
-              {recentActivity.length === 0 ? (
-                <div className="text-center py-12 flex flex-col items-center gap-3">
-                  <div className="p-4 bg-muted rounded-full">
-                    <BookOpen className="h-8 w-8 text-muted-foreground/40" />
-                  </div>
-                  <p className="text-muted-foreground font-medium">
-                    {tStudentProfile("noRecitations")}
-                  </p>
-                </div>
-              ) : (
-                recentActivity
-                  .slice(0, 5)
-                  .map((rec) => (
-                    <RecitationItem
-                      key={rec.id}
-                      pageNumber={rec.pageNumber}
-                      surahName={rec.surahName}
-                      surahNameArabic={rec.surahNameArabic}
-                      quality={rec.quality}
-                      type={rec.type}
-                      createdAt={rec.createdAt}
-                    />
-                  ))
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         {/* Recitations Tab */}
         <TabsContent value="recitations" className="space-y-3 mt-6">
           {recentActivity.length === 0 ? (

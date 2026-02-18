@@ -5,6 +5,7 @@
  */
 
 import { BookOpen, Users, Calendar, ArrowRight } from "lucide-react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 
@@ -52,10 +53,14 @@ function HomePageContent() {
       <header className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xl">
-                ح
-              </span>
+            <div className="w-10 h-10 relative flex items-center justify-center">
+              <Image
+                src="/halaqat.png"
+                alt="Halaqat Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+              />
             </div>
             <span className="text-xl font-bold text-foreground">
               {tHeader("halaqat")}

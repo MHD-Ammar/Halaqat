@@ -1,3 +1,4 @@
+import { UserRole } from "@halaqat/types";
 import {
   Injectable,
   NotFoundException,
@@ -7,12 +8,11 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, ILike } from "typeorm";
-import { UserRole } from "@halaqat/types";
 
-import { Student } from "./entities/student.entity";
 import { CreateStudentDto } from "./dto/create-student.dto";
-import { UpdateStudentDto } from "./dto/update-student.dto";
 import { StudentQueryDto } from "./dto/student-query.dto";
+import { UpdateStudentDto } from "./dto/update-student.dto";
+import { Student } from "./entities/student.entity";
 import { CirclesService } from "../circles/circles.service";
 import { UsersService } from "../users/users.service";
 
@@ -148,33 +148,43 @@ export class StudentsService {
   async findAll(
     query: StudentQueryDto,
     mosqueId?: string | null,
+    teacherId?: string,
   ): Promise<PaginatedResult<Student>> {
     const { page = 1, limit = 20, search, circleId } = query;
     const skip = (page - 1) * limit;
 
     try {
-      const where: any = {};
+      // Use QueryBuilder for flexibility with joins and filtering
+      const qb = this.studentsRepository.createQueryBuilder("student")
+        .leftJoinAndSelect("student.circle", "circle")
+        .where("1=1"); // Base condition
 
-      // Apply tenancy filter if mosqueId provided
+      // Tenancy filter
       if (mosqueId) {
-        where.mosqueId = mosqueId;
+        qb.andWhere("student.mosque_id = :mosqueId", { mosqueId });
       }
 
+      // Search filter
       if (search) {
-        where.name = ILike(`%${search}%`);
+        qb.andWhere("student.name ILIKE :search", { search: `%${search}%` });
       }
 
+      // Circle filter
       if (circleId) {
-        where.circleId = circleId;
+        qb.andWhere("student.circle_id = :circleId", { circleId });
       }
 
-      const [data, total] = await this.studentsRepository.findAndCount({
-        where,
-        relations: ["circle"],
-        order: { name: "ASC" },
-        skip,
-        take: limit,
-      });
+      // Teacher filter (if provided)
+      if (teacherId) {
+        qb.andWhere("circle.teacherId = :teacherId", { teacherId });
+      }
+
+      // Ordering and Pagination
+      qb.orderBy("student.name", "ASC")
+        .skip(skip)
+        .take(limit);
+
+      const [data, total] = await qb.getManyAndCount();
 
       return {
         data,
@@ -225,7 +235,7 @@ export class StudentsService {
   /**
    * Get a single student by ID
    */
-  async findOne(id: string): Promise<Student> {
+  async findOne(id: string, teacherId?: string): Promise<Student> {
     const student = await this.studentsRepository.findOne({
       where: { id },
       relations: ["circle"],
@@ -233,6 +243,11 @@ export class StudentsService {
 
     if (!student) {
       throw new NotFoundException(`Student with ID ${id} not found`);
+    }
+
+    // If teacherId provided, verify ownership
+    if (teacherId && student.circle?.teacherId !== teacherId) {
+      throw new ForbiddenException("You do not have permission to view this student");
     }
 
     return student;
@@ -288,7 +303,7 @@ export class StudentsService {
   /**
    * Get comprehensive student profile with aggregated stats
    */
-  async getStudentProfile(id: string): Promise<{
+  async getStudentProfile(id: string, teacherId?: string): Promise<{
     student: Student;
     stats: {
       attendanceRate: number;
@@ -299,7 +314,7 @@ export class StudentsService {
     pointsHistory: any[];
     attendanceHistory: any[];
   }> {
-    const student = await this.findOne(id);
+    const student = await this.findOne(id, teacherId);
 
     // Parallel queries for all aggregated data
     const [attendanceData, recitations, pointsHistory] = await Promise.all([

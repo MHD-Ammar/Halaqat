@@ -44,6 +44,10 @@ export const metadata: Metadata = {
     "management",
   ],
   authors: [{ name: "Halaqat Team" }],
+  icons: {
+    icon: "/halaqat-logo.png",
+    apple: "/halaqat-logo.png",
+  },
 };
 
 /**

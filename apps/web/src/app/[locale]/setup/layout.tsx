@@ -12,6 +12,7 @@
 import Cookies from "js-cookie";
 import { ReactNode, useEffect, useState } from "react";
 
+import { Logo } from "@/components/logo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "@/i18n/routing";
 import { TOKEN_COOKIE_NAME } from "@/lib/api";
@@ -37,10 +38,8 @@ export default function SetupLayout({ children }: { children: ReactNode }) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="space-y-4 text-center">
-          <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mx-auto">
-            <span className="text-primary-foreground font-bold text-2xl">
-              ح
-            </span>
+          <div className="flex justify-center mx-auto">
+            <Logo width={48} height={48} />
           </div>
           <div className="space-y-2">
             <Skeleton className="h-4 w-32 mx-auto" />
@@ -57,12 +56,9 @@ export default function SetupLayout({ children }: { children: ReactNode }) {
       <div className="w-full max-w-lg">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <span className="text-primary-foreground font-bold text-3xl">
-              ح
-            </span>
+          <div className="flex justify-center mx-auto mb-4">
+            <Logo width={64} height={64} />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">حلقات</h1>
         </div>
 
         {/* Main content */}

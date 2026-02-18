@@ -4,6 +4,7 @@
  * REST API endpoints for managing students.
  */
 
+import { UserRole } from "@halaqat/types";
 import {
   Controller,
   Get,
@@ -26,17 +27,16 @@ import {
   ApiParam,
   ApiQuery,
 } from "@nestjs/swagger";
-import { UserRole } from "@halaqat/types";
 
-import { StudentsService } from "./students.service";
-import { CreateStudentDto } from "./dto/create-student.dto";
-import { UpdateStudentDto } from "./dto/update-student.dto";
-import { StudentQueryDto } from "./dto/student-query.dto";
 import { BulkCreateStudentsDto } from "./dto/bulk-create-students.dto";
+import { CreateStudentDto } from "./dto/create-student.dto";
+import { StudentQueryDto } from "./dto/student-query.dto";
+import { UpdateStudentDto } from "./dto/update-student.dto";
+import { StudentsService } from "./students.service";
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { CurrentUser } from "../auth/decorators/current-user.decorator";
 
 @ApiTags("Students")
 @ApiBearerAuth("JWT-auth")
@@ -65,7 +65,7 @@ export class StudentsController {
   })
   create(
     @Body() createStudentDto: CreateStudentDto,
-    @CurrentUser() user: { sub: string; role: UserRole; mosqueId?: string },
+    @CurrentUser() user: { id: string; role: UserRole; mosqueId?: string },
   ) {
     // Admins can create for any circle, teachers only for their own
     if (user.role === UserRole.ADMIN) {
@@ -73,7 +73,7 @@ export class StudentsController {
     }
     return this.studentsService.createForTeacher(
       createStudentDto,
-      user.sub,
+      user.id,
       user.mosqueId,
     );
   }
@@ -108,7 +108,7 @@ export class StudentsController {
   })
   bulkCreate(
     @Body() bulkCreateDto: BulkCreateStudentsDto,
-    @CurrentUser() user: { sub: string; role: UserRole; mosqueId?: string },
+    @CurrentUser() user: { id: string; role: UserRole; mosqueId?: string },
   ) {
     // Admins can create for any circle, teachers only for their own
     if (user.role === UserRole.ADMIN) {
@@ -121,7 +121,7 @@ export class StudentsController {
     return this.studentsService.bulkCreateForTeacher(
       bulkCreateDto.circleId,
       bulkCreateDto.names,
-      user.sub,
+      user.id,
       user.mosqueId,
     );
   }
@@ -141,9 +141,11 @@ export class StudentsController {
   @ApiResponse({ status: 403, description: "Forbidden - requires ADMIN role" })
   findAll(
     @Query() query: StudentQueryDto,
-    @CurrentUser() user: { sub: string; mosqueId?: string },
+    @CurrentUser() user: { id: string; role: UserRole; mosqueId?: string },
   ) {
-    return this.studentsService.findAll(query, user.mosqueId);
+    // If teacher, pass teacherId to filter results
+    const teacherId = user.role === UserRole.TEACHER ? user.id : undefined;
+    return this.studentsService.findAll(query, user.mosqueId, teacherId);
   }
 
   /**
@@ -210,8 +212,12 @@ export class StudentsController {
   @ApiParam({ name: "id", description: "Student UUID" })
   @ApiResponse({ status: 200, description: "Student profile with stats" })
   @ApiResponse({ status: 404, description: "Student not found" })
-  getProfile(@Param("id", ParseUUIDPipe) id: string) {
-    return this.studentsService.getStudentProfile(id);
+  getProfile(
+    @Param("id", ParseUUIDPipe) id: string,
+    @CurrentUser() user: { id: string; role: UserRole },
+  ) {
+    const teacherId = user.role === UserRole.TEACHER ? user.id : undefined;
+    return this.studentsService.getStudentProfile(id, teacherId);
   }
 
   /**
@@ -226,8 +232,12 @@ export class StudentsController {
   @ApiParam({ name: "id", description: "Student UUID" })
   @ApiResponse({ status: 200, description: "Student details" })
   @ApiResponse({ status: 404, description: "Student not found" })
-  findOne(@Param("id", ParseUUIDPipe) id: string) {
-    return this.studentsService.findOne(id);
+  findOne(
+    @Param("id", ParseUUIDPipe) id: string,
+    @CurrentUser() user: { id: string; role: UserRole },
+  ) {
+    const teacherId = user.role === UserRole.TEACHER ? user.id : undefined;
+    return this.studentsService.findOne(id, teacherId);
   }
 
   /**
