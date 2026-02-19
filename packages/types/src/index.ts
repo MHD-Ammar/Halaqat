@@ -16,3 +16,18 @@ export { RecitationQuality, isRecitationQuality } from "./RecitationQuality";
 export { PointSourceType, isPointSourceType } from "./PointSourceType";
 export { ExamStatus, isExamStatus } from "./ExamStatus";
 export { ExamQuestionType, isExamQuestionType } from "./ExamQuestionType";
+
+// Challenge Config
+export {
+  RAMADAN_FORM,
+  CAMPAIGN_CONFIGS,
+  CAMPAIGN_FORMS,
+  getCampaignConfig,
+  getCampaignForm,
+} from "./ChallengeConfig";
+export type {
+  QuestionType,
+  FormQuestion,
+  QuestionScoringConfig,
+  CampaignConfig,
+} from "./ChallengeConfig";

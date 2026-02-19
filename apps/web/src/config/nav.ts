@@ -14,6 +14,7 @@ import {
   ClipboardCheck,
   UserCog,
   Settings,
+  Trophy,
   type LucideIcon,
 } from "lucide-react";
 
@@ -100,6 +101,13 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/admin/settings",
     icon: Settings,
     description: "Mosque and points configuration",
+    roles: ["ADMIN"],
+  },
+  {
+    titleKey: "challenges",
+    href: "/admin/challenges",
+    icon: Trophy,
+    description: "Daily challenges dashboard",
     roles: ["ADMIN"],
   },
 ];

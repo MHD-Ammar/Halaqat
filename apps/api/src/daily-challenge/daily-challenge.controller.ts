@@ -1,3 +1,4 @@
+import { UserRole } from "@halaqat/types";
 import {
   Controller,
   Get,
@@ -5,12 +6,19 @@ import {
   Body,
   Param,
   Query,
+  Res,
+  UseGuards,
   NotFoundException,
+  BadRequestException,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import { Response } from "express";
 
 import { DailyChallengeService } from "./daily-challenge.service";
 import { SubmitDailyChallengeDto } from "./dto/submit-daily-challenge.dto";
+import { Roles } from "../auth/decorators/roles.decorator";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
 
 @ApiTags("Daily Challenge")
 @Controller("daily-challenge")
@@ -93,5 +101,70 @@ export class DailyChallengeController {
     }
 
     return this.challengeService.getLeaderboard(targetMosqueId, campaign);
+  }
+
+  // ─── Admin Endpoints ─────────────────────────────────────────────────────
+
+  @Get("export/excel")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Export submissions to Excel (Admin)",
+    description: "Streams an .xlsx file with all submissions in the date range",
+  })
+  async exportToExcel(
+    @Query("campaign") campaign: string = "ramadan",
+    @Query("startDate") startDate: string,
+    @Query("endDate") endDate: string,
+    @Res() res: Response,
+  ) {
+    if (!startDate || !endDate) {
+      throw new BadRequestException("startDate and endDate are required");
+    }
+
+    const workbook = await this.challengeService.exportToExcel(
+      campaign,
+      startDate,
+      endDate,
+    );
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=submissions_${startDate}_${endDate}.xlsx`,
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  }
+
+  @Get("submissions/admin-list")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Get paginated submissions for Admin Dashboard",
+    description: "Paginates by students with their submissions in date range",
+  })
+  async getAdminSubmissionsList(
+    @Query("page") page: string = "1",
+    @Query("limit") limit: string = "20",
+    @Query("startDate") startDate: string,
+    @Query("endDate") endDate: string,
+    @Query("campaign") campaign: string = "ramadan",
+  ) {
+    if (!startDate || !endDate) {
+      throw new BadRequestException("startDate and endDate are required");
+    }
+
+    return this.challengeService.getAdminSubmissionsList(
+      Number(page) || 1,
+      Number(limit) || 20,
+      startDate,
+      endDate,
+      campaign,
+    );
   }
 }

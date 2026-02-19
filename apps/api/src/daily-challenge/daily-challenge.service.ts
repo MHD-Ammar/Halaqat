@@ -1,14 +1,21 @@
 import {
+  getCampaignConfig,
+  getCampaignForm,
+  CampaignConfig,
+  QuestionScoringConfig,
+  FormQuestion,
+} from "@halaqat/types";
+import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import * as ExcelJS from "exceljs";
+import { Between, In, Repository } from "typeorm";
 
 import { SubmitDailyChallengeDto } from "./dto/submit-daily-challenge.dto";
 import { DailySubmission } from "./entities/daily-submission.entity";
-import { getCampaignConfig, CampaignConfig, QuestionConfig } from "./form-config.registry";
 import { Circle } from "../circles/entities/circle.entity";
 import { Mosque } from "../mosques/entities/mosque.entity";
 import { Student } from "../students/entities/student.entity";
@@ -93,7 +100,7 @@ export class DailyChallengeService {
     let totalXp = config.submitted_xp || 0;
     const questions = config.questions || {};
 
-    for (const [key, qConfig] of Object.entries<QuestionConfig>(questions)) {
+    for (const [key, qConfig] of Object.entries<QuestionScoringConfig>(questions)) {
       const val = data[key];
       if (val === undefined || val === null) continue;
 
@@ -122,7 +129,6 @@ export class DailyChallengeService {
 
   /**
    * Calculate current streak
-   * (If submitted yesterday, streak = yesterday's streak + 1. Else 1.)
    */
   private async calculateStreak(
     studentId: string,
@@ -168,7 +174,6 @@ export class DailyChallengeService {
 
   /**
    * Get student basic info + current streak (Public)
-   * Used for "Welcome back!" screen
    */
   async getStudentInfo(studentId: string, campaignKey: string = "ramadan") {
     const student = await this.studentRepo.findOne({
@@ -178,7 +183,6 @@ export class DailyChallengeService {
 
     if (!student) throw new NotFoundException("Student not found");
 
-    // Get last submission for this campaign
     const lastSubmission = await this.submissionRepo.findOne({
       where: { studentId, campaignKey },
       order: { submissionDate: "DESC" },
@@ -195,12 +199,10 @@ export class DailyChallengeService {
         (today.getTime() - lastDate.getTime()) / (1000 * 3600 * 24),
       );
 
-      // If submitted today or yesterday, the streak is alive
       if (diffDays <= 1) {
         currentStreak = lastSubmission.streak;
       }
 
-      // Check if already submitted today
       hasSubmittedToday = lastSubmission.submissionDate === todayStr;
     }
 
@@ -225,10 +227,8 @@ export class DailyChallengeService {
 
   /**
    * Get Leaderboard (Public)
-   * Aggregates total XP per student for a specific campaign
    */
   async getLeaderboard(mosqueId: string, campaignKey: string = "ramadan") {
-    // Top 50 students by total XP in this campaign
     const results = await this.submissionRepo
       .createQueryBuilder("submission")
       .select("submission.studentId", "studentId")
@@ -248,7 +248,7 @@ export class DailyChallengeService {
       studentId: r.studentId,
       name: r.name,
       totalXp: Number(r.totalXp),
-      streak: Number(r.maxStreak), 
+      streak: Number(r.maxStreak),
     }));
   }
 
@@ -260,7 +260,6 @@ export class DailyChallengeService {
     startDateStr: string,
     campaignKey: string = "ramadan",
   ) {
-    // 1. Get all students in circle
     const students = await this.studentRepo.find({
       where: { circleId },
       select: ["id", "name"],
@@ -271,14 +270,11 @@ export class DailyChallengeService {
       return [];
     }
 
-    // 2. Calculate date range (start date + 6 days)
     const startDate = new Date(startDateStr);
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + 6);
-
     const endDateStr = endDate.toISOString().split("T")[0];
 
-    // 3. Fetch submissions for these students in range
     const submissions = await this.submissionRepo
       .createQueryBuilder("submission")
       .select([
@@ -298,12 +294,8 @@ export class DailyChallengeService {
       .andWhere("submission.submissionDate <= :endDate", { endDate: endDateStr })
       .getMany();
 
-    // 4. Map results
-    // Output: [ { studentId, name, submissions: { '2024-03-10': { ... }, ... } } ]
     return students.map((student) => {
       const studentSubmissions: Record<string, any> = {};
-
-      // Fill submissions map
       submissions
         .filter((sub) => sub.studentId === student.id)
         .forEach((sub) => {
@@ -340,7 +332,190 @@ export class DailyChallengeService {
       studentName: submission.student.name,
       date: submission.submissionDate,
       totalXp: submission.xpEarned,
-      details: submission.submissionData, // The raw JSON form data
+      details: submission.submissionData,
+    };
+  }
+
+  // ─── Admin Methods ───────────────────────────────────────────────────────
+
+  /**
+   * Flatten a JSONB submission into a flat object using the form config.
+   * Used by the Excel export engine.
+   */
+  private flattenSubmission(
+    data: Record<string, any>,
+    formQuestions: FormQuestion[],
+  ): Record<string, string | number> {
+    const flat: Record<string, string | number> = {};
+
+    for (const question of formQuestions) {
+      const val = data[question.id];
+
+      switch (question.type) {
+        case "GRID": {
+          const rows = question.rows || [];
+          const columns = question.columns || [];
+          const gridData = (val as Record<string, string>) || {};
+
+          for (const row of rows) {
+            const colValue = gridData[row];
+            const colLabel =
+              columns.find((c) => c.value === colValue)?.label || colValue || "";
+            flat[`${question.title} (${row})`] = colLabel;
+          }
+          break;
+        }
+        case "BOOLEAN":
+          flat[question.title] = val === true ? "✓" : "✗";
+          break;
+        case "NUMBER":
+          flat[question.title] = Number(val) || 0;
+          break;
+        default:
+          flat[question.title] = String(val ?? "");
+      }
+    }
+
+    return flat;
+  }
+
+  /**
+   * Export submissions to Excel (Admin)
+   * Returns an ExcelJS Workbook ready to stream.
+   */
+  async exportToExcel(
+    campaignKey: string,
+    startDate: string,
+    endDate: string,
+  ): Promise<ExcelJS.Workbook> {
+    const formQuestions = getCampaignForm(campaignKey);
+
+    // Fetch all submissions in range with relations
+    const submissions = await this.submissionRepo.find({
+      where: {
+        campaignKey,
+        submissionDate: Between(startDate, endDate) as any,
+      },
+      relations: ["student", "student.circle"],
+      order: { submissionDate: "ASC" },
+    });
+
+    // Build dynamic column headers from form config
+    const dynamicHeaders: string[] = [];
+    for (const q of formQuestions) {
+      if (q.type === "GRID" && q.rows) {
+        for (const row of q.rows) {
+          dynamicHeaders.push(`${q.title} (${row})`);
+        }
+      } else {
+        dynamicHeaders.push(q.title);
+      }
+    }
+
+    // Create workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Submissions");
+
+    // Define columns
+    worksheet.columns = [
+      { header: "التاريخ", key: "date", width: 14 },
+      { header: "اسم الطالب", key: "studentName", width: 25 },
+      { header: "الحلقة", key: "circleName", width: 20 },
+      { header: "مجموع النقاط", key: "totalXp", width: 14 },
+      ...dynamicHeaders.map((h) => ({ header: h, key: h, width: 20 })),
+    ];
+
+    // Style header row
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.alignment = { horizontal: "center" as const };
+
+    // Add data rows
+    for (const sub of submissions) {
+      const flat = this.flattenSubmission(sub.submissionData, formQuestions);
+
+      worksheet.addRow({
+        date: sub.submissionDate,
+        studentName: sub.student?.name || "—",
+        circleName: sub.student?.circle?.name || "—",
+        totalXp: sub.xpEarned,
+        ...flat,
+      });
+    }
+
+    return workbook;
+  }
+
+  /**
+   * Get paginated student submissions for Admin Dashboard.
+   * Paginates students (not submissions) for consistent matrix view.
+   */
+  async getAdminSubmissionsList(
+    page: number = 1,
+    limit: number = 20,
+    startDate: string,
+    endDate: string,
+    campaignKey: string = "ramadan",
+  ) {
+    const skip = (page - 1) * limit;
+
+    // 1. Paginate students
+    const [students, total] = await this.studentRepo.findAndCount({
+      select: ["id", "name", "circleId"],
+      relations: ["circle"],
+      order: { name: "ASC" },
+      skip,
+      take: limit,
+    });
+
+    if (!students.length) {
+      return {
+        data: [],
+        meta: { total, page, lastPage: Math.ceil(total / limit) || 1 },
+      };
+    }
+
+    // 2. Fetch submissions for these students in range
+    const studentIds = students.map((s) => s.id);
+    const submissions = await this.submissionRepo.find({
+      where: {
+        studentId: In(studentIds),
+        campaignKey,
+        submissionDate: Between(startDate, endDate) as any,
+      },
+      select: ["id", "studentId", "submissionDate", "xpEarned", "streak"],
+    });
+
+    // 3. Map to matrix format
+    const data = students.map((student) => {
+      const studentSubs: Record<string, any> = {};
+      submissions
+        .filter((s) => s.studentId === student.id)
+        .forEach((s) => {
+          studentSubs[s.submissionDate] = {
+            id: s.id,
+            xp: s.xpEarned,
+            streak: s.streak,
+          };
+        });
+
+      return {
+        student: {
+          id: student.id,
+          name: student.name,
+          circleName: student.circle?.name || null,
+        },
+        submissions: studentSubs,
+      };
+    });
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        lastPage: Math.ceil(total / limit) || 1,
+      },
     };
   }
 }

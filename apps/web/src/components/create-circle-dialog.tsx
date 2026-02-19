@@ -10,7 +10,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -41,22 +41,41 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateCircle, useTeachers } from "@/hooks";
+import { useCreateCircle, useUpdateCircle, useTeachers, Circle } from "@/hooks";
 import { useToast } from "@/hooks/use-toast";
 
 interface CreateCircleDialogProps {
   /** Optional custom trigger button */
   children?: React.ReactNode;
+  /** Optional circle to edit. If provided, dialog will be in edit mode */
+  circle?: Circle;
+  /** Optional open state control */
+  open?: boolean;
+  /** Optional onOpenChange handler */
+  onOpenChange?: (open: boolean) => void;
 }
 
 /**
- * Dialog component for creating new study circles
+ * Dialog component for creating or editing study circles
  */
-export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
-  const [open, setOpen] = useState(false);
+export function CreateCircleDialog({
+  children,
+  circle,
+  open: controlledOpen,
+  onOpenChange: setControlledOpen,
+}: CreateCircleDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? setControlledOpen : setInternalOpen;
+
   const { toast } = useToast();
   const createMutation = useCreateCircle();
+  const updateMutation = useUpdateCircle();
   const { data: teachers = [], isLoading: teachersLoading } = useTeachers();
+
+  const isEditMode = !!circle;
+  const isLoading = createMutation.isPending || updateMutation.isPending;
 
   const t = useTranslations("Circles");
   const tCommon = useTranslations("Common");
@@ -83,29 +102,69 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
     },
   });
 
+  // Reset form when dialog opens or circle changes
+  useEffect(() => {
+    if (open) {
+      if (circle) {
+        form.reset({
+          name: circle.name,
+          description: circle.description || "",
+          gender: circle.gender,
+          teacherId: circle.teacherId, // Note: teacherId might be undefined if not loaded fully or if teacher was deleted
+        });
+      } else {
+        form.reset({
+          name: "",
+          description: "",
+          gender: undefined,
+          teacherId: undefined,
+        });
+      }
+    }
+  }, [open, circle, form]);
+
   /**
    * Handle form submission
-   * Creates a new circle and closes the dialog on success
+   * Creates or updates a circle and closes the dialog on success
    */
   const onSubmit = async (data: CreateCircleFormData) => {
     try {
-      await createMutation.mutateAsync({
-        name: data.name,
-        description: data.description,
-        gender: data.gender,
-        teacherId: data.teacherId,
-      });
+      if (isEditMode && circle) {
+        await updateMutation.mutateAsync({
+          id: circle.id,
+          data: {
+            name: data.name,
+            description: data.description,
+            gender: data.gender,
+            teacherId: data.teacherId,
+          },
+        });
+        toast({
+          title: t("updateSuccessTitle"),
+          description: t("updateSuccessDesc", { name: data.name }),
+        });
+      } else {
+        await createMutation.mutateAsync({
+          name: data.name,
+          description: data.description,
+          gender: data.gender,
+          teacherId: data.teacherId,
+        });
+        toast({
+          title: t("successTitle"),
+          description: t("successDesc", { name: data.name }),
+        });
+      }
 
-      toast({
-        title: t("successTitle"),
-        description: t("successDesc", { name: data.name }),
-      });
-
-      setOpen(false);
+      setOpen?.(false);
       form.reset();
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof Error ? error.message : t("errorDesc");
+        error instanceof Error
+          ? error.message
+          : isEditMode
+            ? t("updateErrorDesc")
+            : t("errorDesc");
 
       toast({
         variant: "destructive",
@@ -117,18 +176,24 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {children || (
-          <Button>
-            <Plus className="h-4 w-4 rtl:ml-2 ltr:mr-2" />
-            {t("newCircleBtn")}
-          </Button>
-        )}
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          {children || (
+            <Button>
+              <Plus className="h-4 w-4 rtl:ml-2 ltr:mr-2" />
+              {t("newCircleBtn")}
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{t("createDialogTitle")}</DialogTitle>
-          <DialogDescription>{t("createDialogDesc")}</DialogDescription>
+          <DialogTitle>
+            {isEditMode ? t("editDialogTitle") : t("createDialogTitle")}
+          </DialogTitle>
+          <DialogDescription>
+            {isEditMode ? t("editDialogDesc") : t("createDialogDesc")}
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -142,7 +207,7 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
                   <FormControl>
                     <Input
                       placeholder={t("namePlaceholder")}
-                      disabled={createMutation.isPending}
+                      disabled={isLoading}
                       {...field}
                     />
                   </FormControl>
@@ -161,7 +226,8 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
-                    disabled={createMutation.isPending || teachersLoading}
+                    value={field.value}
+                    disabled={isLoading || teachersLoading}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -203,7 +269,8 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
-                    disabled={createMutation.isPending}
+                    value={field.value}
+                    disabled={isLoading}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -230,7 +297,7 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
                   <FormControl>
                     <Textarea
                       placeholder={t("descriptionPlaceholder")}
-                      disabled={createMutation.isPending}
+                      disabled={isLoading}
                       rows={3}
                       {...field}
                     />
@@ -242,12 +309,14 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
 
             <DialogFooter>
               <div className="flex justify-between flex-col gap-2">
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? (
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 rtl:ml-2 ltr:mr-2 animate-spin" />
-                      {t("creating")}
+                      {isEditMode ? t("updating") : t("creating")}
                     </>
+                  ) : isEditMode ? (
+                    t("updateCircle")
                   ) : (
                     t("createCircle")
                   )}
@@ -255,8 +324,8 @@ export function CreateCircleDialog({ children }: CreateCircleDialogProps) {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setOpen(false)}
-                  disabled={createMutation.isPending}
+                  onClick={() => setOpen?.(false)}
+                  disabled={isLoading}
                 >
                   {tCommon("cancel")}
                 </Button>

@@ -7,7 +7,7 @@
  * Features: List circles, create new circles, view circle details.
  */
 
-import { BookOpen, Users, MoreVertical, Trash2 } from "lucide-react";
+import { BookOpen, Users, MoreVertical, Trash2, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -37,7 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCircles, useDeleteCircle, useAuth } from "@/hooks";
+import { useCircles, useDeleteCircle, useAuth, Circle } from "@/hooks";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "@/i18n/routing";
 
@@ -58,6 +58,8 @@ export default function CirclesPage() {
     name: string;
   } | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [circleToEdit, setCircleToEdit] = useState<Circle | undefined>(undefined);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   // Protect the page - redirect non-admins
   useEffect(() => {
@@ -170,6 +172,15 @@ export default function CirclesPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
+                        onClick={() => {
+                          setCircleToEdit(circle);
+                          setEditDialogOpen(true);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4 me-2" />
+                        {t("editCircle")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
                         className="text-destructive"
                         onClick={() => handleDeleteClick(circle.id, circle.name)}
                       >
@@ -208,6 +219,16 @@ export default function CirclesPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Edit Dialog */}
+      <CreateCircleDialog
+        open={editDialogOpen}
+        onOpenChange={(open) => {
+          setEditDialogOpen(open);
+          if (!open) setCircleToEdit(undefined);
+        }}
+        circle={circleToEdit}
+      />
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

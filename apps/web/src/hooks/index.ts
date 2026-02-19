@@ -31,6 +31,7 @@ export {
   useCircles,
   useMyCircles,
   useCreateCircle,
+  useUpdateCircle,
   useDeleteCircle,
   type Circle,
   type CreateCircleDto,

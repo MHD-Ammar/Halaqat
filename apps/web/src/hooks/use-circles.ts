@@ -21,6 +21,7 @@ export interface Circle {
   };
   studentCount?: number;
   createdAt: string;
+  gender: "MALE" | "FEMALE";
 }
 
 export interface CreateCircleDto {
@@ -29,6 +30,9 @@ export interface CreateCircleDto {
   gender: "MALE" | "FEMALE";
   teacherId: string;
 }
+
+export interface UpdateCircleDto extends Partial<CreateCircleDto> {}
+
 
 /**
  * Fetch all circles (Admin)
@@ -76,6 +80,28 @@ export function useCreateCircle() {
       // Invalidate circles list to refetch
       queryClient.invalidateQueries({ queryKey: ["circles"] });
       // Invalidate user profile to update my-circle list
+      queryClient.invalidateQueries({ queryKey: ["user", "profile"] });
+    },
+  });
+}
+
+/**
+ * Update a circle
+ */
+export function useUpdateCircle() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateCircleDto }) => {
+      const response = await api.patch<Circle>(`/circles/${id}`, data);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      // Invalidate circles list to refetch
+      queryClient.invalidateQueries({ queryKey: ["circles"] });
+      // Invalidate specific circle details
+      queryClient.invalidateQueries({ queryKey: ["circles", data.id] });
+      // Invalidate user profile if needed
       queryClient.invalidateQueries({ queryKey: ["user", "profile"] });
     },
   });
