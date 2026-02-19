@@ -21,7 +21,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { CreateStudentDialog } from "@/components/create-student-dialog";
 import { EditStudentDialog } from "@/components/edit-student-dialog";
@@ -55,7 +55,17 @@ function getInitials(name: string): string {
 export default function MyStudentsPage() {
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const limit = 10;
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1); // Reset to page 1 on new search
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -67,7 +77,7 @@ export default function MyStudentsPage() {
   const { toast } = useToast();
 
   // Fetches students for the logged-in teacher automatically
-  const { data, isLoading, isError } = useStudents({ page, limit });
+  const { data, isLoading, isError } = useStudents({ page, limit, search: debouncedSearch || undefined });
   const deleteStudentMutation = useDeleteStudent();
 
   const handleConfirmDelete = async () => {
@@ -83,13 +93,6 @@ export default function MyStudentsPage() {
   const students = data?.data || [];
   const totalPages = data?.totalPages || 1;
   const total = data?.total || 0;
-
-  // Filter by search (client-side for now)
-  const filteredStudents = searchTerm
-    ? students.filter((s) =>
-        s.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : students;
 
   const handleEditClick = (student: Student) => {
     setSelectedStudent(student);
@@ -160,9 +163,9 @@ export default function MyStudentsPage() {
       </div>
 
       {/* Students List */}
-      {filteredStudents.length > 0 ? (
+      {students.length > 0 ? (
         <div className="space-y-3">
-          {filteredStudents.map((student) => (
+          {students.map((student) => (
             <Card
               key={student.id}
               className="hover:shadow-md transition-shadow"

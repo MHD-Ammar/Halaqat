@@ -45,6 +45,7 @@ export interface StudentQueryParams {
   page?: number;
   limit?: number;
   circleId?: string;
+  search?: string;
 }
 
 export interface PaginatedStudents {
@@ -53,6 +54,17 @@ export interface PaginatedStudents {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+/** Raw shape returned by the backend */
+interface BackendPaginatedResponse {
+  data: Student[];
+  meta: {
+    total: number;
+    page: number;
+    lastPage: number;
+    limit: number;
+  };
 }
 
 /**
@@ -66,9 +78,19 @@ export function useStudents(params?: StudentQueryParams) {
       if (params?.page) searchParams.set("page", String(params.page));
       if (params?.limit) searchParams.set("limit", String(params.limit));
       if (params?.circleId) searchParams.set("circleId", params.circleId);
+      if (params?.search) searchParams.set("search", params.search);
       
-      const response = await api.get<PaginatedStudents>(`/students?${searchParams}`);
-      return response.data;
+      const response = await api.get<BackendPaginatedResponse>(`/students?${searchParams}`);
+      const raw = response.data;
+
+      // Normalize backend meta shape into flat PaginatedStudents
+      return {
+        data: raw.data,
+        total: raw.meta.total,
+        page: raw.meta.page,
+        limit: raw.meta.limit,
+        totalPages: raw.meta.lastPage,
+      } as PaginatedStudents;
     },
     refetchOnMount: "always",
   });

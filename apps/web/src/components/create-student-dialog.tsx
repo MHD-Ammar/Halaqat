@@ -209,7 +209,6 @@ export function CreateStudentDialog({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit, (errors) => {
-              console.error("Validation failed:", errors);
               const firstError =
                 Object.values(errors)[0]?.message || tCommon("error");
               toast({

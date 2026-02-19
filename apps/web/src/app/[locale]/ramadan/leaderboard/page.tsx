@@ -69,16 +69,16 @@ function LeaderboardContent() {
                   <div className="mb-2 font-bold text-slate-300">#2</div>
                   <div
                     className={cn(
-                      "w-24 md:w-32 p-4 rounded-t-xl flex flex-col items-center justify-end text-center border-t-4",
+                      "w-24 md:w-32 p-4 rounded-t-xl flex flex-col items-center justify-center overflow-hidden text-center border-t-4",
                       getRankStyle(1),
                     )}
                     style={{ height: "140px" }}
                   >
-                    <Medal className="w-8 h-8 mb-2 opacity-50" />
-                    <div className="font-bold text-sm md:text-base line-clamp-2">
+                    <Medal className="w-8 h-8 mb-2 opacity-50 shrink-0" />
+                    <div className="font-bold text-sm md:text-base line-clamp-2 w-full">
                       {top3[1].name}
                     </div>
-                    <div className="text-xs opacity-75 mt-1 font-mono">
+                    <div className="text-xs opacity-75 mt-1 font-mono shrink-0">
                       {top3[1].totalXp} XP
                     </div>
                   </div>
@@ -91,16 +91,16 @@ function LeaderboardContent() {
                   <div className="mb-2 text-2xl animate-bounce">👑</div>
                   <div
                     className={cn(
-                      "w-28 md:w-40 p-4 rounded-t-xl flex flex-col items-center justify-end text-center border-t-4 relative",
+                      "w-28 md:w-40 p-4 rounded-t-xl flex flex-col items-center justify-center overflow-hidden text-center border-t-4 relative",
                       getRankStyle(0),
                     )}
                     style={{ height: "180px" }}
                   >
-                    <Crown className="w-10 h-10 mb-2 text-yellow-900" />
-                    <div className="font-extrabold text-base md:text-lg line-clamp-2">
+                    <Crown className="w-10 h-10 mb-2 text-yellow-900 shrink-0" />
+                    <div className="font-extrabold text-base md:text-lg line-clamp-2 w-full">
                       {top3[0].name}
                     </div>
-                    <div className="text-sm font-bold mt-1 font-mono">
+                    <div className="text-sm font-bold mt-1 font-mono shrink-0">
                       {top3[0].totalXp} XP
                     </div>
                     
@@ -118,16 +118,16 @@ function LeaderboardContent() {
                   <div className="mb-2 font-bold text-amber-600">#3</div>
                   <div
                     className={cn(
-                      "w-24 md:w-32 p-4 rounded-t-xl flex flex-col items-center justify-end text-center border-t-4",
+                      "w-24 md:w-32 p-4 rounded-t-xl flex flex-col items-center justify-center overflow-hidden text-center border-t-4",
                       getRankStyle(2),
                     )}
-                    style={{ height: "120px" }}
+                    style={{ height: "130px" }}
                   >
-                    <Trophy className="w-8 h-8 mb-2 opacity-50" />
-                    <div className="font-bold text-sm md:text-base line-clamp-2">
+                    <Trophy className="w-8 h-8 mb-1 opacity-50 shrink-0" />
+                    <div className="font-bold text-xs md:text-sm line-clamp-2 w-full">
                       {top3[2].name}
                     </div>
-                    <div className="text-xs opacity-75 mt-1 font-mono">
+                    <div className="text-xs opacity-75 mt-1 font-mono shrink-0">
                       {top3[2].totalXp} XP
                     </div>
                   </div>
