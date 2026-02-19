@@ -6,6 +6,8 @@ interface NumberStepperProps {
   value: number;
   onChange: (value: number) => void;
   max?: number;
+  min?: number;
+  step?: number;
   multiplier?: number;
 }
 
@@ -13,13 +15,15 @@ export function NumberStepper({
   value = 0,
   onChange,
   max = 100,
+  min = 0,
+  step = 1,
 }: NumberStepperProps) {
   const increment = () => {
-    if (value < max) onChange(value + 1);
+    if (value + step <= max) onChange(value + step);
   };
 
   const decrement = () => {
-    if (value > 0) onChange(value - 1);
+    if (value - step >= min) onChange(value - step);
   };
 
   return (
@@ -30,7 +34,7 @@ export function NumberStepper({
         size="icon"
         className="h-14 w-14 rounded-full border-2"
         onClick={decrement}
-        disabled={value <= 0}
+        disabled={value <= min}
       >
         <Minus className="w-6 h-6" />
       </Button>

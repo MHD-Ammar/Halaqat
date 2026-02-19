@@ -9,6 +9,10 @@ export interface FormQuestion {
   columns?: { label: string; value: string; xp: number }[];
   multiplier?: number;
   max?: number;
+  min?: number;
+  max?: number;
+  step?: number;
+  defaultValue?: number;
   xpYes?: number;
   xpNo?: number;
 }
@@ -53,8 +57,10 @@ export const RAMADAN_FORM: FormQuestion[] = [
     id: "tahajud",
     title: "كم ركعة تهجد صليت اليوم؟",
     type: "NUMBER",
-    multiplier: 15,
+    step: 2,
+    min: 0,
     max: 20,
+    multiplier: 15,
   },
   {
     id: "sun_rise",
@@ -71,12 +77,14 @@ export const RAMADAN_FORM: FormQuestion[] = [
     type: "NUMBER",
     multiplier: 20,
     max: 20, 
+    min: 0,
   },
   {
     id: "quran_juz",
     title: "كم جزء قرأت اليوم؟",
     type: "NUMBER",
     multiplier: 40,
+    min: 0,
     max: 30, 
   },
   {
@@ -98,6 +106,8 @@ export const RAMADAN_FORM: FormQuestion[] = [
     title: "تقييم الوالدين لبرك اليوم",
     type: "NUMBER",
     multiplier: 10,
+    min: 0,
     max: 10,
+    defaultValue:10,
   },
 ];

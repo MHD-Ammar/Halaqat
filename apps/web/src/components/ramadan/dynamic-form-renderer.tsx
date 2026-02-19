@@ -20,7 +20,16 @@ export function DynamicFormRenderer({
   onSubmit,
   isSubmitting = false,
 }: DynamicFormRendererProps) {
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [formData, setFormData] = useState<Record<string, any>>(() => {
+    const initialData: Record<string, any> = {};
+    questions.forEach((q) => {
+      if (q.type === "NUMBER") {
+        initialData[q.id] = q.defaultValue ?? q.min ?? 0;
+      }
+      // We can also initialize other types if needed, but NUMBER is the main concern here
+    });
+    return initialData;
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleChange = (id: string, value: any) => {
@@ -113,8 +122,10 @@ export function DynamicFormRenderer({
 
             {q.type === "NUMBER" && (
               <NumberStepper
-                value={formData[q.id] || 0}
+                value={formData[q.id] ?? q.defaultValue ?? q.min ?? 0}
                 max={q.max}
+                min={q.min}
+                step={q.step}
                 onChange={(val) => handleChange(q.id, val)}
               />
             )}
