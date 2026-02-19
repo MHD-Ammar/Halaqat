@@ -10,7 +10,6 @@ export interface FormQuestion {
   multiplier?: number;
   max?: number;
   min?: number;
-  max?: number;
   step?: number;
   defaultValue?: number;
   xpYes?: number;
