@@ -17,13 +17,14 @@ import {
   FileText,
   UserCheck,
   UserX,
-
+  Trophy,
   Loader2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useMemo } from "react";
 import { type DateRange } from "react-day-picker";
 
+import { CircleSessionSummaryButton } from "@/components/dashboards/circle-session-summary-button";
 import { StatsCard } from "@/components/stats-card";
 import {
   Card,
@@ -33,6 +34,8 @@ import {
 } from "@/components/ui/card";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { useTeacherDashboard } from "@/hooks/use-teacher-dashboard";
+import { useUserProfile } from "@/hooks/use-user-profile";
+import { Link } from "@/i18n/routing";
 
 /**
  * Format date to YYYY-MM-DD for the API
@@ -97,6 +100,11 @@ function AttendanceBar({
 export function TeacherDashboard() {
   const t = useTranslations("TeacherDashboard");
 
+  // Get user profile to find their circle
+  const { data: profile } = useUserProfile();
+  const circleId = profile?.circles?.[0]?.id;
+  const circleName = profile?.circles?.[0]?.name;
+
   // Default date range: last 7 days
   const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
     const today = new Date();
@@ -140,6 +148,32 @@ export function TeacherDashboard() {
           />
         </div>
       </div>
+
+      {/* Quick Actions */}
+      {circleId && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Link href="/my-circle/challenges" className="block group">
+            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent hover:from-amber-500/20 hover:via-orange-500/10 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
+              <CardContent className="flex items-center gap-4 p-4">
+                <div className="flex items-center justify-center h-11 w-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform duration-300">
+                  <Trophy className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-sm">{t("challengesDashboard")}</p>
+                  <p className="text-xs text-muted-foreground truncate">{t("challengesDesc")}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          {circleName && (
+            <CircleSessionSummaryButton
+              circleId={circleId}
+              circleName={circleName}
+            />
+          )}
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">

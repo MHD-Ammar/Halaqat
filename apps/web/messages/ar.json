@@ -619,7 +619,10 @@
     "noSessions": "لا توجد حلقات",
     "noStudents": "لا يوجد طلاب",
     "noData": "لا توجد بيانات للفترة المحددة",
-    "loading": "جاري تحميل لوحة التحكم..."
+    "loading": "جاري تحميل لوحة التحكم...",
+    "challengesDashboard": "التحديات",
+    "challengesDesc": "متابعة تقدم الطلاب في التحديات",
+    "dailySummaryDesc": "عرض ملخص جلسة اليوم"
   },
   "ChallengesDashboard": {
     "title": "لوحة متابعة التحديات",

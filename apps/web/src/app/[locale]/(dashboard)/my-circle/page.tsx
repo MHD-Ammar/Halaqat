@@ -20,7 +20,6 @@ import {
 import { useTranslations, useFormatter } from "next-intl";
 import { useState, useMemo, useCallback } from "react";
 
-import { CircleSessionSummaryButton } from "@/components/dashboards/circle-session-summary-button";
 import { StudentActionSheet } from "@/components/student-action-sheet";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,7 +37,6 @@ import {
   useUpdateAttendance,
 } from "@/hooks/use-today-session";
 import { useUserProfile } from "@/hooks/use-user-profile";
-import { Link } from "@/i18n/routing";
 
 /**
  * Status cycle order for toggling
@@ -296,32 +294,17 @@ export default function DashboardPage() {
     <div className="p-4 md:p-6 pb-24">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              {session
-                ? format.dateTime(new Date(session.date), {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "short",
-                  })
-                : t("todaySession")}
-            </h1>
-            <p className="text-muted-foreground">{session?.circle?.name}</p>
-          </div>
-          {circleId && session?.circle?.name && (
-            <div className="flex gap-2">
-              <Link href="/my-circle/challenges">
-                <Button variant="outline">
-                  {t("challengesDashboard")}
-                </Button>
-              </Link>
-              <CircleSessionSummaryButton
-                circleId={circleId}
-                circleName={session.circle.name}
-              />
-            </div>
-          )}
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            {session
+              ? format.dateTime(new Date(session.date), {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "short",
+                })
+              : t("todaySession")}
+          </h1>
+          <p className="text-muted-foreground">{session?.circle?.name}</p>
         </div>
       </div>
 

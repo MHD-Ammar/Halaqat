@@ -618,7 +618,10 @@
     "noSessions": "No sessions found",
     "noStudents": "No students found",
     "noData": "No data for the selected period",
-    "loading": "Loading dashboard..."
+    "loading": "Loading dashboard...",
+    "challengesDashboard": "Challenges",
+    "challengesDesc": "Monitor student challenge progress",
+    "dailySummaryDesc": "View today's session summary"
   },
   "ChallengesDashboard": {
     "title": "Challenges Dashboard",
