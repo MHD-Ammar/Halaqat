@@ -1,4 +1,4 @@
-import {
+ import {
   getCampaignConfig,
   getCampaignForm,
   CampaignConfig,
@@ -244,12 +244,51 @@ export class DailyChallengeService {
       .limit(50)
       .getRawMany();
 
-    return results.map((r) => ({
+    const students = results.map((r) => ({
       studentId: r.studentId,
       name: r.name,
       totalXp: Number(r.totalXp),
       streak: Number(r.maxStreak),
     }));
+
+    // Circle averages
+    const circleResults = await this.submissionRepo
+      .createQueryBuilder("submission")
+      .select("student.circleId", "circleid")
+      .addSelect("circle.name", "circlename")
+      .addSelect("COUNT(DISTINCT submission.studentId)", "studentcount")
+      .addSelect("SUM(submission.xpEarned)", "totalxp")
+      .addSelect("AVG(sub_totals.studenttotal)", "avgxp")
+      .innerJoin("submission.student", "student")
+      .innerJoin("student.circle", "circle")
+      .innerJoin(
+        (qb) =>
+          qb
+            .select("s.studentId", "sid")
+            .addSelect("SUM(s.xpEarned)", "studenttotal")
+            .from("daily_submission", "s")
+            .where("s.mosqueId = :mosqueId", { mosqueId })
+            .andWhere("s.campaignKey = :campaignKey", { campaignKey })
+            .groupBy("s.studentId"),
+        "sub_totals",
+        "sub_totals.sid = submission.studentId",
+      )
+      .where("submission.mosqueId = :mosqueId", { mosqueId })
+      .andWhere("submission.campaignKey = :campaignKey", { campaignKey })
+      .groupBy("student.circleId")
+      .addGroupBy("circle.name")
+      .orderBy("AVG(sub_totals.studenttotal)", "DESC")
+      .getRawMany();
+
+    const circleAverages = circleResults.map((r) => ({
+      circleId: r.circleid,
+      circleName: r.circlename,
+      studentCount: Number(r.studentcount),
+      totalXp: Number(r.totalxp),
+      avgXp: Math.round(Number(r.avgxp)),
+    }));
+
+    return { students, circleAverages };
   }
 
   /**

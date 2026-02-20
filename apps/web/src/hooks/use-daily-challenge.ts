@@ -35,6 +35,19 @@ export interface ChallengeLeaderboardEntry {
   streak: number;
 }
 
+export interface CircleAverage {
+  circleId: string;
+  circleName: string;
+  studentCount: number;
+  totalXp: number;
+  avgXp: number;
+}
+
+export interface LeaderboardResponse {
+  students: ChallengeLeaderboardEntry[];
+  circleAverages: CircleAverage[];
+}
+
 // --- Keys ---
 export const challengeKeys = {
   all: ["daily-challenge"] as const,
@@ -129,7 +142,7 @@ export function useDailyChallengeLeaderboard(mosqueId?: string, campaign: string
     queryKey: challengeKeys.leaderboard(mosqueId || "default", campaign),
     queryFn: async () => {
       const params = mosqueId ? { mosqueId, campaign } : { campaign };
-      const { data } = await api.get<ChallengeLeaderboardEntry[]>(
+      const { data } = await api.get<LeaderboardResponse>(
         "/daily-challenge/leaderboard",
         { params },
       );

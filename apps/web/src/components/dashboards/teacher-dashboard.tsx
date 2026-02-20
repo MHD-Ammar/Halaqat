@@ -152,7 +152,7 @@ export function TeacherDashboard() {
       {/* Quick Actions */}
       {circleId && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Link href="/my-circle/challenges" className="block group">
+          <Link href="/overview/challenges" className="block group">
             <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent hover:from-amber-500/20 hover:via-orange-500/10 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
               <CardContent className="flex items-center gap-4 p-4">
                 <div className="flex items-center justify-center h-11 w-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform duration-300">

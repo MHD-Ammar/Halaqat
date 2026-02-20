@@ -46,7 +46,7 @@ export interface CampaignConfig {
 export const RAMADAN_FORM: FormQuestion[] = [
   {
     id: "prayers",
-    title: "الفرائض والوتر",
+    title: "الفرائض",
     type: "GRID",
     rows: ["الفجر", "الظهر", "العصر", "المغرب", "العشاء"],
     columns: [
@@ -69,7 +69,7 @@ export const RAMADAN_FORM: FormQuestion[] = [
     title: "هل أنهيت وردك اليوم؟",
     description: "100 أستغفار - 200 صلاة على النبي صلى الله عليه وسلم - 1000 لا إله إلا الله",
     type: "BOOLEAN",
-    xpYes: 25,
+    xpYes: 50,
     xpNo: 0,
   },
   {
@@ -93,7 +93,7 @@ export const RAMADAN_FORM: FormQuestion[] = [
     title: "جلسة الشروق",
     description: "جلست بعد الفجر إلى طلوع الشمس",
     type: "BOOLEAN",
-    xpYes: 35,
+    xpYes: 50,
     xpNo: 0,
   },
   {
@@ -146,10 +146,10 @@ export const CAMPAIGN_CONFIGS: Record<string, CampaignConfig> = {
     questions: {
       prayers: { type: "GRID", xpMap: { mosque: 15, solo: 5 } },
       sunnah: { type: "GRID", xpMap: { yes: 8, no: 0 } },
-      wird: { type: "BOOLEAN", xpYes: 25, xpNo: 0 },
+      wird: { type: "BOOLEAN", xpYes: 50, xpNo: 0 },
       taraweeh: { type: "BOOLEAN", xpYes: 30, xpNo: 0 },
       tahajud: { type: "NUMBER", multiplier: 15, max: 20 },
-      sun_rise: { type: "BOOLEAN", xpYes: 35, xpNo: 0 },
+      sun_rise: { type: "BOOLEAN", xpYes: 50, xpNo: 0 },
       quran_hifz: { type: "NUMBER", multiplier: 20, max: 20 },
       quran_juz: { type: "NUMBER", multiplier: 40, max: 30 },
       sadaqa: { type: "BOOLEAN", xpYes: 20, xpNo: 0 },

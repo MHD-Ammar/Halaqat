@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Crown, Medal, Trophy } from "lucide-react";
+import { ChevronRight, Crown, Medal, Trophy, Users } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -21,9 +21,15 @@ function LeaderboardContent() {
     CAMPAIGN_KEY,
   );
 
+  const students = leaderboard?.students || [];
+  const circleAverages = leaderboard?.circleAverages || [];
+
   // Top 3
-  const top3 = leaderboard?.slice(0, 3) || [];
-  const rest = leaderboard?.slice(3) || [];
+  const top3 = students.slice(0, 3);
+  const rest = students.slice(3);
+
+  // Max avg for normalizing progress bars
+  const maxAvg = circleAverages.length > 0 ? Math.max(...circleAverages.map((c) => c.avgXp)) : 1;
 
   const getRankStyle = (index: number) => {
     switch (index) {
@@ -36,6 +42,18 @@ function LeaderboardContent() {
       default:
         return "bg-card";
     }
+  };
+
+  const getCircleBarColor = (index: number) => {
+    const colors = [
+      "from-emerald-400 to-emerald-600",
+      "from-blue-400 to-blue-600",
+      "from-purple-400 to-purple-600",
+      "from-amber-400 to-amber-600",
+      "from-rose-400 to-rose-600",
+      "from-cyan-400 to-cyan-600",
+    ];
+    return colors[index % colors.length];
   };
 
   return (
@@ -60,6 +78,71 @@ function LeaderboardContent() {
         </div>
       ) : (
         <>
+          {/* Circle Battle Section */}
+          {circleAverages.length > 1 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 px-1">
+                <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center">
+                  <Trophy className="w-4 h-4 text-amber-400" />
+                </div>
+                <h2 className="text-lg font-bold text-white/90">
+                  تنافس الحلقات
+                </h2>
+              </div>
+
+              <Card className="bg-white/5 backdrop-blur-xl border-white/10 overflow-hidden">
+                <CardContent className="p-4 space-y-4">
+                  {circleAverages.map((circle, index) => {
+                    const pct = maxAvg > 0 ? (circle.avgXp / maxAvg) * 100 : 0;
+                    const isFirst = index === 0;
+
+                    return (
+                      <div key={circle.circleId} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 min-w-0">
+                            {isFirst && (
+                              <span className="text-sm">🥇</span>
+                            )}
+                            <span className={cn(
+                              "font-semibold text-sm truncate",
+                              isFirst ? "text-amber-300" : "text-white/80"
+                            )}>
+                              {circle.circleName}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <span className="text-xs text-white/40 flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              {circle.studentCount}
+                            </span>
+                            <span className={cn(
+                              "font-mono font-bold text-sm",
+                              isFirst ? "text-amber-400" : "text-indigo-300"
+                            )}>
+                              {circle.avgXp} XP
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Progress bar */}
+                        <div className="h-3 rounded-full bg-white/5 overflow-hidden">
+                          <div
+                            className={cn(
+                              "h-full rounded-full bg-gradient-to-r transition-all duration-1000 ease-out",
+                              getCircleBarColor(index),
+                              isFirst && "shadow-[0_0_12px_rgba(52,211,153,0.3)]"
+                            )}
+                            style={{ width: `${Math.max(pct, 3)}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Podium */}
           {top3.length > 0 && (
             <div className="flex justify-center items-end gap-4 md:gap-6 mb-12 px-2">
@@ -177,7 +260,7 @@ function LeaderboardContent() {
             ))}
           </div>
 
-          {leaderboard?.length === 0 && (
+          {students.length === 0 && (
             <div className="text-center p-12 text-white/50">
               لا توجد بيانات للصدارة بعد. كن أول المنافسين!
             </div>
