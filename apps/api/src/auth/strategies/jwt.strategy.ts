@@ -44,6 +44,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
       return {
         id: student.id,
+        studentId: student.id, // For student portal endpoints
         role: UserRole.STUDENT,
         name: student.name,
         mosqueId: student.mosqueId,

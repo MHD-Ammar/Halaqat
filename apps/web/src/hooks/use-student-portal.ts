@@ -6,7 +6,7 @@
  * Fetches the logged-in student's profile data using their linked studentId.
  */
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
 
@@ -64,3 +64,67 @@ export function useStudentPortal() {
 }
 
 export type { StudentPortalData, Student, StudentStats };
+
+// ── Gamification Hooks ───────────────────────────────────────────────
+
+export interface DashboardData {
+  streakCalendar: Record<string, boolean>;
+  recentRecitations: {
+    date: string;
+    surah: string;
+    quality: string;
+    mistakesCount: number;
+    type: string;
+  }[];
+  hasSubmittedToday: boolean;
+  currentStreak: number;
+  totalXp: number;
+  currentLevel: number;
+}
+
+export interface ClaimLoginBonusResponse {
+  claimed: boolean;
+  xpAwarded?: number;
+  newTotalXp?: number;
+  levelUp?: boolean;
+  newLevel?: number;
+}
+
+/**
+ * Fetch dashboard aggregation data for the student
+ */
+export function useStudentDashboard(campaignKey: string = "ramadan") {
+  return useQuery({
+    queryKey: ["student-portal-dashboard", campaignKey],
+    queryFn: async () => {
+      const response = await api.get<DashboardData>(
+        `/student-portal/dashboard`,
+        { params: { campaignKey } },
+      );
+      return response.data;
+    },
+    staleTime: 30 * 1000,
+  });
+}
+
+/**
+ * Claim the daily sequence bonus package
+ */
+export function useClaimLoginBonus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const response = await api.post<ClaimLoginBonusResponse>(
+        `/student-portal/claim-login-bonus`,
+      );
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (data.claimed) {
+        queryClient.invalidateQueries({ queryKey: ["student-portal-dashboard"] });
+        queryClient.invalidateQueries({ queryKey: ["student-portal"] });
+      }
+    },
+  });
+}

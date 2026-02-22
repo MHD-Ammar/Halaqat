@@ -22,6 +22,7 @@ import { MosquesModule } from "./mosques/mosques.module";
 import { PointsModule } from "./points/points.module";
 import { ProgressModule } from "./progress/progress.module";
 import { SessionsModule } from "./sessions/sessions.module";
+import { StudentPortalModule } from "./student-portal/student-portal.module";
 import { StudentsModule } from "./students/students.module";
 import { UsersModule } from "./users/users.module";
 
@@ -47,6 +48,7 @@ import { UsersModule } from "./users/users.module";
     AuthModule,
     CirclesModule,
     StudentsModule,
+    StudentPortalModule,
     CurriculumModule,
     SessionsModule,
     PointsModule,

@@ -36,7 +36,10 @@
     "update": "Update",
     "phoneInvalid": "Phone number can only contain digits and + - ( ) symbols",
     "processing": "Processing...",
-    "undo": "Undo"
+    "undo": "Undo",
+    "max": "Max",
+    "submitting": "Submitting...",
+    "continue": "Continue"
   },
   "Nav": {
     "overview": "Overview",
@@ -220,6 +223,7 @@
   },
   "Students": {
     "title": "Students",
+    "myStudents": "My Students",
     "totalStudents": "{count} student(s) total",
     "addStudent": "Add Student",
     "noStudents": "No students yet",
@@ -352,13 +356,15 @@
     "welcomeHero": "Welcome to your adventure, hero! 🚀",
     "welcomeSubtitle": "Keep going and reach new levels!",
     "streak": "Streak",
+    "bestStreak": "Best Streak",
     "streakDays": "{count} Days",
     "totalXp": "Total XP",
     "level": "Level",
     "levelBadge": "Level {level}",
     "logout": "Logout",
     "xpProgress": "XP Progress",
-    "keepItUp": "Keep up the great work!"
+    "keepItUp": "Keep up the great work!",
+    "startTodayQuests": "Start Today's Quests 🚀"
   },
   "Exams": {
     "title": "Exams",
@@ -692,6 +698,30 @@
     "didNotSubmit": "Did not submit",
     "viewDetails": "View Details",
     "close": "Close"
+  },
+  "Gamification": {
+    "level": "Level",
+    "levelUp": "Level Up! 🎉",
+    "youReachedLevel": "You've reached Level",
+    "xp": "XP",
+    "earnedToday": "Earned Today",
+    "totalXp": "Total XP",
+    "streak": "Streak",
+    "maxStreak": "Max Streak"
+  },
+  "Quests": {
+    "dailyQuests": "Daily Quests",
+    "submitTodaysQuests": "Complete your daily quests to earn XP and boost your streak!",
+    "todaysChallenge": "Today's Challenge",
+    "completeQuestsTips": "Answer all questions to complete your daily quests",
+    "submissionSuccess": "Quests Submitted!",
+    "earnedXpDescription": "You earned {xp} XP! Keep it up!",
+    "alreadySubmitted": "You've Already Submitted Today! 🎯",
+    "earnedXpToday": "You earned {xp} XP today!",
+    "comeBackTomorrow": "Come back tomorrow to submit new quests",
+    "fillAllFields": "Please fill in all required fields",
+    "submitQuests": "Submit Quests",
+    "noQuestsAvailable": "No quests available right now"
   }
 }
 

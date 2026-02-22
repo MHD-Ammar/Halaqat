@@ -109,6 +109,13 @@ export class Student extends BaseEntity {
   @Column({ name: "last_login_at", type: "timestamp", nullable: true })
   lastLoginAt!: Date | null;
 
+  /**
+   * Timestamp for when the student last claimed the daily login bonus
+   * Distinct from lastLoginAt which updates on every session
+   */
+  @Column({ name: "last_login_bonus_at", type: "timestamp", nullable: true })
+  lastLoginBonusAt?: Date | null;
+
   // ── Gamification ───────────────────────────────────────────────
 
   /**

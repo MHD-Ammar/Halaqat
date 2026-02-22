@@ -36,7 +36,10 @@
     "update": "تحديث",
     "phoneInvalid": "رقم الهاتف يجب أن يحتوي على أرقام ورموز + - ( ) فقط",
     "processing": "جاري المعالجة...",
-    "undo": "تراجع"
+    "undo": "تراجع",
+    "max": "الحد الأقصى",
+    "submitting": "جاري الإرسال...",
+    "continue": "متابعة"
   },
   "Nav": {
     "overview": "نظرة عامة",
@@ -353,13 +356,15 @@
     "welcomeHero": "أهلاً بك يا بطل في رحلتك! 🚀",
     "welcomeSubtitle": "واصل التقدم واصعد إلى مستويات جديدة!",
     "streak": "السلسلة",
+    "bestStreak": "أعلى سلسلة",
     "streakDays": "{count} أيام",
     "totalXp": "إجمالي XP",
     "level": "المستوى",
     "levelBadge": "مستوى {level}",
     "logout": "تسجيل الخروج",
     "xpProgress": "تقدم XP",
-    "keepItUp": "استمر في العمل الرائع!"
+    "keepItUp": "استمر في العمل الرائع!",
+    "startTodayQuests": "إنطلق إلى مهام اليوم 🚀"
   },
   "Exams": {
     "title": "الاختبارات",
@@ -693,6 +698,30 @@
     "didNotSubmit": "لم يشارك",
     "viewDetails": "عرض التفاصيل",
     "close": "إغلاق"
+  },
+  "Gamification": {
+    "level": "المستوى",
+    "levelUp": "ترقية جديدة! 🎉",
+    "youReachedLevel": "لقد وصلت إلى المستوى",
+    "xp": "نقاط الخبرة",
+    "earnedToday": "المكتسبة اليوم",
+    "totalXp": "إجمالي نقاط الخبرة",
+    "streak": "سلسلة يومية",
+    "maxStreak": "أفضل سلسلة"
+  },
+  "Quests": {
+    "dailyQuests": "المهام اليومية",
+    "submitTodaysQuests": "أكمل مهامك اليومية لكسب نقاط الخبرة وزيادة سلسلتك اليومية!",
+    "todaysChallenge": "تحدي اليوم",
+    "completeQuestsTips": "أجب على جميع الأسئلة لإكمال مهامك اليومية",
+    "submissionSuccess": "تم إرسال المهام!",
+    "earnedXpDescription": "لقد كسبت {xp} نقاط خبرة! استمر على هذا النحو!",
+    "alreadySubmitted": "لقد أرسلت مهامك اليوم بالفعل! 🎯",
+    "earnedXpToday": "كسبت {xp} نقطة خبرة اليوم!",
+    "comeBackTomorrow": "عد غداً لإرسال مهام جديدة",
+    "fillAllFields": "يرجى ملء جميع الحقول المطلوبة",
+    "submitQuests": "إرسال المهام",
+    "noQuestsAvailable": "لا توجد مهام متاحة حالياً"
   }
 }
 
