@@ -4,6 +4,7 @@
  * REST API endpoints for managing daily sessions and attendance.
  */
 
+import { UserRole } from "@halaqat/types";
 import {
   Controller,
   Get,
@@ -26,14 +27,17 @@ import {
   ApiQuery,
 } from "@nestjs/swagger";
 
-import { SessionsService } from "./sessions.service";
 import { BulkAttendanceDto } from "./dto/bulk-attendance.dto";
+import { SessionsService } from "./sessions.service";
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
 
 @ApiTags("Sessions")
 @ApiBearerAuth("JWT-auth")
 @Controller("sessions")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
@@ -46,6 +50,7 @@ export class SessionsController {
    * Smart initialization: creates session + attendance records if needed.
    */
   @Get("today")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "Get today's session",
     description:
@@ -53,8 +58,12 @@ export class SessionsController {
   })
   @ApiQuery({ name: "circleId", description: "Circle UUID", required: true })
   @ApiResponse({ status: 200, description: "Session details or empty" })
-  findToday(@Query("circleId", ParseUUIDPipe) circleId: string) {
-    return this.sessionsService.findTodaySession(circleId);
+  findToday(
+    @Query("circleId", ParseUUIDPipe) circleId: string,
+    @CurrentUser() user: { id: string; role: UserRole },
+  ) {
+    const teacherId = user.role === UserRole.TEACHER ? user.id : undefined;
+    return this.sessionsService.findTodaySession(circleId, teacherId);
   }
 
   /**
@@ -62,6 +71,7 @@ export class SessionsController {
    * POST /api/sessions/today
    */
   @Post("today")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "Start today's session",
     description:
@@ -69,8 +79,12 @@ export class SessionsController {
   })
   @ApiQuery({ name: "circleId", description: "Circle UUID", required: true })
   @ApiResponse({ status: 201, description: "Session created" })
-  createToday(@Query("circleId", ParseUUIDPipe) circleId: string) {
-    return this.sessionsService.createTodaySession(circleId);
+  createToday(
+    @Query("circleId", ParseUUIDPipe) circleId: string,
+    @CurrentUser() user: { id: string; role: UserRole },
+  ) {
+    const teacherId = user.role === UserRole.TEACHER ? user.id : undefined;
+    return this.sessionsService.createTodaySession(circleId, teacherId);
   }
 
   /**
@@ -78,6 +92,7 @@ export class SessionsController {
    * GET /api/sessions/history?circleId=...
    */
   @Get("history")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "Get session history",
     description: "Get past sessions for a circle",
@@ -92,10 +107,13 @@ export class SessionsController {
   getHistory(
     @Query("circleId", ParseUUIDPipe) circleId: string,
     @Query("limit") limit?: string,
+    @CurrentUser() user?: { id: string; role: UserRole },
   ) {
+    const teacherId = user?.role === UserRole.TEACHER ? user.id : undefined;
     return this.sessionsService.getSessionHistory(
       circleId,
       limit ? parseInt(limit, 10) : 30,
+      teacherId,
     );
   }
 
@@ -104,6 +122,7 @@ export class SessionsController {
    * GET /api/sessions/:id
    */
   @Get(":id")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "Get session by ID",
     description: "Get a single session with attendance",
@@ -111,8 +130,12 @@ export class SessionsController {
   @ApiParam({ name: "id", description: "Session UUID" })
   @ApiResponse({ status: 200, description: "Session details" })
   @ApiResponse({ status: 404, description: "Session not found" })
-  findOne(@Param("id", ParseUUIDPipe) id: string) {
-    return this.sessionsService.findOne(id);
+  findOne(
+    @Param("id", ParseUUIDPipe) id: string,
+    @CurrentUser() user: { id: string; role: UserRole },
+  ) {
+    const teacherId = user.role === UserRole.TEACHER ? user.id : undefined;
+    return this.sessionsService.findOne(id, teacherId);
   }
 
   /**
@@ -120,6 +143,7 @@ export class SessionsController {
    * PATCH /api/sessions/:id/attendance
    */
   @Patch(":id/attendance")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "Update attendance",
     description: "Bulk update attendance status for students in a session",
@@ -130,8 +154,10 @@ export class SessionsController {
   updateAttendance(
     @Param("id", ParseUUIDPipe) id: string,
     @Body() bulkDto: BulkAttendanceDto,
+    @CurrentUser() user: { id: string; role: UserRole },
   ) {
-    return this.sessionsService.updateBulkAttendance(id, bulkDto);
+    const teacherId = user.role === UserRole.TEACHER ? user.id : undefined;
+    return this.sessionsService.updateBulkAttendance(id, bulkDto, teacherId);
   }
 
   /**
@@ -139,6 +165,7 @@ export class SessionsController {
    * PATCH /api/sessions/:id/close
    */
   @Patch(":id/close")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "Close session",
     description: "Mark a session as closed",
@@ -146,7 +173,11 @@ export class SessionsController {
   @ApiParam({ name: "id", description: "Session UUID" })
   @ApiResponse({ status: 200, description: "Session closed successfully" })
   @ApiResponse({ status: 404, description: "Session not found" })
-  closeSession(@Param("id", ParseUUIDPipe) id: string) {
-    return this.sessionsService.closeSession(id);
+  closeSession(
+    @Param("id", ParseUUIDPipe) id: string,
+    @CurrentUser() user: { id: string; role: UserRole },
+  ) {
+    const teacherId = user.role === UserRole.TEACHER ? user.id : undefined;
+    return this.sessionsService.closeSession(id, teacherId);
   }
 }

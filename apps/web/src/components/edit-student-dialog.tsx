@@ -129,11 +129,22 @@ export function EditStudentDialog({
   const onSubmit = async (data: EditStudentFormData) => {
     if (!student) return;
 
+    // Convert empty strings to null to ensure they clear out in DB
+    // Format DOB to ISO string if provided
+    const payload = {
+      id: student.id,
+      name: data.name,
+      circleId: data.circleId,
+      dob: data.dob ? new Date(data.dob).toISOString() : null,
+      phone: data.phone || null,
+      address: data.address || null,
+      notes: data.notes || null,
+      guardianName: data.guardianName || null,
+      guardianPhone: data.guardianPhone || null,
+    };
+
     try {
-      await updateMutation.mutateAsync({
-        id: student.id,
-        ...data,
-      });
+      await updateMutation.mutateAsync(payload as any);
 
       toast({
         title: tCommon("success"),
@@ -146,7 +157,7 @@ export function EditStudentDialog({
       toast({
         variant: "destructive",
         title: tCommon("error"),
-        description: message,
+        description: Array.isArray(message) ? message[0] : message,
       });
     }
   };

@@ -5,6 +5,7 @@
  * Uses Madinah Mushaf pages (1-604) for tracking.
  */
 
+import { UserRole } from "@halaqat/types";
 import {
   Controller,
   Get,
@@ -24,15 +25,17 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 
-import { ProgressService } from "./progress.service";
-import { RecordRecitationDto } from "./dto/record-recitation.dto";
 import { BulkRecitationDto } from "./dto/bulk-recitation.dto";
+import { RecordRecitationDto } from "./dto/record-recitation.dto";
+import { ProgressService } from "./progress.service";
+import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
 
 @ApiTags("Progress")
 @ApiBearerAuth("JWT-auth")
 @Controller("progress")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 export class ProgressController {
   constructor(private readonly progressService: ProgressService) {}
@@ -42,6 +45,7 @@ export class ProgressController {
    * POST /api/progress/recitations
    */
   @Post("recitations")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "Record recitation",
     description:
@@ -58,6 +62,7 @@ export class ProgressController {
    * POST /api/progress/recitations/bulk
    */
   @Post("recitations/bulk")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "Record bulk recitation",
     description:
@@ -77,6 +82,7 @@ export class ProgressController {
    * GET /api/progress/recitations/:id
    */
   @Get("recitations/:id")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "Get recitation by ID",
     description: "Get a single recitation record",
@@ -93,6 +99,7 @@ export class ProgressController {
    * GET /api/progress/students/:studentId/recitations
    */
   @Get("students/:studentId/recitations")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "Get student recitations",
     description: "Get all recitations for a specific student",
@@ -108,6 +115,7 @@ export class ProgressController {
    * GET /api/progress/sessions/:sessionId/recitations
    */
   @Get("sessions/:sessionId/recitations")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "Get session recitations",
     description: "Get all recitations from a specific session",
@@ -123,6 +131,7 @@ export class ProgressController {
    * GET /api/progress/students/:studentId/total-pages
    */
   @Get("students/:studentId/total-pages")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "Get total pages",
     description: "Get count of distinct pages memorized by a student",

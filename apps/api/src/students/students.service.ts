@@ -389,12 +389,16 @@ export class StudentsService {
   async update(
     id: string,
     updateStudentDto: UpdateStudentDto,
+    teacherId?: string,
   ): Promise<Student> {
-    const student = await this.findOne(id);
+    const student = await this.findOne(id, teacherId);
 
-    // If circleId is being updated, verify the new circle exists
+    // If circleId is being updated, verify the new circle exists and belongs to the teacher
     if (updateStudentDto.circleId) {
-      await this.circlesService.findOne(updateStudentDto.circleId);
+      const circle = await this.circlesService.findOne(updateStudentDto.circleId);
+      if (teacherId && circle.teacherId !== teacherId) {
+        throw new ForbiddenException("Cannot move student to a circle you do not own");
+      }
     }
 
     Object.assign(student, updateStudentDto);
@@ -404,8 +408,8 @@ export class StudentsService {
   /**
    * Soft delete a student
    */
-  async remove(id: string): Promise<void> {
-    const student = await this.findOne(id);
+  async remove(id: string, teacherId?: string): Promise<void> {
+    const student = await this.findOne(id, teacherId);
     await this.studentsRepository.softRemove(student);
   }
 

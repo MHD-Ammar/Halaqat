@@ -41,7 +41,7 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 @ApiTags("Students")
 @ApiBearerAuth("JWT-auth")
 @Controller("students")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 export class StudentsController {
   constructor(private readonly studentsService: StudentsService) {}
@@ -52,6 +52,7 @@ export class StudentsController {
    * Teachers can only add to their own circles
    */
   @Post()
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
   @ApiOperation({
     summary: "Create student",
     description:
@@ -84,7 +85,6 @@ export class StudentsController {
    * Teachers can only add to their own circles
    */
   @Post("bulk")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.TEACHER)
   @ApiOperation({
     summary: "Bulk create students",
@@ -131,7 +131,6 @@ export class StudentsController {
    * GET /api/students
    */
   @Get()
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.EXAMINER)
   @ApiOperation({
     summary: "List all students",
@@ -153,6 +152,7 @@ export class StudentsController {
    * GET /api/students/search?term=...
    */
   @Get("search")
+  @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.EXAMINER)
   @ApiOperation({
     summary: "Search students",
     description: "Search students by name (case-insensitive)",
@@ -168,7 +168,6 @@ export class StudentsController {
    * GET /api/students/unassigned?search=...
    */
   @Get("unassigned")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: "Get unassigned students",
@@ -190,6 +189,7 @@ export class StudentsController {
    * GET /api/students/by-circle/:circleId
    */
   @Get("by-circle/:circleId")
+  @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.EXAMINER)
   @ApiOperation({
     summary: "Get students by circle",
     description: "Get all students in a specific circle",
@@ -205,6 +205,7 @@ export class StudentsController {
    * GET /api/students/:id/profile
    */
   @Get(":id/profile")
+  @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.EXAMINER)
   @ApiOperation({
     summary: "Get student profile",
     description: "Get comprehensive student profile with stats",
@@ -225,6 +226,7 @@ export class StudentsController {
    * GET /api/students/:id
    */
   @Get(":id")
+  @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.EXAMINER)
   @ApiOperation({
     summary: "Get student by ID",
     description: "Get a single student's details",
@@ -245,6 +247,7 @@ export class StudentsController {
    * PATCH /api/students/:id
    */
   @Patch(":id")
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
   @ApiOperation({
     summary: "Update student",
     description: "Update student details",
@@ -255,8 +258,10 @@ export class StudentsController {
   update(
     @Param("id", ParseUUIDPipe) id: string,
     @Body() updateStudentDto: UpdateStudentDto,
+    @CurrentUser() user: { id: string; role: UserRole },
   ) {
-    return this.studentsService.update(id, updateStudentDto);
+    const teacherId = user.role === UserRole.TEACHER ? user.id : undefined;
+    return this.studentsService.update(id, updateStudentDto, teacherId);
   }
 
   /**
@@ -264,6 +269,7 @@ export class StudentsController {
    * DELETE /api/students/:id
    */
   @Delete(":id")
+  @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: "Delete student",
     description: "Soft delete a student",
@@ -271,8 +277,12 @@ export class StudentsController {
   @ApiParam({ name: "id", description: "Student UUID" })
   @ApiResponse({ status: 200, description: "Student deleted successfully" })
   @ApiResponse({ status: 404, description: "Student not found" })
-  remove(@Param("id", ParseUUIDPipe) id: string) {
-    return this.studentsService.remove(id);
+  remove(
+    @Param("id", ParseUUIDPipe) id: string,
+    @CurrentUser() user: { id: string; role: UserRole },
+  ) {
+    const teacherId = user.role === UserRole.TEACHER ? user.id : undefined;
+    return this.studentsService.remove(id, teacherId);
   }
 
   /**
@@ -280,7 +290,6 @@ export class StudentsController {
    * POST /api/students/:id/generate-credentials
    */
   @Post(":id/generate-credentials")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.TEACHER)
   @ApiOperation({
     summary: "Generate student credentials",

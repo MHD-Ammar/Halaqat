@@ -6,7 +6,7 @@
  */
 
 import { AttendanceStatus, SessionStatus } from "@halaqat/types";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
@@ -43,7 +43,12 @@ export class SessionsService {
    * Find today's session for a circle (Read Only)
    * Returns null if no session exists.
    */
-  async findTodaySession(circleId: string): Promise<Session | null> {
+  async findTodaySession(circleId: string, teacherId?: string): Promise<Session | null> {
+    if (teacherId) {
+      const isOwner = await this.circlesService.validateCircleOwnership(circleId, teacherId);
+      if (!isOwner) throw new ForbiddenException("You do not have access to this circle");
+    }
+
     const today = this.getTodayDate();
 
     const session = await this.sessionRepository.findOne({
@@ -73,7 +78,12 @@ export class SessionsService {
    * - Creates session if not exists
    * - Populates attendance for all students
    */
-  async createTodaySession(circleId: string): Promise<Session> {
+  async createTodaySession(circleId: string, teacherId?: string): Promise<Session> {
+    if (teacherId) {
+      const isOwner = await this.circlesService.validateCircleOwnership(circleId, teacherId);
+      if (!isOwner) throw new ForbiddenException("You do not have access to this circle");
+    }
+
     // Validate circle exists first
     const circle = await this.circlesService
       .findOne(circleId)
@@ -162,7 +172,7 @@ export class SessionsService {
   /**
    * Get a session by ID with attendance records
    */
-  async findOne(id: string): Promise<Session> {
+  async findOne(id: string, teacherId?: string): Promise<Session> {
     const session = await this.sessionRepository.findOne({
       where: { id },
       relations: [
@@ -178,6 +188,10 @@ export class SessionsService {
       throw new NotFoundException(`Session with ID ${id} not found`);
     }
 
+    if (teacherId && session.circle?.teacherId !== teacherId) {
+      throw new ForbiddenException("You do not have permission to view or manage this session");
+    }
+
     return session;
   }
 
@@ -187,9 +201,10 @@ export class SessionsService {
   async updateBulkAttendance(
     sessionId: string,
     bulkDto: BulkAttendanceDto,
+    teacherId?: string,
   ): Promise<Session> {
     // Verify session exists and get current state
-    const session = await this.findOne(sessionId);
+    const session = await this.findOne(sessionId, teacherId);
 
     // Map current attendances for easy lookup
     const attendanceMap = new Map(session.attendances.map((a) => [a.studentId, a]));
@@ -237,7 +252,7 @@ export class SessionsService {
     }
 
     // Return updated session
-    return this.findOne(sessionId);
+    return this.findOne(sessionId, teacherId);
   }
 
   /**
@@ -246,7 +261,13 @@ export class SessionsService {
   async getSessionHistory(
     circleId: string,
     limit: number = 30,
+    teacherId?: string,
   ): Promise<Session[]> {
+    if (teacherId) {
+      const isOwner = await this.circlesService.validateCircleOwnership(circleId, teacherId);
+      if (!isOwner) throw new ForbiddenException("You do not have access to this circle");
+    }
+
     return this.sessionRepository.find({
       where: { circleId },
       relations: ["attendances", "attendances.student"],
@@ -258,8 +279,8 @@ export class SessionsService {
   /**
    * Close a session (mark as CLOSED)
    */
-  async closeSession(id: string): Promise<Session> {
-    const session = await this.findOne(id);
+  async closeSession(id: string, teacherId?: string): Promise<Session> {
+    const session = await this.findOne(id, teacherId);
     session.status = SessionStatus.CLOSED;
     return this.sessionRepository.save(session);
   }

@@ -45,7 +45,7 @@ import { UsersService } from "../users/users.service";
 @ApiTags("Points")
 @ApiBearerAuth("JWT-auth")
 @Controller("points")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 export class PointsController {
   constructor(
@@ -60,7 +60,6 @@ export class PointsController {
    * GET /api/points/rules
    */
   @Get("rules")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: "Get all point rules",
@@ -77,7 +76,6 @@ export class PointsController {
    * GET /api/points/rules/teacher
    */
   @Get("rules/teacher")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.TEACHER, UserRole.ADMIN)
   @ApiOperation({
     summary: "Get teacher-visible rules",
@@ -93,7 +91,6 @@ export class PointsController {
    * POST /api/points/rules
    */
   @Post("rules")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: "Create custom rule",
@@ -113,7 +110,6 @@ export class PointsController {
    * DELETE /api/points/rules/:id
    */
   @Delete("rules/:id")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: "Delete custom rule",
@@ -136,7 +132,6 @@ export class PointsController {
    * PATCH /api/points/rules/:key
    */
   @Patch("rules/:key")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: "Update point rule",
@@ -158,7 +153,6 @@ export class PointsController {
    * PUT /api/points/rules
    */
   @Put("rules")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: "Bulk update point rules",
@@ -184,7 +178,6 @@ export class PointsController {
    * POST /api/points/award-by-rule
    */
   @Post("award-by-rule")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.TEACHER, UserRole.ADMIN)
   @ApiOperation({
     summary: "Award points by rule",
@@ -207,6 +200,7 @@ export class PointsController {
    * POST /api/points/manual
    */
   @Post("manual")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "Add manual points",
     description: "Add bonus/penalty points to a student (with budget limits)",
@@ -228,6 +222,7 @@ export class PointsController {
    * GET /api/points/budget?sessionId=...
    */
   @Get("budget")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "Get budget usage",
     description: "Get teacher's manual points budget usage for the current week",
@@ -261,6 +256,7 @@ export class PointsController {
    * GET /api/points/history/:studentId
    */
   @Get("history/:studentId")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "Get point history",
     description: "Get point history for a student",
@@ -287,6 +283,7 @@ export class PointsController {
    * GET /api/points/total/:studentId
    */
   @Get("total/:studentId")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "Get total points",
     description: "Get student's total point balance",

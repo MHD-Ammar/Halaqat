@@ -31,7 +31,7 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 @ApiTags("Mosques")
 @ApiBearerAuth("JWT-auth")
 @Controller("mosques")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 export class MosquesController {
   constructor(private readonly mosquesService: MosquesService) {}
@@ -59,7 +59,6 @@ export class MosquesController {
    * PATCH /api/mosques/my-mosque
    */
   @Patch("my-mosque")
-  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: "Update my mosque",

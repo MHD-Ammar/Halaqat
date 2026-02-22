@@ -14,16 +14,9 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { GenericDialog } from "@/components/shared/generic-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { DialogFooter } from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -175,27 +168,24 @@ export function CreateCircleDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      {!isControlled && (
-        <DialogTrigger asChild>
-          {children || (
+    <GenericDialog
+      open={open}
+      onOpenChange={setOpen}
+      title={isEditMode ? t("editDialogTitle") : t("createDialogTitle")}
+      description={isEditMode ? t("editDialogDesc") : t("createDialogDesc")}
+      className="sm:max-w-[425px]"
+      trigger={
+        !isControlled ? (
+          children || (
             <Button>
               <Plus className="h-4 w-4 rtl:ml-2 ltr:mr-2" />
               {t("newCircleBtn")}
             </Button>
-          )}
-        </DialogTrigger>
-      )}
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>
-            {isEditMode ? t("editDialogTitle") : t("createDialogTitle")}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditMode ? t("editDialogDesc") : t("createDialogDesc")}
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
+          )
+        ) : undefined
+      }
+    >
+      <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {/* Circle Name */}
             <FormField
@@ -333,7 +323,6 @@ export function CreateCircleDialog({
             </DialogFooter>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+    </GenericDialog>
   );
 }

@@ -63,6 +63,8 @@ export class DailyChallengeController {
   }
 
   @Get("submissions/weekly")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({
     summary: "Get weekly submissions for a circle (Teacher)",
     description: "Returns all students in circle with their submissions for the specified date range",
@@ -79,6 +81,8 @@ export class DailyChallengeController {
   }
 
   @Get("submission/:id")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
   @ApiOperation({ summary: "Get single submission details (Teacher)" })
   async getSubmission(@Param("id") id: string) {
     return this.challengeService.getSubmissionById(id);

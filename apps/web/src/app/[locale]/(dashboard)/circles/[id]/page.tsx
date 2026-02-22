@@ -13,18 +13,11 @@ import { useTranslations } from "next-intl";
 import { use } from "react";
 
 import { AddStudentToCircleDialog } from "@/components/add-student-to-circle-dialog";
+import { DataTable } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useCircle } from "@/hooks";
 
 interface PageProps {
@@ -168,48 +161,43 @@ export default function CircleDetailsPage({ params }: PageProps) {
           <AddStudentToCircleDialog circleId={id} />
         </CardHeader>
         <CardContent>
-          {circle.students && circle.students.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{tCommon("name")}</TableHead>
-                    <TableHead className="text-right">{tProfile("points")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {circle.students.map((student) => (
-                    <TableRow key={student.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold">
-                            {getInitials(student.name)}
-                          </div>
-                          <Link
-                            href={`/students/${student.id}`}
-                            className="font-medium hover:text-primary hover:underline"
-                          >
-                            {student.name}
-                          </Link>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="secondary" className="font-mono">
-                          {student.totalPoints || 0} pts
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="py-8 text-center text-muted-foreground">
-              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>{t("noStudentsInCircle")}</p>
-              <p className="text-sm">{t("addStudentsPrompt")}</p>
-            </div>
-          )}
+          <DataTable
+            data={circle.students || []}
+            emptyState={{
+              icon: Users,
+              title: t("noStudentsInCircle"),
+              description: t("addStudentsPrompt"),
+            }}
+            columns={[
+              {
+                header: tCommon("name"),
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                cell: (student: any) => (
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold">
+                      {getInitials(student.name)}
+                    </div>
+                    <Link
+                      href={`/students/${student.id}`}
+                      className="font-medium hover:text-primary hover:underline"
+                    >
+                      {student.name}
+                    </Link>
+                  </div>
+                ),
+              },
+              {
+                header: tProfile("points"),
+                className: "text-right",
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                cell: (student: any) => (
+                  <Badge variant="secondary" className="font-mono">
+                    {student.totalPoints || 0} pts
+                  </Badge>
+                ),
+              },
+            ]}
+          />
         </CardContent>
       </Card>
     </div>

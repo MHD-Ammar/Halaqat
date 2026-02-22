@@ -164,7 +164,7 @@ export function StudentCredentialsDialog({
             {/* Actions */}
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => handleClose(false)}>
-                {t("cancel", { ns: "Common" })}
+                {tCommon("cancel")}
               </Button>
               <Button onClick={handleCopy} variant={copied ? "outline" : "default"}>
                 {copied ? (

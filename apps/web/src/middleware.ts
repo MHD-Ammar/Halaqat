@@ -101,27 +101,66 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Logged-in user on auth routes → redirect based on role from token
-  if (isAuthRoute && token) {
-    // Try to decode the token to check role for smart redirect
+  let userRole: string | null = null;
+  if (token) {
     try {
       const tokenParts = token.split(".");
-      const payload = JSON.parse(atob(tokenParts[1] as string));
-      if (payload.role === "STUDENT") {
-        return NextResponse.redirect(
-          new URL(`/${currentLocale}/student-portal`, request.url),
-        );
+      if (tokenParts.length === 3) {
+        const payload = JSON.parse(atob(tokenParts[1] as string));
+        userRole = payload.role;
       }
     } catch {
-      // If decode fails, fall through to default redirect
+      // If decode fails, ignore
+    }
+  }
+
+  // Logged-in user on auth routes → redirect based on role from token
+  if (isAuthRoute && token) {
+    if (userRole === "STUDENT") {
+      return NextResponse.redirect(
+        new URL(`/${currentLocale}/student-portal`, request.url),
+      );
     }
     return NextResponse.redirect(
       new URL(`/${currentLocale}/overview`, request.url),
     );
   }
 
-  // Logged-in user on landing page (root) → redirect to overview
+  // Role-Based Route Hardening for Protected Routes
+  if (isProtectedRoute && token) {
+    if (userRole === "STUDENT") {
+      // Students can only access student-portal
+      if (!pathnameWithoutLocale.startsWith("/student-portal")) {
+        return NextResponse.redirect(
+          new URL(`/${currentLocale}/student-portal`, request.url),
+        );
+      }
+    } else {
+      // Non-students
+      if (pathnameWithoutLocale.startsWith("/student-portal")) {
+        return NextResponse.redirect(
+          new URL(`/${currentLocale}/overview`, request.url),
+        );
+      }
+      
+      // Only Admin and Supervisor can access /admin routes
+      if (pathnameWithoutLocale.startsWith("/admin")) {
+        if (userRole !== "ADMIN" && userRole !== "SUPERVISOR") {
+          return NextResponse.redirect(
+            new URL(`/${currentLocale}/overview`, request.url),
+          );
+        }
+      }
+    }
+  }
+
+  // Logged-in user on landing page (root) → redirect appropriately
   if (pathnameWithoutLocale === "/" && token) {
+    if (userRole === "STUDENT") {
+      return NextResponse.redirect(
+        new URL(`/${currentLocale}/student-portal`, request.url),
+      );
+    }
     return NextResponse.redirect(
       new URL(`/${currentLocale}/overview`, request.url),
     );

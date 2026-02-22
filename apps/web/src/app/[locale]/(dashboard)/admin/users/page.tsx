@@ -13,6 +13,7 @@ import { useState } from "react";
 import { CreateUserDialog } from "@/components/create-user-dialog";
 import { EditUserDialog } from "@/components/edit-user-dialog";
 import { ResetPasswordDialog } from "@/components/reset-password-dialog";
+import { DataTable } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,15 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useUsers, useUpdateUserRole, useDeleteUser, type User } from "@/hooks";
 import { useToast } from "@/hooks/use-toast";
 
@@ -134,105 +126,96 @@ export default function AdminUsersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : users.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>{t("noUsers")}</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t("name")}</TableHead>
-                      <TableHead>{t("email")}</TableHead>
-                      <TableHead>{t("role")}</TableHead>
-                      <TableHead className="w-[280px]">{t("actions")}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user: User) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">
-                          {user.fullName}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {user.email}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getRoleBadgeVariant(user.role)}>
-                            {tRoles(user.role as any)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {/* Role Select */}
-                            <Select
-                              value={user.role}
-                              onValueChange={(value) =>
-                                handleRoleChange(user.id, value)
-                              }
-                              disabled={updateRoleMutation.isPending}
-                            >
-                              <SelectTrigger className="w-[130px]">
-                                <SelectValue placeholder={t("selectRole")} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {ROLES.map((role) => (
-                                  <SelectItem key={role} value={role}>
-                                    {tRoles(role)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-  
-                            {/* Edit Button */}
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => handleEditClick(user)}
-                              title={t("editUser")}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-  
-                            {/* Reset Password Button */}
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setResetPasswordDialogOpen(true);
-                              }}
-                              title={t("resetPassword") || "Reset Password"}
-                            >
-                              <Lock className="h-4 w-4" />
-                            </Button>
+            <DataTable
+              data={users}
+              isLoading={isLoading}
+              emptyState={{
+                icon: Users,
+                title: t("noUsers"),
+              }}
+              columns={[
+                {
+                  header: t("name"),
+                  accessorKey: "fullName",
+                  className: "font-medium",
+                },
+                {
+                  header: t("email"),
+                  accessorKey: "email",
+                  className: "text-muted-foreground",
+                },
+                {
+                  header: t("role"),
+                  cell: (user) => (
+                    <Badge variant={getRoleBadgeVariant(user.role)}>
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      {tRoles(user.role as any)}
+                    </Badge>
+                  ),
+                },
+                {
+                  header: t("actions"),
+                  className: "w-[280px]",
+                  cell: (user) => (
+                    <div className="flex items-center gap-2">
+                      {/* Role Select */}
+                      <Select
+                        value={user.role}
+                        onValueChange={(value) =>
+                          handleRoleChange(user.id, value)
+                        }
+                        disabled={updateRoleMutation.isPending}
+                      >
+                        <SelectTrigger className="w-[130px]">
+                          <SelectValue placeholder={t("selectRole")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ROLES.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {tRoles(role)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
 
-                            {/* Delete Button */}
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => handleDeleteClick(user)}
-                              title={t("deleteUser")}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+                      {/* Edit Button */}
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleEditClick(user)}
+                        title={t("editUser")}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+
+                      {/* Reset Password Button */}
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setResetPasswordDialogOpen(true);
+                        }}
+                        title={t("resetPassword") || "Reset Password"}
+                      >
+                        <Lock className="h-4 w-4" />
+                      </Button>
+
+                      {/* Delete Button */}
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleDeleteClick(user)}
+                        title={t("deleteUser")}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ),
+                },
+              ]}
+            />
           </CardContent>
         </Card>
   
