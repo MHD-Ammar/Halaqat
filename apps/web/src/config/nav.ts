@@ -10,7 +10,6 @@ import {
   Users,
   BookOpen,
   LayoutDashboard,
-  GraduationCap,
   ClipboardCheck,
   UserCog,
   Settings,
@@ -74,13 +73,6 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Users,
     description: "View and manage your students",
     roles: ["TEACHER"],
-  },
-  {
-    titleKey: "studentPortal",
-    href: "/student-portal",
-    icon: GraduationCap,
-    description: "View your progress and QR code",
-    roles: ["STUDENT"],
   },
   {
     titleKey: "exams",

@@ -7,17 +7,15 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
+import { Student } from "./entities/student.entity";
 import { StudentsController } from "./students.controller";
 import { StudentsService } from "./students.service";
-import { Student } from "./entities/student.entity";
 import { CirclesModule } from "../circles/circles.module";
-import { UsersModule } from "../users/users.module";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Student]),
     CirclesModule, // For ownership validation
-    UsersModule, // For credentials generation
   ],
   controllers: [StudentsController],
   providers: [StudentsService],

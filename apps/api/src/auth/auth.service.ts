@@ -2,23 +2,31 @@
  * Auth Service
  *
  * Handles authentication logic including credential validation,
- * JWT generation, and registration with invite code validation.
+ * JWT generation, registration with invite code validation,
+ * and student authentication.
  */
 
-import { Injectable, BadRequestException } from "@nestjs/common";
+import { UserRole } from "@halaqat/types";
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 
-import { UsersService } from "../users/users.service";
-import { MosquesService } from "../mosques/mosques.service";
-import { User } from "../users/entities/user.entity";
 import { JwtPayload } from "./interfaces/jwt-payload.interface";
+import { MosquesService } from "../mosques/mosques.service";
+import { StudentsService } from "../students/students.service";
+import { User } from "../users/entities/user.entity";
+import { UsersService } from "../users/users.service";
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly mosquesService: MosquesService,
+    private readonly studentsService: StudentsService,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -59,6 +67,66 @@ export class AuthService {
 
     return {
       accessToken: this.jwtService.sign(payload),
+    };
+  }
+
+  /**
+   * Authenticate a student by username and password.
+   * Returns JWT and basic student info (XP, level, streak).
+   */
+  async studentLogin(
+    username: string,
+    password: string,
+  ): Promise<{
+    accessToken: string;
+    student: {
+      id: string;
+      name: string;
+      username: string;
+      totalXp: number;
+      currentLevel: number;
+      currentStreak: number;
+    };
+  }> {
+    // Find student by username, including passwordHash (select: false)
+    const student = await this.studentsService
+      .getRepository()
+      .createQueryBuilder("student")
+      .addSelect("student.passwordHash")
+      .where("student.username = :username", { username })
+      .getOne();
+
+    if (!student || !student.passwordHash) {
+      throw new UnauthorizedException("Invalid username or password");
+    }
+
+    // Verify password
+    const isValid = await bcrypt.compare(password, student.passwordHash);
+    if (!isValid) {
+      throw new UnauthorizedException("Invalid username or password");
+    }
+
+    // Update lastLoginAt
+    await this.studentsService
+      .getRepository()
+      .update(student.id, { lastLoginAt: new Date() });
+
+    // Sign JWT
+    const payload: JwtPayload = {
+      sub: student.id,
+      role: UserRole.STUDENT,
+    };
+
+    return {
+      accessToken: this.jwtService.sign(payload),
+      student: {
+        id: student.id,
+        name: student.name,
+        username: student.username ?? username,
+        totalXp: student.totalXp,
+        currentLevel: student.currentLevel,
+        currentStreak: student.currentStreak,
+      },
     };
   }
 

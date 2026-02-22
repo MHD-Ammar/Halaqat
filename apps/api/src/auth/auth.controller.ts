@@ -4,37 +4,38 @@
  * Handles authentication endpoints: register, login, profile, and admin-only test.
  */
 
+import { UserRole } from "@halaqat/types";
 import {
-  Controller,
-  Post,
-  Get,
-  Patch,
-  Body,
-  UseGuards,
-  UnauthorizedException,
   BadRequestException,
+  Body,
+  Controller,
+  Get,
   HttpCode,
   HttpStatus,
+  Patch,
+  Post,
+  UnauthorizedException,
+  UseGuards,
 } from "@nestjs/common";
 import {
-  ApiTags,
+  ApiBearerAuth,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
+  ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@halaqat/types";
 
 import { AuthService } from "./auth.service";
-import { RegisterDto } from "./dto/register.dto";
+import { CurrentUser } from "./decorators/current-user.decorator";
+import { Roles } from "./decorators/roles.decorator";
 import { LoginDto } from "./dto/login.dto";
+import { RegisterDto } from "./dto/register.dto";
+import { StudentLoginDto } from "./dto/student-login.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { RolesGuard } from "./guards/roles.guard";
-import { Roles } from "./decorators/roles.decorator";
-import { CurrentUser } from "./decorators/current-user.decorator";
-
-import { UsersService } from "../users/users.service";
-import { UpdateProfileDto } from "../users/dto/update-profile.dto";
+import { StudentsService } from "../students/students.service";
 import { ChangePasswordDto } from "../users/dto/change-password.dto";
+import { UpdateProfileDto } from "../users/dto/update-profile.dto";
+import { UsersService } from "../users/users.service";
 
 @ApiTags("Auth")
 @Controller("auth")
@@ -42,6 +43,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
+    private readonly studentsService: StudentsService,
   ) {}
 
   /**
@@ -100,6 +102,25 @@ export class AuthController {
   }
 
   /**
+   * Student login with username and password
+   * POST /auth/student/login
+   */
+  @Post("student/login")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "Student login",
+    description: "Authenticate a student with username and password",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Login successful, returns JWT token and student info",
+  })
+  @ApiResponse({ status: 401, description: "Invalid credentials" })
+  async studentLogin(@Body() dto: StudentLoginDto) {
+    return this.authService.studentLogin(dto.username, dto.password);
+  }
+
+  /**
    * Get current user profile (protected)
    * GET /auth/profile
    */
@@ -116,6 +137,25 @@ export class AuthController {
     description: "Unauthorized - invalid or missing token",
   })
   async getProfile(@CurrentUser() currentUser: any) {
+    // Student profile — return gamification data directly
+    if (currentUser.role === UserRole.STUDENT) {
+      const student = await this.studentsService.findOne(currentUser.id);
+      return {
+        message: "Profile retrieved successfully",
+        user: {
+          id: student.id,
+          name: student.name,
+          role: UserRole.STUDENT,
+          username: student.username,
+          totalXp: student.totalXp,
+          currentLevel: student.currentLevel,
+          currentStreak: student.currentStreak,
+          maxStreak: student.maxStreak,
+          mosqueId: student.mosqueId,
+        },
+      };
+    }
+
     const user = await this.usersService.findProfile(currentUser.id);
     return {
       message: "Profile retrieved successfully",

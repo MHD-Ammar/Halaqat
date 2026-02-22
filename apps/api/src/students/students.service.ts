@@ -1,12 +1,11 @@
-import { UserRole } from "@halaqat/types";
 import {
   Injectable,
   NotFoundException,
   ForbiddenException,
-  ConflictException,
   BadRequestException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import * as bcrypt from "bcrypt";
 import { Repository, ILike } from "typeorm";
 
 import { CreateStudentDto } from "./dto/create-student.dto";
@@ -14,7 +13,8 @@ import { StudentQueryDto } from "./dto/student-query.dto";
 import { UpdateStudentDto } from "./dto/update-student.dto";
 import { Student } from "./entities/student.entity";
 import { CirclesService } from "../circles/circles.service";
-import { UsersService } from "../users/users.service";
+
+const SALT_ROUNDS = 10;
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -29,8 +29,24 @@ export interface PaginatedResult<T> {
 export interface GeneratedCredentials {
   username: string;
   password: string;
-  userId: string;
 }
+
+/**
+ * Simple Arabic-to-English transliteration map for common first names.
+ * Only used for username prefix generation — not a full transliteration.
+ */
+const ARABIC_TO_LATIN: Record<string, string> = {
+  'ا': 'a', 'أ': 'a', 'إ': 'e', 'آ': 'a',
+  'ب': 'b', 'ت': 't', 'ث': 'th',
+  'ج': 'j', 'ح': 'h', 'خ': 'kh',
+  'د': 'd', 'ذ': 'th', 'ر': 'r', 'ز': 'z',
+  'س': 's', 'ش': 'sh', 'ص': 's', 'ض': 'd',
+  'ط': 't', 'ظ': 'z', 'ع': 'a', 'غ': 'gh',
+  'ف': 'f', 'ق': 'q', 'ك': 'k', 'ل': 'l',
+  'م': 'm', 'ن': 'n', 'ه': 'h', 'و': 'w',
+  'ي': 'y', 'ى': 'a', 'ة': 'h', 'ء': 'a',
+  'ئ': 'e', 'ؤ': 'o',
+};
 
 @Injectable()
 export class StudentsService {
@@ -38,26 +54,122 @@ export class StudentsService {
     @InjectRepository(Student)
     private studentsRepository: Repository<Student>,
     private circlesService: CirclesService,
-    private usersService: UsersService,
   ) {}
 
   /**
-   * Create a new student with mosqueId (Admin flow)
+   * Expose the repository for query builder access (e.g. auth service)
+   */
+  getRepository(): Repository<Student> {
+    return this.studentsRepository;
+  }
+
+  // ── Credential Generation Helpers ──────────────────────────────
+
+  /**
+   * Transliterate an Arabic string to a simple Latin equivalent.
+   * Non-Arabic characters pass through unchanged.
+   */
+  private transliterate(text: string): string {
+    return text
+      .split("")
+      .map((char) => ARABIC_TO_LATIN[char] ?? char)
+      .join("");
+  }
+
+  /**
+   * Generate a username prefix from a student's name.
+   * Takes the first word, transliterates if Arabic, lowercases, strips non-alphanumeric.
+   * Falls back to "stu" if the result is empty.
+   */
+  private generateUsernamePrefix(name: string): string {
+    const firstName = name.trim().split(/\s+/)[0] || "stu";
+    const transliterated = this.transliterate(firstName).toLowerCase();
+    const cleaned = transliterated.replace(/[^a-z0-9]/g, "");
+    return cleaned || "stu";
+  }
+
+  /**
+   * Generate a random 4-digit number string (0000–9999).
+   */
+  private randomDigits(length: number): string {
+    let result = "";
+    for (let i = 0; i < length; i++) {
+      result += Math.floor(Math.random() * 10).toString();
+    }
+    return result;
+  }
+
+  /**
+   * Generate a 6-character alphanumeric password (uppercase + digits).
+   * Characters I, O, 0, 1 are excluded to avoid confusion for kids.
+   */
+  private generatePassword(): string {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let password = "";
+    for (let i = 0; i < 6; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  }
+
+  /**
+   * Generate a unique username + raw password for a student.
+   * Retries up to 10 times if the generated username already exists.
+   */
+  private async generateStudentCredentials(
+    name: string,
+  ): Promise<{ username: string; rawPassword: string }> {
+    const prefix = this.generateUsernamePrefix(name);
+    const rawPassword = this.generatePassword();
+
+    let attempts = 0;
+    while (attempts < 10) {
+      const username = `${prefix}${this.randomDigits(4)}`;
+      const existing = await this.studentsRepository.findOne({
+        where: { username },
+        select: ["id"],
+      });
+      if (!existing) {
+        return { username, rawPassword };
+      }
+      attempts++;
+    }
+
+    // Extremely unlikely fallback: use prefix + 6 digits
+    const fallbackUsername = `${prefix}${this.randomDigits(6)}`;
+    return { username: fallbackUsername, rawPassword };
+  }
+
+  // ── CRUD Operations ────────────────────────────────────────────
+
+  /**
+   * Create a new student with auto-generated credentials (Admin flow)
    */
   async create(
     createStudentDto: CreateStudentDto,
     mosqueId?: string | null,
-  ): Promise<Student> {
+  ): Promise<Student & { rawPassword: string }> {
     // Verify circle exists
     await this.circlesService.findOne(createStudentDto.circleId);
+
+    // Generate credentials
+    const { username, rawPassword } = await this.generateStudentCredentials(
+      createStudentDto.name,
+    );
+    const passwordHash = await bcrypt.hash(rawPassword, SALT_ROUNDS);
 
     const student = new Student();
     Object.assign(student, createStudentDto);
     if (mosqueId) {
       student.mosqueId = mosqueId;
     }
+    student.username = username;
+    student.passwordHash = passwordHash;
 
-    return this.studentsRepository.save(student);
+    const saved = await this.studentsRepository.save(student);
+
+    // Return raw password once (not persisted in plaintext)
+    return { ...saved, rawPassword };
   }
 
   /**
@@ -67,7 +179,7 @@ export class StudentsService {
     createStudentDto: CreateStudentDto,
     teacherId: string,
     mosqueId?: string | null,
-  ): Promise<Student> {
+  ): Promise<Student & { rawPassword: string }> {
     // Verify teacher owns the circle
     const isOwner = await this.circlesService.validateCircleOwnership(
       createStudentDto.circleId,
@@ -85,36 +197,42 @@ export class StudentsService {
 
   /**
    * Bulk create students from an array of names (Admin flow)
+   * Returns each student with their one-time raw password.
    */
   async bulkCreate(
     circleId: string,
     names: string[],
     mosqueId?: string | null,
-  ): Promise<{ created: Student[]; count: number }> {
+  ): Promise<{ created: (Student & { rawPassword: string })[]; count: number }> {
     // Verify circle exists and get mosqueId
     const circle = await this.circlesService.findOne(circleId);
     const effectiveMosqueId = mosqueId || circle.mosqueId;
 
-    // Create students in parallel
-    const students: Student[] = [];
+    const results: (Student & { rawPassword: string })[] = [];
+
     for (const name of names) {
       const trimmedName = name.trim();
       if (!trimmedName) continue; // Skip empty names
+
+      // Generate credentials for each student
+      const { username, rawPassword } =
+        await this.generateStudentCredentials(trimmedName);
+      const passwordHash = await bcrypt.hash(rawPassword, SALT_ROUNDS);
 
       const student = new Student();
       student.name = trimmedName;
       student.circleId = circleId;
       student.mosqueId = effectiveMosqueId;
+      student.username = username;
+      student.passwordHash = passwordHash;
 
-      students.push(student);
+      const saved = await this.studentsRepository.save(student);
+      results.push({ ...saved, rawPassword });
     }
 
-    // Save all students
-    const created = await this.studentsRepository.save(students);
-
     return {
-      created,
-      count: created.length,
+      created: results,
+      count: results.length,
     };
   }
 
@@ -126,7 +244,7 @@ export class StudentsService {
     names: string[],
     teacherId: string,
     mosqueId?: string | null,
-  ): Promise<{ created: Student[]; count: number }> {
+  ): Promise<{ created: (Student & { rawPassword: string })[]; count: number }> {
     // Verify teacher owns the circle
     const isOwner = await this.circlesService.validateCircleOwnership(
       circleId,
@@ -404,53 +522,27 @@ export class StudentsService {
   }
 
   /**
-   * Generate login credentials for a student
-   * Creates a User account linked to the student for portal access
+   * Generate/reset login credentials for a student.
+   * Hashes password directly on the Student entity.
+   * Returns the raw credentials to the teacher (one-time visibility).
    */
   async generateCredentials(studentId: string): Promise<GeneratedCredentials> {
     const student = await this.findOne(studentId);
 
-    // Check if student already has credentials
-    if (student.userId) {
-      throw new ConflictException("Student already has login credentials");
-    }
+    // Generate new credentials
+    const { username, rawPassword } =
+      await this.generateStudentCredentials(student.name);
+    const passwordHash = await bcrypt.hash(rawPassword, SALT_ROUNDS);
 
-    // Generate unique username: student_{first8CharsOfId}
-    const username = `student_${studentId.slice(0, 8)}`;
-
-    // Generate random 8-character password
-    const password = this.generateRandomPassword(8);
-
-    // Create user account with STUDENT role
-    const user = await this.usersService.create({
-      email: `${username}@student.halaqat.local`, // Internal email for system use
-      password,
-      fullName: student.name,
-      phoneNumber: student.phone || "",
-      role: UserRole.STUDENT,
-    });
-
-    // Link user to student
-    student.userId = user.id;
+    // Update student with new credentials
     student.username = username;
+    student.passwordHash = passwordHash;
     await this.studentsRepository.save(student);
 
     return {
       username,
-      password,
-      userId: user.id,
+      password: rawPassword,
     };
   }
-
-  /**
-   * Generate a random password with letters and numbers
-   */
-  private generateRandomPassword(length: number): string {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-    let password = "";
-    for (let i = 0; i < length; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return password;
-  }
 }
+

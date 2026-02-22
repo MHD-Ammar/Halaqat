@@ -48,10 +48,11 @@ export function useAuth() {
     // Clear all cached queries
     queryClient.clear();
 
-    // Redirect to login
-    router.push("/login");
+    // Redirect to appropriate login page
+    const isStudentUser = profile?.role === "STUDENT";
+    router.push(isStudentUser ? "/student-login" : "/login");
     router.refresh();
-  }, [queryClient, router]);
+  }, [queryClient, router, profile?.role]);
 
   /**
    * Check if user has a specific role

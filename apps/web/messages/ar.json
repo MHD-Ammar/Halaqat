@@ -261,7 +261,17 @@
     "passwordResetSuccess": "تم إعادة تعيين كلمة المرور بنجاح",
     "noCredentialsDesc": "هذا الطالب ليس لديه بيانات دخول حتى الآن.",
     "generateCredentials": "توليد بيانات دخول",
-    "credentialsGenerated": "تم توليد البيانات بنجاح"
+    "credentialsGenerated": "تم توليد البيانات بنجاح",
+    "portalAccess": "بوابة الطالب",
+    "credentialsDialogTitle": "بيانات دخول الطالب",
+    "credentialsDialogDesc": "بيانات الدخول للطالب {name}. يرجى حفظها — كلمة المرور ستظهر مرة واحدة فقط.",
+    "credentialsWarning": "احفظ كلمة المرور الآن! لن تظهر مرة أخرى.",
+    "copyCredentials": "نسخ البيانات",
+    "copied": "تم النسخ!",
+    "noPortalAccess": "بدون وصول للبوابة",
+    "resetCredentials": "إعادة تعيين البيانات",
+    "resetCredentialsDesc": "سيتم توليد اسم مستخدم وكلمة مرور جديدة للطالب {name}. البيانات القديمة ستتوقف عن العمل.",
+    "generating": "جاري التوليد..."
   },
   "StudentProfile": {
     "title": "ملف الطالب",
@@ -312,6 +322,23 @@
     "saveChanges": "حفظ التغييرات",
     "challengesDashboard": "لوحة التحديات"
   },
+  "StudentLogin": {
+    "title": "بوابة الطالب",
+    "subtitle": "سجّل دخولك لتبدأ مغامرتك!",
+    "username": "اسم المستخدم",
+    "password": "كلمة المرور",
+    "usernamePlaceholder": "أدخل اسم المستخدم",
+    "passwordPlaceholder": "أدخل كلمة المرور",
+    "usernameRequired": "اسم المستخدم مطلوب",
+    "passwordMinLength": "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
+    "signIn": "ادخل إلى بوابتك 🚀",
+    "signingIn": "جاري الدخول...",
+    "loginSuccess": "مرحباً بعودتك!",
+    "loginSuccessDesc": "استعد لمغامرتك!",
+    "loginFailed": "فشل تسجيل الدخول",
+    "invalidCredentials": "اسم المستخدم أو كلمة المرور غير صحيحة",
+    "helpText": "اطلب اسم المستخدم وكلمة المرور من معلمك"
+  },
   "StudentPortal": {
     "title": "بوابتي",
     "subtitle": "عرض تقدمك ومعلوماتك",
@@ -322,7 +349,17 @@
     "totalPoints": "إجمالي النقاط",
     "circle": "الحلقة",
     "scanQrDescription": "اعرض رمز QR لتسجيل الحضور السريع",
-    "noData": "لا توجد بيانات متاحة بعد"
+    "noData": "لا توجد بيانات متاحة بعد",
+    "welcomeHero": "أهلاً بك يا بطل في رحلتك! 🚀",
+    "welcomeSubtitle": "واصل التقدم واصعد إلى مستويات جديدة!",
+    "streak": "السلسلة",
+    "streakDays": "{count} أيام",
+    "totalXp": "إجمالي XP",
+    "level": "المستوى",
+    "levelBadge": "مستوى {level}",
+    "logout": "تسجيل الخروج",
+    "xpProgress": "تقدم XP",
+    "keepItUp": "استمر في العمل الرائع!"
   },
   "Exams": {
     "title": "الاختبارات",

@@ -41,9 +41,11 @@ export {
   useStudentsByCircle,
   useCreateStudent,
   useDeleteStudent,
+  useGenerateCredentials,
   type Student,
   type CreateStudentDto,
   type PaginatedStudents,
+  type StudentCredentials,
 } from "./use-students";
 export { useAuth, type AuthUser, type UserRole } from "./use-auth";
 export { useTeachers, type Teacher } from "./use-teachers";

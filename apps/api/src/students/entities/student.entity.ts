@@ -3,24 +3,26 @@
  *
  * Represents a student in a study circle (Halqa).
  * Students belong to one circle and can be quickly added with minimal info.
+ * Auth credentials (username/passwordHash) are stored directly on this entity
+ * rather than via a separate User account, since students are minors.
  */
 
 import {
   Entity,
   Column,
   ManyToOne,
-  OneToOne,
   JoinColumn,
   Index,
 } from "typeorm";
 
-import { BaseEntity } from "../../common/entities/base.entity";
 import { Circle } from "../../circles/entities/circle.entity";
-import { User } from "../../users/entities/user.entity";
+import { BaseEntity } from "../../common/entities/base.entity";
 import { Mosque } from "../../mosques/entities/mosque.entity";
 
 @Entity("student")
 export class Student extends BaseEntity {
+  // ── Personal Info ──────────────────────────────────────────────
+
   /**
    * Student's full name (required)
    */
@@ -63,6 +65,8 @@ export class Student extends BaseEntity {
   @Column({ name: "guardian_phone", type: "varchar", nullable: true })
   guardianPhone!: string | null;
 
+  // ── Circle Relationship ────────────────────────────────────────
+
   /**
    * The circle this student belongs to
    * Relationship: Many Students -> One Circle
@@ -82,33 +86,62 @@ export class Student extends BaseEntity {
   @Index()
   circleId!: string | null;
 
+  // ── Auth Credentials ───────────────────────────────────────────
+
   /**
-   * Total accumulated points for gamification
+   * Username for student login (auto-generated)
+   * Format: first_name + 4-digit number (e.g., ahmad8492)
+   */
+  @Column({ type: "varchar", nullable: true, unique: true })
+  @Index()
+  username!: string | null;
+
+  /**
+   * Hashed password for student portal login
+   * Hidden by default for security (select: false)
+   */
+  @Column({ name: "password_hash", type: "varchar", nullable: true, select: false })
+  passwordHash!: string | null;
+
+  /**
+   * Timestamp of the student's last login
+   */
+  @Column({ name: "last_login_at", type: "timestamp", nullable: true })
+  lastLoginAt!: Date | null;
+
+  // ── Gamification ───────────────────────────────────────────────
+
+  /**
+   * Total accumulated points (legacy/manual rewards)
    */
   @Column({ name: "total_points", type: "int", default: 0 })
   totalPoints!: number;
 
   /**
-   * Linked user account for portal access (optional)
-   * Relationship: One Student -> One User
+   * Lifetime experience points for the gamification engine
    */
-  @OneToOne(() => User, { nullable: true, onDelete: "SET NULL" })
-  @JoinColumn({ name: "user_id" })
-  user!: User | null;
+  @Column({ name: "total_xp", type: "int", default: 0 })
+  totalXp!: number;
 
   /**
-   * Foreign key for the linked user account
+   * Current level (calculated based on XP thresholds)
    */
-  @Column({ name: "user_id", type: "uuid", nullable: true })
-  @Index()
-  userId!: string | null;
+  @Column({ name: "current_level", type: "int", default: 1 })
+  currentLevel!: number;
 
   /**
-   * Username for student login (auto-generated)
+   * Current consecutive daily login/submission streak
    */
-  @Column({ type: "varchar", nullable: true, unique: true })
-  @Index()
-  username!: string | null;
+  @Column({ name: "current_streak", type: "int", default: 0 })
+  currentStreak!: number;
+
+  /**
+   * All-time best streak record
+   */
+  @Column({ name: "max_streak", type: "int", default: 0 })
+  maxStreak!: number;
+
+  // ── Multi-tenancy ──────────────────────────────────────────────
 
   /**
    * The mosque this student belongs to (Multi-tenancy)

@@ -30,7 +30,7 @@ const protectedRoutes = [
 ];
 
 // Auth routes (login/register)
-const authRoutes = ["/login", "/register"];
+const authRoutes = ["/login", "/register", "/student-login"];
 
 // Cookie name for auth token
 const TOKEN_COOKIE_NAME = "token";
@@ -101,8 +101,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Logged-in user on auth routes → redirect to overview
+  // Logged-in user on auth routes → redirect based on role from token
   if (isAuthRoute && token) {
+    // Try to decode the token to check role for smart redirect
+    try {
+      const tokenParts = token.split(".");
+      const payload = JSON.parse(atob(tokenParts[1] as string));
+      if (payload.role === "STUDENT") {
+        return NextResponse.redirect(
+          new URL(`/${currentLocale}/student-portal`, request.url),
+        );
+      }
+    } catch {
+      // If decode fails, fall through to default redirect
+    }
     return NextResponse.redirect(
       new URL(`/${currentLocale}/overview`, request.url),
     );

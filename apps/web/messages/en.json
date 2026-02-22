@@ -260,7 +260,17 @@
     "passwordResetSuccess": "Password reset successfully",
     "noCredentialsDesc": "This student does not have login credentials yet.",
     "generateCredentials": "Generate Credentials",
-    "credentialsGenerated": "Credentials generated"
+    "credentialsGenerated": "Credentials generated",
+    "portalAccess": "Portal Access",
+    "credentialsDialogTitle": "Student Login Credentials",
+    "credentialsDialogDesc": "These are the login credentials for {name}. Please save them — the password will only be shown once.",
+    "credentialsWarning": "Save this password now! It will not be shown again.",
+    "copyCredentials": "Copy Credentials",
+    "copied": "Copied!",
+    "noPortalAccess": "No portal access",
+    "resetCredentials": "Reset Credentials",
+    "resetCredentialsDesc": "This will generate a new username and password for {name}. The old credentials will stop working.",
+    "generating": "Generating..."
   },
   "StudentProfile": {
     "title": "Student Profile",
@@ -311,6 +321,23 @@
     "saveChanges": "Save Changes",
     "challengesDashboard": "Challenges Dashboard"
   },
+  "StudentLogin": {
+    "title": "Student Portal",
+    "subtitle": "Login to start your adventure!",
+    "username": "Username",
+    "password": "Password",
+    "usernamePlaceholder": "Enter your username",
+    "passwordPlaceholder": "Enter your password",
+    "usernameRequired": "Username is required",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "signIn": "🚀 Enter Your Portal",
+    "signingIn": "Signing in...",
+    "loginSuccess": "Welcome back!",
+    "loginSuccessDesc": "Get ready for your adventure!",
+    "loginFailed": "Login failed",
+    "invalidCredentials": "Invalid username or password",
+    "helpText": "Ask your teacher for your username and password"
+  },
   "StudentPortal": {
     "title": "My Portal",
     "subtitle": "View your progress and information",
@@ -321,7 +348,17 @@
     "totalPoints": "Total Points",
     "circle": "Circle",
     "scanQrDescription": "Show this QR code for quick attendance",
-    "noData": "No data available yet"
+    "noData": "No data available yet",
+    "welcomeHero": "Welcome to your adventure, hero! 🚀",
+    "welcomeSubtitle": "Keep going and reach new levels!",
+    "streak": "Streak",
+    "streakDays": "{count} Days",
+    "totalXp": "Total XP",
+    "level": "Level",
+    "levelBadge": "Level {level}",
+    "logout": "Logout",
+    "xpProgress": "XP Progress",
+    "keepItUp": "Keep up the great work!"
   },
   "Exams": {
     "title": "Exams",

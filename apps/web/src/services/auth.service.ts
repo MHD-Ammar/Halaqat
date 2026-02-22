@@ -11,6 +11,11 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface StudentLoginCredentials {
+  username: string;
+  password: string;
+}
+
 export interface RegisterCredentials {
   email: string;
   password: string;
@@ -68,9 +73,23 @@ export async function getProfile(): Promise<{
   return response.data;
 }
 
+/**
+ * Login student with username and password
+ */
+export async function studentLogin(
+  credentials: StudentLoginCredentials,
+): Promise<AuthResponse & { student: { id: string; name: string; username: string; totalXp: number; currentLevel: number; currentStreak: number } }> {
+  const response = await api.post<AuthResponse & { student: { id: string; name: string; username: string; totalXp: number; currentLevel: number; currentStreak: number } }>(
+    "/auth/student/login",
+    credentials,
+  );
+  return response.data;
+}
+
 export const authService = {
   login,
   register,
+  studentLogin,
   getProfile,
 };
 

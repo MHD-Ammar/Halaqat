@@ -19,12 +19,14 @@ import {
   ChevronRight,
   Pencil,
   Trash2,
+  Key,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 
 import { CreateStudentDialog } from "@/components/create-student-dialog";
 import { EditStudentDialog } from "@/components/edit-student-dialog";
+import { StudentCredentialsDialog } from "@/components/student-credentials-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,6 +72,7 @@ export default function MyStudentsPage() {
   // Dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   const t = useTranslations("Students");
@@ -102,6 +105,11 @@ export default function MyStudentsPage() {
   const handleDeleteClick = (student: Student) => {
     setSelectedStudent(student);
     setDeleteDialogOpen(true);
+  };
+
+  const handleCredentialsClick = (student: Student) => {
+    setSelectedStudent(student);
+    setCredentialsDialogOpen(true);
   };
 
   // Loading state
@@ -200,6 +208,14 @@ export default function MyStudentsPage() {
                     </div>
                   </div>
 
+                  {/* Portal Access Badge */}
+                  {student.username ? (
+                    <Badge variant="outline" className="font-mono text-xs gap-1">
+                      <Key className="h-3 w-3" />
+                      {student.username}
+                    </Badge>
+                  ) : null}
+
                   {/* Points Badge */}
                   {student.totalPoints !== undefined && (
                     <Badge variant="secondary" className="font-mono">
@@ -209,6 +225,14 @@ export default function MyStudentsPage() {
 
                   {/* Action Buttons */}
                   <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleCredentialsClick(student)}
+                      title={student.username ? t("resetCredentials") : t("generateCredentials")}
+                    >
+                      <Key className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -294,6 +318,13 @@ export default function MyStudentsPage() {
         isPending={deleteStudentMutation.isPending}
         onConfirm={handleConfirmDelete}
         confirmLabel={t("deleteStudent")}
+      />
+
+      {/* Student Credentials Dialog */}
+      <StudentCredentialsDialog
+        student={selectedStudent}
+        open={credentialsDialogOpen}
+        onOpenChange={setCredentialsDialogOpen}
       />
     </div>
   );

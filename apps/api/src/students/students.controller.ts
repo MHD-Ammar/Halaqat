@@ -276,16 +276,16 @@ export class StudentsController {
   }
 
   /**
-   * Generate login credentials for a student
-   * POST /api/students/:id/credentials
+   * Generate/reset login credentials for a student
+   * POST /api/students/:id/generate-credentials
    */
-  @Post(":id/credentials")
+  @Post(":id/generate-credentials")
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.TEACHER)
   @ApiOperation({
     summary: "Generate student credentials",
     description:
-      "Create login credentials for a student to access their portal (Admin/Teacher only)",
+      "Generate or reset login credentials for a student (Admin/Teacher only). Returns the raw password once.",
   })
   @ApiParam({ name: "id", description: "Student UUID" })
   @ApiResponse({
@@ -293,14 +293,12 @@ export class StudentsController {
     description: "Credentials generated successfully",
     schema: {
       properties: {
-        username: { type: "string", example: "student_abc12345" },
-        password: { type: "string", example: "Xk7mP2nQ" },
-        userId: { type: "string", format: "uuid" },
+        username: { type: "string", example: "ahmad8492" },
+        password: { type: "string", example: "K9M2XA" },
       },
     },
   })
   @ApiResponse({ status: 404, description: "Student not found" })
-  @ApiResponse({ status: 409, description: "Student already has credentials" })
   @ApiResponse({
     status: 403,
     description: "Forbidden - requires ADMIN or TEACHER role",

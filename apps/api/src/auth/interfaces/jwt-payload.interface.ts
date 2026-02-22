@@ -8,8 +8,8 @@ export interface JwtPayload {
   /** User ID (subject) */
   sub: string;
   
-  /** User email */
-  email: string;
+  /** User email (absent for students) */
+  email?: string;
   
   /** User role */
   role: UserRole;

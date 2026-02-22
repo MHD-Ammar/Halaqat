@@ -25,7 +25,10 @@ export interface Student {
     name: string;
   };
   totalPoints?: number;
-  userId?: string;
+  totalXp?: number;
+  currentLevel?: number;
+  currentStreak?: number;
+  maxStreak?: number;
   username?: string;
   createdAt: string;
 }
@@ -192,8 +195,7 @@ export function useDeleteStudent() {
 
 export interface StudentCredentials {
   username: string;
-  password?: string;
-  userId: string;
+  password: string;
 }
 
 /**
@@ -204,7 +206,7 @@ export function useGenerateCredentials() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.post<StudentCredentials>(`/students/${id}/credentials`);
+      const response = await api.post<StudentCredentials>(`/students/${id}/generate-credentials`);
       return response.data;
     },
     onSuccess: () => {
