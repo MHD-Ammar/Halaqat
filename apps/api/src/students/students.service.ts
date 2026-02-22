@@ -208,7 +208,8 @@ export class StudentsService {
     const circle = await this.circlesService.findOne(circleId);
     const effectiveMosqueId = mosqueId || circle.mosqueId;
 
-    const results: (Student & { rawPassword: string })[] = [];
+    const studentsToSave: Student[] = [];
+    const passwordsToReturn: string[] = [];
 
     for (const name of names) {
       const trimmedName = name.trim();
@@ -226,9 +227,16 @@ export class StudentsService {
       student.username = username;
       student.passwordHash = passwordHash;
 
-      const saved = await this.studentsRepository.save(student);
-      results.push({ ...saved, rawPassword });
+      studentsToSave.push(student);
+      passwordsToReturn.push(rawPassword);
     }
+
+    const savedStudents = await this.studentsRepository.save(studentsToSave);
+
+    const results = savedStudents.map((saved, index) => ({
+      ...saved,
+      rawPassword: passwordsToReturn[index] as string,
+    }));
 
     return {
       created: results,

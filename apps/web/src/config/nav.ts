@@ -14,6 +14,7 @@ import {
   UserCog,
   Settings,
   Trophy,
+  Megaphone,
   type LucideIcon,
 } from "lucide-react";
 
@@ -100,6 +101,13 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/admin/challenges",
     icon: Trophy,
     description: "Daily challenges dashboard",
+    roles: ["ADMIN"],
+  },
+  {
+    titleKey: "campaigns",
+    href: "/admin/campaigns",
+    icon: Megaphone,
+    description: "Manage campaigns and dynamic forms",
     roles: ["ADMIN"],
   },
 ];

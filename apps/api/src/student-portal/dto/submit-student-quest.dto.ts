@@ -15,14 +15,6 @@ export class SubmitStudentQuestDto {
   submissionData!: Record<string, unknown>;
 
   /**
-   * Campaign key (defaults to 'ramadan')
-   * e.g., 'ramadan', 'summer_2025', etc.
-   */
-  @IsString()
-  @IsOptional()
-  campaignKey?: string;
-
-  /**
    * Local date string (YYYY-MM-DD) for handling timezones
    * If not provided, server uses current UTC date
    */

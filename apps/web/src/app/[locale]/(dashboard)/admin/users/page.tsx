@@ -56,7 +56,8 @@ function getRoleBadgeVariant(
 export default function AdminUsersPage() {
   const t = useTranslations("Admin");
   const tRoles = useTranslations("Roles");
-  const { data: users = [], isLoading } = useUsers();
+  const { data, isLoading } = useUsers();
+  const users = data?.data || [];
   const updateRoleMutation = useUpdateUserRole();
   const { toast } = useToast();
 

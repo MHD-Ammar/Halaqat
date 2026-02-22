@@ -6,7 +6,6 @@
 
 import { UserRole } from "@halaqat/types";
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
@@ -211,24 +210,14 @@ export class AuthController {
     @CurrentUser() currentUser: any,
     @Body() dto: ChangePasswordDto,
   ) {
-    try {
-      await this.usersService.changePassword(
-        currentUser.id,
-        dto.currentPassword,
-        dto.newPassword,
-      );
-      return {
-        message: "Password changed successfully",
-      };
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message === "Current password is incorrect"
-      ) {
-        throw new BadRequestException("Current password is incorrect");
-      }
-      throw error;
-    }
+    await this.usersService.changePassword(
+      currentUser.id,
+      dto.currentPassword,
+      dto.newPassword,
+    );
+    return {
+      message: "Password changed successfully",
+    };
   }
 
   /**

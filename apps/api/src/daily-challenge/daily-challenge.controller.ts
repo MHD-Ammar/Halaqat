@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
   Param,
   Query,
@@ -170,5 +171,30 @@ export class DailyChallengeController {
       endDate,
       campaign,
     );
+  }
+
+  @Patch("submissions/:id")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Override Submission (Admin)",
+    description: "Manually adjust a student's submission data or XP",
+  })
+  async overrideSubmission(
+    @Param("id") id: string,
+    @Body() dto: { submissionData?: Record<string, any>; xpEarned?: number },
+  ) {
+    return this.challengeService.overrideSubmission(id, dto);
+  }
+
+  @Post("campaigns/reset-streaks")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Reset Streaks (Admin)",
+    description: "Bulk reset streaks to 0 for all students, optionally filtered by mosque or circle.",
+  })
+  async resetStreaks(@Body() dto: { mosqueId?: string; circleId?: string }) {
+    return this.challengeService.resetStreaks(dto);
   }
 }

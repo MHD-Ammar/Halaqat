@@ -54,22 +54,28 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
     // Handle TypeORM QueryFailedError (database errors)
     else if (exception instanceof QueryFailedError) {
-      statusCode = HttpStatus.BAD_REQUEST;
-      error = "Database Error";
+      const dbException = exception as QueryFailedError & { driverError?: { code?: string } };
+      const driverError = dbException.driverError;
 
-      // Handle common database errors
-      const driverError = (exception as any).driverError;
       if (driverError?.code === "23505") {
         // Unique constraint violation
+        statusCode = HttpStatus.CONFLICT;
         message = "A record with this value already exists";
+        error = "Conflict";
       } else if (driverError?.code === "23503") {
         // Foreign key violation
+        statusCode = HttpStatus.BAD_REQUEST;
         message = "Referenced record does not exist";
+        error = "Bad Request";
       } else if (driverError?.code === "22P02") {
         // Invalid UUID format
+        statusCode = HttpStatus.BAD_REQUEST;
         message = "Invalid ID format provided";
+        error = "Bad Request";
       } else {
-        message = `Database operation failed: ${(exception as any).message}`;
+        statusCode = HttpStatus.BAD_REQUEST;
+        message = `Database operation failed: ${exception.message}`;
+        error = "Database Error";
       }
 
       this.logger.error(

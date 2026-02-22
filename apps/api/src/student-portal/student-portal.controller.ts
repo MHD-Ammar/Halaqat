@@ -14,7 +14,6 @@ import {
   Post,
   Body,
   UseGuards,
-  Query,
   UseInterceptors,
   ClassSerializerInterceptor,
 } from "@nestjs/common";
@@ -66,11 +65,9 @@ export class StudentPortalController {
   @ApiResponse({ status: 403, description: "Forbidden - STUDENT role required" })
   async getTodayQuests(
     @CurrentUser() user: { id: string; studentId: string },
-    @Query("campaignKey") campaignKey: string = "ramadan",
   ) {
     return this.studentPortalService.getTodayQuests(
       user.studentId,
-      campaignKey,
     );
   }
 
@@ -165,8 +162,7 @@ export class StudentPortalController {
   @ApiResponse({ status: 403, description: "Forbidden" })
   async getDashboard(
     @CurrentUser() user: { id: string; studentId: string },
-    @Query("campaignKey") campaignKey: string = "ramadan",
   ) {
-    return this.studentPortalService.getDashboardData(user.studentId, campaignKey);
+    return this.studentPortalService.getDashboardData(user.studentId);
   }
 }

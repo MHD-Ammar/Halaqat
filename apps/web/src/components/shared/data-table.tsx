@@ -99,7 +99,7 @@ export function DataTable<T>({
       <Table>
         <TableHeader>
           <TableRow>
-            {columns.map((col, idx) => (
+            {columns?.map((col, idx) => (
               <TableHead key={idx} className={col.className}>
                 {col.header}
               </TableHead>
@@ -107,7 +107,7 @@ export function DataTable<T>({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.map((item, rowIdx) => {
+          {data?.map((item, rowIdx) => {
             const rowKey = keyExtractor
               ? keyExtractor(item, rowIdx)
               : // eslint-disable-next-line @typescript-eslint/no-explicit-any

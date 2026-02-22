@@ -117,6 +117,8 @@ export class ProgressService {
       select: ["mosqueId"],
     });
 
+    const recitationsToSave: Recitation[] = [];
+
     // Process each page individually
     for (const detail of dto.details) {
       // Auto-link: Get surahId from pageNumber using cached lookup
@@ -136,33 +138,29 @@ export class ProgressService {
         surahId: surahId, // Auto-linked from page number
       });
 
-      await this.recitationRepository.save(recitation);
-      recitations.push(recitation);
+      recitationsToSave.push(recitation);
+    }
 
-      // Award points for this specific page
-      if (student?.mosqueId) {
+    const savedRecitations = await this.recitationRepository.save(recitationsToSave);
+    recitations.push(...savedRecitations);
+
+    // Award points
+    if (student?.mosqueId) {
+      const bulkAwards: Array<{ studentId: string; ruleKey: string }> = [];
+
+      for (const detail of dto.details) {
         const ruleKey = QUALITY_TO_RULE_KEY[detail.quality];
-        const pointTransaction = await this.pointsService.calculateAndAwardPoints(
-          dto.studentId,
-          ruleKey,
+        bulkAwards.push({ studentId: dto.studentId, ruleKey });
+        bulkAwards.push({ studentId: dto.studentId, ruleKey: "RECITATION_PAGE" });
+      }
+
+      if (bulkAwards.length > 0) {
+        const transactions = await this.pointsService.calculateAndAwardPointsBulk(
           student.mosqueId,
           dto.sessionId,
+          bulkAwards
         );
-
-        // Also award per-page points (RECITATION_PAGE rule)
-        const pagePointTransaction = await this.pointsService.calculateAndAwardPoints(
-          dto.studentId,
-          "RECITATION_PAGE",
-          student.mosqueId,
-          dto.sessionId,
-        );
-
-        if (pointTransaction) {
-          totalPointsAwarded += pointTransaction.amount;
-        }
-        if (pagePointTransaction) {
-          totalPointsAwarded += pagePointTransaction.amount;
-        }
+        totalPointsAwarded = transactions.reduce((sum, t) => sum + t.amount, 0);
       }
     }
 

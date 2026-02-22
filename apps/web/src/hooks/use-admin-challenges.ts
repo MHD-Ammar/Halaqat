@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
 
@@ -57,6 +57,21 @@ export function useAdminChallengesList(
       return data;
     },
     enabled: !!startDate && !!endDate,
+  });
+}
+
+export function useOverrideSubmission() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { xpEarned?: number; submissionData?: any } }) => {
+      const res = await api.patch(`/daily-challenge/submissions/${id}`, data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminChallengeKeys.all });
+      // We also might want to invalidate the specific submission detail
+      queryClient.invalidateQueries({ queryKey: ["weekly-submissions"] }); 
+    },
   });
 }
 

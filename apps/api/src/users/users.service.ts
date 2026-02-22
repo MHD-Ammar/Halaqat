@@ -9,6 +9,7 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  BadRequestException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import * as bcrypt from "bcrypt";
@@ -84,7 +85,14 @@ export class UsersService {
    * @param mosqueId - Optional mosque ID to filter by
    * @returns Array of users (without password)
    */
-  async findAll(role?: string, mosqueId?: string): Promise<User[]> {
+  async findAll(
+    page: number = 1,
+    limit: number = 20,
+    role?: string,
+    mosqueId?: string,
+  ): Promise<{ data: User[]; meta: { total: number; page: number; lastPage: number; limit: number } }> {
+    const skip = (page - 1) * limit;
+
     const query = this.userRepository
       .createQueryBuilder("user")
       .select([
@@ -96,7 +104,9 @@ export class UsersService {
         "user.createdAt",
         "user.mosqueId",
       ])
-      .orderBy("user.fullName", "ASC");
+      .orderBy("user.fullName", "ASC")
+      .skip(skip)
+      .take(limit);
 
     if (role) {
       query.andWhere("user.role = :role", { role });
@@ -106,7 +116,17 @@ export class UsersService {
       query.andWhere("user.mosqueId = :mosqueId", { mosqueId });
     }
 
-    return query.getMany();
+    const [data, total] = await query.getManyAndCount();
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        lastPage: Math.ceil(total / limit),
+        limit,
+      },
+    };
   }
 
   /**
@@ -167,7 +187,7 @@ export class UsersService {
       user.password,
     );
     if (!isCurrentPasswordValid) {
-      throw new Error("Current password is incorrect");
+      throw new BadRequestException("Current password is incorrect");
     }
 
     // Hash new password and save

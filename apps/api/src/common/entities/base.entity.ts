@@ -10,6 +10,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  Index,
 } from "typeorm";
 
 export abstract class BaseEntity {
@@ -35,6 +36,7 @@ export abstract class BaseEntity {
    * Soft delete timestamp (null if not deleted)
    * When set, the entity is considered "deleted" but remains in the database
    */
+  @Index()
   @DeleteDateColumn()
   deletedAt!: Date | null;
 }

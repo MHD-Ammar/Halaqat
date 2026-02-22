@@ -10,7 +10,6 @@
  */
 
 import {
-  getCampaignConfig,
   QuestionScoringConfig,
   CampaignConfig,
 } from "@halaqat/types";
@@ -23,6 +22,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, Repository } from "typeorm";
 
 import { SubmitStudentQuestDto } from "./dto/submit-student-quest.dto";
+import { Campaign } from "../daily-challenge/entities/campaign.entity";
 import { DailySubmission } from "../daily-challenge/entities/daily-submission.entity";
 import { Recitation } from "../progress/entities/recitation.entity";
 import { Student } from "../students/entities/student.entity";
@@ -42,14 +42,16 @@ export class StudentPortalService {
     private submissionRepo: Repository<DailySubmission>,
     @InjectRepository(Recitation)
     private recitationRepo: Repository<Recitation>,
+    @InjectRepository(Campaign)
+    private campaignRepo: Repository<Campaign>,
     private readonly dataSource: DataSource,
   ) {}
 
   /**
    * Get today's quest status for a student
-   * Returns whether they've submitted today and earned XP, plus the campaign config
+   * Returns whether they've submitted today and earned XP, plus the active campaign config
    */
-  async getTodayQuests(studentId: string, campaignKey: string = "ramadan") {
+  async getTodayQuests(studentId: string) {
     const student = await this.studentRepo.findOne({
       where: { id: studentId },
     });
@@ -58,9 +60,18 @@ export class StudentPortalService {
       throw new NotFoundException("Student not found");
     }
 
-    const config = getCampaignConfig(campaignKey);
-    if (!config) {
-      throw new BadRequestException("Invalid campaign key");
+    const activeCampaign = await this.campaignRepo.findOne({
+      where: { isActive: true },
+      order: { createdAt: "DESC" },
+    });
+
+    if (!activeCampaign) {
+      // If no active campaign, simply return a gracefully handled "no quests" state
+      return {
+        hasSubmittedToday: false,
+        todayXpEarned: undefined,
+        config: null,
+      };
     }
 
     const today = new Date().toISOString().split("T")[0];
@@ -69,7 +80,7 @@ export class StudentPortalService {
       where: {
         studentId,
         submissionDate: today,
-        campaignKey,
+        campaignId: activeCampaign.id,
       },
     });
 
@@ -79,7 +90,7 @@ export class StudentPortalService {
     return {
       hasSubmittedToday,
       todayXpEarned,
-      config,
+      config: activeCampaign.formConfig,
     };
   }
 
@@ -128,7 +139,7 @@ export class StudentPortalService {
   /**
    * Get student dashboard aggregated data
    */
-  async getDashboardData(studentId: string, campaignKey: string = "ramadan") {
+  async getDashboardData(studentId: string) {
     const student = await this.studentRepo.findOne({
       where: { id: studentId },
       select: ["id", "totalXp", "currentLevel", "currentStreak"],
@@ -146,12 +157,23 @@ export class StudentPortalService {
       last7Days.push(d.toISOString().split("T")[0]!);
     }
 
-    const recentSubmissions = await this.submissionRepo
+    const activeCampaign = await this.campaignRepo.findOne({
+      where: { isActive: true },
+      order: { createdAt: "DESC" },
+    });
+
+    const query = this.submissionRepo
       .createQueryBuilder("sub")
       .where("sub.student_id = :studentId", { studentId })
-      .andWhere("sub.campaign_key = :campaignKey", { campaignKey })
-      .andWhere("sub.submission_date IN (:...dates)", { dates: last7Days })
-      .getMany();
+      .andWhere("sub.submission_date IN (:...dates)", { dates: last7Days });
+
+    if (activeCampaign) {
+      query.andWhere("sub.campaign_id = :campaignId", { campaignId: activeCampaign.id });
+    } else {
+      query.andWhere("1 = 0"); // Return no submissions if no active campaign
+    }
+
+    const recentSubmissions = await query.getMany();
 
     const streakCalendar: Record<string, boolean> = {};
     for (const date of last7Days) {
@@ -211,11 +233,20 @@ export class StudentPortalService {
       throw new NotFoundException("Student not found");
     }
 
-    const campaignKey: string = dto.campaignKey || "ramadan";
-    const config = getCampaignConfig(campaignKey);
+    const activeCampaign = await this.campaignRepo.findOne({
+      where: { isActive: true },
+      order: { createdAt: "DESC" },
+    });
+
+    if (!activeCampaign) {
+      throw new BadRequestException("No active campaign found");
+    }
+
+    const campaignId = activeCampaign.id;
+    const config = activeCampaign.formConfig as CampaignConfig;
 
     if (!config) {
-      throw new BadRequestException("Invalid campaign key");
+      throw new BadRequestException("Invalid campaign config");
     }
 
     // Use provided date or default to today
@@ -226,7 +257,7 @@ export class StudentPortalService {
       where: {
         studentId,
         submissionDate: today,
-        campaignKey,
+        campaignId,
       },
     });
 
@@ -237,11 +268,11 @@ export class StudentPortalService {
     // Calculate XP
     const xpEarned = this.calculateXP(dto.submissionData, config);
 
-    // Calculate streak - campaignKey is guaranteed to be a string at this point
+    // Calculate streak - campaignId is guaranteed to be a string at this point
     const newStreak = await this.calculateStreak(
       studentId,
       today,
-      campaignKey,
+      campaignId,
     );
 
     // === TRANSACTION: Update Student & Create Submission ===
@@ -258,7 +289,7 @@ export class StudentPortalService {
         submissionData: dto.submissionData,
         xpEarned,
         streak: newStreak,
-        campaignKey,
+        campaignId,
       });
       await queryRunner.manager.save(submission);
 
@@ -379,7 +410,7 @@ export class StudentPortalService {
   private async calculateStreak(
     studentId: string,
     todayStr: string,
-    campaignKey: string,
+    campaignId: string,
   ): Promise<number> {
     // Treat the input string as a UTC date to avoid local timezone shifts
     const yesterdayDate = new Date(`${todayStr}T00:00:00Z`);
@@ -390,7 +421,7 @@ export class StudentPortalService {
       where: {
         studentId,
         submissionDate: yesterdayStr,
-        campaignKey,
+        campaignId,
       },
     });
 
