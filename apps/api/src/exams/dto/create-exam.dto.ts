@@ -4,6 +4,7 @@
  * Data transfer object for starting a new exam session.
  */
 
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsUUID,
   IsDateString,
@@ -14,7 +15,6 @@ import {
   Min,
   Max,
 } from "class-validator";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class CreateExamDto {
   /**

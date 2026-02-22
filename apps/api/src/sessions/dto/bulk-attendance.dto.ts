@@ -4,9 +4,10 @@
  * Data transfer object for updating multiple attendance records at once.
  */
 
+import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsArray, ValidateNested, ArrayMinSize } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+
 import { UpdateAttendanceDto } from "./update-attendance.dto";
 
 export class BulkAttendanceDto {

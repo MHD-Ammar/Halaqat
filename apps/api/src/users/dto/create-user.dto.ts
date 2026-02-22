@@ -2,6 +2,8 @@
  * Create User DTO
  */
 
+import { UserRole } from "@halaqat/types";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsEmail,
   IsString,
@@ -10,8 +12,6 @@ import {
   IsEnum,
   Matches,
 } from "class-validator";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { UserRole } from "@halaqat/types";
 
 export class CreateUserDto {
   @ApiProperty({

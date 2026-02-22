@@ -4,6 +4,8 @@
  * Data transfer object for recording a single page recitation.
  */
 
+import { RecitationType, RecitationQuality } from "@halaqat/types";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsUUID,
   IsInt,
@@ -13,8 +15,6 @@ import {
   Min,
   Max,
 } from "class-validator";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { RecitationType, RecitationQuality } from "@halaqat/types";
 
 export class RecordRecitationDto {
   @ApiProperty({

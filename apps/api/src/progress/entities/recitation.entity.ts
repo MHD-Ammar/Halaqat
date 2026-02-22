@@ -5,13 +5,13 @@
  * Tracks pages from Madinah Mushaf (1-604).
  */
 
-import { Entity, Column, ManyToOne, JoinColumn, Index } from "typeorm";
 import { RecitationType, RecitationQuality } from "@halaqat/types";
+import { Entity, Column, ManyToOne, JoinColumn, Index } from "typeorm";
 
 import { BaseEntity } from "../../common/entities/base.entity";
-import { Student } from "../../students/entities/student.entity";
-import { Session } from "../../sessions/entities/session.entity";
 import { Surah } from "../../curriculum/entities/surah.entity";
+import { Session } from "../../sessions/entities/session.entity";
+import { Student } from "../../students/entities/student.entity";
 
 @Entity("recitation")
 export class Recitation extends BaseEntity {

@@ -4,9 +4,9 @@
  * Query parameters for filtering and pagination.
  */
 
-import { IsOptional, IsString, IsUUID, IsInt, Min, Max } from "class-validator";
-import { Type } from "class-transformer";
 import { ApiPropertyOptional } from "@nestjs/swagger";
+import { Type } from "class-transformer";
+import { IsOptional, IsString, IsUUID, IsInt, Min, Max } from "class-validator";
 
 export class StudentQueryDto {
   @ApiPropertyOptional({

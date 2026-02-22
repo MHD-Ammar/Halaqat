@@ -4,6 +4,7 @@
  * REST API endpoints for managing exams in the Quran Testing System.
  */
 
+import { UserRole } from "@halaqat/types";
 import {
   Controller,
   Get,
@@ -22,15 +23,14 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from "@nestjs/swagger";
-import { UserRole } from "@halaqat/types";
 
-import { ExamsService } from "./exams.service";
 import { CreateExamDto } from "./dto/create-exam.dto";
 import { SubmitExamDto } from "./dto/submit-exam.dto";
+import { ExamsService } from "./exams.service";
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { CurrentUser } from "../auth/decorators/current-user.decorator";
 
 @ApiTags("exams")
 @ApiBearerAuth()

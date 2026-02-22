@@ -8,10 +8,10 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
+import { ExamQuestion } from "./entities/exam-question.entity";
+import { Exam } from "./entities/exam.entity";
 import { ExamsController } from "./exams.controller";
 import { ExamsService } from "./exams.service";
-import { Exam } from "./entities/exam.entity";
-import { ExamQuestion } from "./entities/exam-question.entity";
 import { StudentsModule } from "../students/students.module";
 
 @Module({

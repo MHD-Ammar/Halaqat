@@ -5,15 +5,15 @@
  * Handles exam creation, submission, and scoring.
  */
 
+import {  ExamStatus } from "@halaqat/types";
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import {  ExamStatus } from "@halaqat/types";
 
-import { Exam } from "./entities/exam.entity";
-import { ExamQuestion } from "./entities/exam-question.entity";
 import { CreateExamDto } from "./dto/create-exam.dto";
 import { SubmitExamDto, ExamQuestionDto } from "./dto/submit-exam.dto";
+import { ExamQuestion } from "./entities/exam-question.entity";
+import { Exam } from "./entities/exam.entity";
 import { StudentsService } from "../students/students.service";
 
 /** Points deducted per mistake for scoring calculation */

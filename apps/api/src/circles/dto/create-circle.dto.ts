@@ -4,6 +4,8 @@
  * Data transfer object for creating a new circle.
  */
 
+import { Gender } from "@halaqat/types";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsString,
   IsNotEmpty,
@@ -11,8 +13,6 @@ import {
   IsUUID,
   IsEnum,
 } from "class-validator";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Gender } from "@halaqat/types";
 
 export class CreateCircleDto {
   @ApiProperty({

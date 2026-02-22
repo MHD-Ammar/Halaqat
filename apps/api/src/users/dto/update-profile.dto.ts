@@ -4,8 +4,8 @@
  * Data transfer object for updating user profile.
  */
 
-import { IsString, MinLength, IsOptional } from "class-validator";
 import { ApiPropertyOptional } from "@nestjs/swagger";
+import { IsString, MinLength, IsOptional } from "class-validator";
 
 export class UpdateProfileDto {
   @ApiPropertyOptional({

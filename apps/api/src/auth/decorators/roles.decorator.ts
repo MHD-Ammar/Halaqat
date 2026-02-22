@@ -5,8 +5,8 @@
  * Used with RolesGuard to implement RBAC.
  */
 
-import { SetMetadata } from "@nestjs/common";
 import { UserRole } from "@halaqat/types";
+import { SetMetadata } from "@nestjs/common";
 
 export const ROLES_KEY = "roles";
 

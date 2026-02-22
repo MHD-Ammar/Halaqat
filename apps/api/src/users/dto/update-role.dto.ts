@@ -2,9 +2,9 @@
  * Update Role DTO
  */
 
-import { IsEnum } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
 import { UserRole } from "@halaqat/types";
+import { ApiProperty } from "@nestjs/swagger";
+import { IsEnum } from "class-validator";
 
 export class UpdateRoleDto {
   @ApiProperty({

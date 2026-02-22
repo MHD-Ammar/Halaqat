@@ -6,6 +6,7 @@
  * plus optional cumulative questions from previous parts.
  */
 
+import { ExamStatus } from "@halaqat/types";
 import {
   Entity,
   Column,
@@ -14,15 +15,14 @@ import {
   JoinColumn,
   Index,
 } from "typeorm";
-import { ExamStatus } from "@halaqat/types";
 
+import type { ExamQuestion } from "./exam-question.entity";
 import { BaseEntity } from "../../common/entities/base.entity";
+import { Mosque } from "../../mosques/entities/mosque.entity";
 import { Student } from "../../students/entities/student.entity";
 import { User } from "../../users/entities/user.entity";
-import { Mosque } from "../../mosques/entities/mosque.entity";
 
 // Forward reference to avoid circular dependency
-import type { ExamQuestion } from "./exam-question.entity";
 
 @Entity("exam")
 export class Exam extends BaseEntity {

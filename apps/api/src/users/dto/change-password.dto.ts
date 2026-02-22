@@ -4,8 +4,8 @@
  * Data transfer object for changing user password.
  */
 
-import { IsString, MinLength } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
+import { IsString, MinLength } from "class-validator";
 
 export class ChangePasswordDto {
   @ApiProperty({

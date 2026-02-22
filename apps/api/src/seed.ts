@@ -9,11 +9,12 @@
  * Note: Surahs and PointRules are seeded automatically on app bootstrap.
  */
 
-import { NestFactory } from "@nestjs/core";
-import { DataSource } from "typeorm";
-import * as bcrypt from "bcrypt";
-import { AppModule } from "./app.module";
 import { Gender, UserRole, SessionStatus, ExamStatus } from "@halaqat/types";
+import { NestFactory } from "@nestjs/core";
+import * as bcrypt from "bcrypt";
+import { DataSource } from "typeorm";
+
+import { AppModule } from "./app.module";
 
 // Test data constants
 const TEST_PASSWORD = "password123";

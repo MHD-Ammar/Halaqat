@@ -4,8 +4,8 @@
  * Data transfer object for updating a point rule's value.
  */
 
-import { IsInt, IsOptional, IsBoolean, IsString } from "class-validator";
 import { ApiPropertyOptional } from "@nestjs/swagger";
+import { IsInt, IsOptional, IsBoolean, IsString } from "class-validator";
 
 export class UpdatePointRuleDto {
   @ApiPropertyOptional({

@@ -4,6 +4,9 @@
  * Data transfer object for recording multiple page recitations at once.
  */
 
+import { RecitationType, RecitationQuality } from "@halaqat/types";
+import { ApiProperty } from "@nestjs/swagger";
+import { Type } from "class-transformer";
 import {
   IsUUID,
   IsInt,
@@ -14,9 +17,6 @@ import {
   Max,
   ArrayMinSize,
 } from "class-validator";
-import { Type } from "class-transformer";
-import { ApiProperty } from "@nestjs/swagger";
-import { RecitationType, RecitationQuality } from "@halaqat/types";
 
 /**
  * Single page recitation detail

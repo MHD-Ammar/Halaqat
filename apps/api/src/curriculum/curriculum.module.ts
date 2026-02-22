@@ -7,9 +7,9 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
+import { CurriculumSeederService } from "./curriculum-seeder.service";
 import { CurriculumController } from "./curriculum.controller";
 import { CurriculumService } from "./curriculum.service";
-import { CurriculumSeederService } from "./curriculum-seeder.service";
 import { Surah } from "./entities/surah.entity";
 
 @Module({

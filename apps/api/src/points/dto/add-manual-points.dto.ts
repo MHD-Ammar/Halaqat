@@ -4,8 +4,8 @@
  * Data transfer object for adding manual points with budget constraints.
  */
 
-import { IsUUID, IsInt, IsString, IsNotEmpty, Min, Max } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
+import { IsUUID, IsInt, IsString, IsNotEmpty, Min, Max } from "class-validator";
 
 export class AddManualPointsDto {
   @ApiProperty({

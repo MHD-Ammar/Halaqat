@@ -5,10 +5,11 @@
  * in both development (ts-node) and production (node dist/...).
  */
 
+import { join } from "path";
+
+import * as dotenv from "dotenv";
 import { DataSource, DataSourceOptions } from "typeorm";
 import { SnakeNamingStrategy } from "typeorm-naming-strategies";
-import * as dotenv from "dotenv";
-import { join } from "path";
 
 // Load environment variables from root .env if running locally
 // In production/Docker, these will be provided by the environment

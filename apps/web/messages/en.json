@@ -52,7 +52,8 @@
     "exams": "Exams",
     "usersManagement": "Users",
     "settings": "Settings",
-    "challenges": "Challenges"
+    "challenges": "Challenges",
+    "campaigns": "Campaigns"
   },
   "Auth": {
     "welcomeBack": "Welcome back",
@@ -722,6 +723,42 @@
     "fillAllFields": "Please fill in all required fields",
     "submitQuests": "Submit Quests",
     "noQuestsAvailable": "No quests available right now"
+  },
+  "AdminCampaigns": {
+    "title": "Campaign Management",
+    "subtitle": "Create and manage gamification campaigns",
+    "createNew": "Create New Campaign",
+    "campaignTitle": "Title",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "status": "Status",
+    "actions": "Actions",
+    "active": "Active",
+    "inactive": "Inactive",
+    "edit": "Edit",
+    "delete": "Delete",
+    "globalActions": "Global Actions",
+    "resetStreaks": "⚠️ Reset All Streaks",
+    "resetStreaksConfirm": "Are you sure? This will set all student streaks to 0. Usually done at the start of a new campaign.",
+    "resetStreaksDescription": "Reset student streaks across the ecosystem.",
+    "resetSuccess": "Streaks reset successfully.",
+    "noData": "No campaigns found",
+    "createCampaign": "Create Campaign",
+    "editCampaign": "Edit Campaign",
+    "formBuilder": "Form Builder",
+    "addQuestion": "Add Question",
+    "questionType": "Type",
+    "boolean": "Boolean (Yes/No)",
+    "number": "Number Input",
+    "grid": "Grid Matrix",
+    "questionTitle": "Question Title",
+    "xpYes": "XP for Yes",
+    "xpNo": "XP for No",
+    "multiplier": "XP per unit",
+    "maxLimit": "Max Limit",
+    "gridTemplate": "Grid Template",
+    "standardPrayers": "Standard 5 Prayers Grid",
+    "saveCampaign": "Save Campaign"
   }
 }
 

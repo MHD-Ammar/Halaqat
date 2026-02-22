@@ -4,6 +4,8 @@
  * Data transfer object for submitting an exam with questions and scoring.
  */
 
+import { ExamQuestionType } from "@halaqat/types";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import {
   IsArray,
@@ -17,8 +19,6 @@ import {
   Min,
   ValidateNested,
 } from "class-validator";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { ExamQuestionType } from "@halaqat/types";
 
 /**
  * DTO for a single question submission

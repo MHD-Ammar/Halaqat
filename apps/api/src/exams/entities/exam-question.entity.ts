@@ -6,12 +6,12 @@
  * Tracks mistakes and calculates achieved score based on the grading formula.
  */
 
-import { Entity, Column, ManyToOne, JoinColumn, Index } from "typeorm";
-import { Exclude } from "class-transformer";
 import { ExamQuestionType } from "@halaqat/types";
+import { Exclude } from "class-transformer";
+import { Entity, Column, ManyToOne, JoinColumn, Index } from "typeorm";
 
-import { BaseEntity } from "../../common/entities/base.entity";
 import { Exam } from "./exam.entity";
+import { BaseEntity } from "../../common/entities/base.entity";
 
 @Entity("exam_question")
 export class ExamQuestion extends BaseEntity {

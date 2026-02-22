@@ -6,6 +6,7 @@
  * Teacher endpoints require authentication only.
  */
 
+import { UserRole } from "@halaqat/types";
 import {
   Controller,
   Get,
@@ -26,15 +27,14 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from "@nestjs/swagger";
-import { UserRole } from "@halaqat/types";
 
 import { CirclesService } from "./circles.service";
 import { CreateCircleDto } from "./dto/create-circle.dto";
 import { UpdateCircleDto } from "./dto/update-circle.dto";
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { CurrentUser } from "../auth/decorators/current-user.decorator";
 
 @ApiTags("Circles")
 @ApiBearerAuth("JWT-auth")

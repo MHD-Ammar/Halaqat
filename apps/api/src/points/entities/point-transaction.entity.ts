@@ -4,12 +4,12 @@
  * Ledger of all point additions/deductions for students.
  */
 
-import { Entity, Column, ManyToOne, JoinColumn, Index } from "typeorm";
 import { PointSourceType } from "@halaqat/types";
+import { Entity, Column, ManyToOne, JoinColumn, Index } from "typeorm";
 
 import { BaseEntity } from "../../common/entities/base.entity";
-import { Student } from "../../students/entities/student.entity";
 import { Session } from "../../sessions/entities/session.entity";
+import { Student } from "../../students/entities/student.entity";
 
 @Entity("point_transaction")
 export class PointTransaction extends BaseEntity {

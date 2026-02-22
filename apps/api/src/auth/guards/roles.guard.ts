@@ -5,6 +5,7 @@
  * Must be used after JwtAuthGuard.
  */
 
+import { UserRole } from "@halaqat/types";
 import {
   Injectable,
   CanActivate,
@@ -12,7 +13,6 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { UserRole } from "@halaqat/types";
 
 import { ROLES_KEY } from "../decorators/roles.decorator";
 

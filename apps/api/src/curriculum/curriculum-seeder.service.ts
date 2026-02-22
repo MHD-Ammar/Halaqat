@@ -8,8 +8,8 @@ import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
-import { Surah } from "./entities/surah.entity";
 import { SURAH_DATA } from "./data/surah.data";
+import { Surah } from "./entities/surah.entity";
 
 @Injectable()
 export class CurriculumSeederService implements OnApplicationBootstrap {

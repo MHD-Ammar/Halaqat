@@ -5,6 +5,7 @@
  * Designed for quick creation - only name and circleId are required.
  */
 
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsString,
   IsNotEmpty,
@@ -12,7 +13,6 @@ import {
   IsUUID,
   IsDateString,
 } from "class-validator";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class CreateStudentDto {
   @ApiProperty({

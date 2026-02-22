@@ -5,6 +5,7 @@
  * Each circle belongs to a teacher and can contain multiple students.
  */
 
+import { Gender } from "@halaqat/types";
 import {
   Entity,
   Column,
@@ -13,14 +14,12 @@ import {
   JoinColumn,
   Index,
 } from "typeorm";
-import { Gender } from "@halaqat/types";
 
 import { BaseEntity } from "../../common/entities/base.entity";
-import { User } from "../../users/entities/user.entity";
 import { Mosque } from "../../mosques/entities/mosque.entity";
-
 // Forward reference to avoid circular dependency
 import type { Student } from "../../students/entities/student.entity";
+import { User } from "../../users/entities/user.entity";
 
 @Entity("circle")
 export class Circle extends BaseEntity {

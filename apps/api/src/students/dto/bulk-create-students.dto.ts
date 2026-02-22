@@ -5,8 +5,8 @@
  * Accepts a circle ID and array of student names.
  */
 
-import { IsString, IsNotEmpty, IsUUID, IsArray, ArrayMinSize } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
+import { IsString, IsNotEmpty, IsUUID, IsArray, ArrayMinSize } from "class-validator";
 
 export class BulkCreateStudentsDto {
   @ApiProperty({

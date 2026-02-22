@@ -4,9 +4,9 @@
  * Provides core business logic for the application.
  */
 
+import { UserRole } from "@halaqat/types";
 import { Injectable } from "@nestjs/common";
 
-import { UserRole } from "@halaqat/types";
 
 /**
  * Response type for the health check

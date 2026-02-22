@@ -4,10 +4,10 @@
  * Handles root-level routes for the API.
  */
 
+import { UserRole } from "@halaqat/types";
 import { Controller, Get } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 
-import { UserRole } from "@halaqat/types";
 
 import { AppService } from "./app.service";
 

@@ -4,9 +4,9 @@
  * Data transfer object for updating a single attendance record.
  */
 
-import { IsUUID, IsEnum, IsNotEmpty } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
 import { AttendanceStatus } from "@halaqat/types";
+import { ApiProperty } from "@nestjs/swagger";
+import { IsUUID, IsEnum, IsNotEmpty } from "class-validator";
 
 export class UpdateAttendanceDto {
   @ApiProperty({

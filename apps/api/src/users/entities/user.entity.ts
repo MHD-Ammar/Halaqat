@@ -5,6 +5,8 @@
  * Uses the shared UserRole enum from @halaqat/types.
  */
 
+import { UserRole } from "@halaqat/types";
+import { Exclude } from "class-transformer";
 import {
   Entity,
   Column,
@@ -13,14 +15,12 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
-import { UserRole } from "@halaqat/types";
-import { Exclude } from "class-transformer";
 
+import type { Circle } from "../../circles/entities/circle.entity";
 import { BaseEntity } from "../../common/entities/base.entity";
 import { Mosque } from "../../mosques/entities/mosque.entity";
 
 // Forward reference to avoid circular dependency
-import type { Circle } from "../../circles/entities/circle.entity";
 
 @Entity("user")
 export class User extends BaseEntity {

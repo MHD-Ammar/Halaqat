@@ -4,6 +4,7 @@
  * Represents a daily session/meeting of a study circle.
  */
 
+import { SessionStatus } from "@halaqat/types";
 import {
   Entity,
   Column,
@@ -12,14 +13,13 @@ import {
   JoinColumn,
   Index,
 } from "typeorm";
-import { SessionStatus } from "@halaqat/types";
 
-import { BaseEntity } from "../../common/entities/base.entity";
+import type { Attendance } from "./attendance.entity";
 import { Circle } from "../../circles/entities/circle.entity";
+import { BaseEntity } from "../../common/entities/base.entity";
 import { Mosque } from "../../mosques/entities/mosque.entity";
 
 // Forward reference to avoid circular dependency
-import type { Attendance } from "./attendance.entity";
 
 @Entity("session")
 export class Session extends BaseEntity {

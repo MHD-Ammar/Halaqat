@@ -5,8 +5,8 @@
  * Includes Madinah Mushaf page range for each Surah.
  */
 
-import { Entity, Column, PrimaryGeneratedColumn, Index } from "typeorm";
 import { MaterialType } from "@halaqat/types";
+import { Entity, Column, PrimaryGeneratedColumn, Index } from "typeorm";
 
 @Entity("surah")
 export class Surah {

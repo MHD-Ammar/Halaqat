@@ -52,7 +52,8 @@
     "usersManagement": "المستخدمين",
     "settings": "الإعدادات",
     "myStudents": "طلابي",
-    "challenges": "التحديات"
+    "challenges": "التحديات",
+    "campaigns": "الحملات"
   },
   "Auth": {
     "welcomeBack": "مرحباً بعودتك",
@@ -722,6 +723,42 @@
     "fillAllFields": "يرجى ملء جميع الحقول المطلوبة",
     "submitQuests": "إرسال المهام",
     "noQuestsAvailable": "لا توجد مهام متاحة حالياً"
+  },
+  "AdminCampaigns": {
+    "title": "إدارة الحملات",
+    "subtitle": "إنشاء وإدارة حملات التحفيز",
+    "createNew": "إنشاء حملة جديدة",
+    "campaignTitle": "العنوان",
+    "startDate": "تاريخ البدء",
+    "endDate": "تاريخ الانتهاء",
+    "status": "الحالة",
+    "actions": "الإجراءات",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "globalActions": "إجراءات عامة",
+    "resetStreaks": "⚠️ إعادة تعيين السلاسل اليومية",
+    "resetStreaksConfirm": "هل أنت متأكد؟ سيؤدي هذا إلى تصفير سلاسل الحضور لجميع الطلاب. عادة ما يتم ذلك في بداية الجملة الجديدة.",
+    "resetStreaksDescription": "إعادة تعيين نقاط وسلاسل الطلاب في النظام بأكمله.",
+    "resetSuccess": "تم إعادة تعيين السلاسل بنجاح.",
+    "noData": "لم يتم العثور على حملات",
+    "createCampaign": "إنشاء حملة",
+    "editCampaign": "تعديل حملة",
+    "formBuilder": "منشئ النماذج",
+    "addQuestion": "إضافة سؤال",
+    "questionType": "النوع",
+    "boolean": "نعم/لا",
+    "number": "إدخال رقم",
+    "grid": "جدول مصغر",
+    "questionTitle": "عنوان السؤال",
+    "xpYes": "نقاط الإجابة بنعم",
+    "xpNo": "نقاط الإجابة بلا",
+    "multiplier": "النقاط لكل وحدة",
+    "maxLimit": "الحد الأقصى",
+    "gridTemplate": "نموذج الجدول",
+    "standardPrayers": "جدول الصلوات الخمس",
+    "saveCampaign": "حفظ الحملة"
   }
 }
 

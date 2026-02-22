@@ -5,9 +5,10 @@
  * Uses snake_case naming strategy for database columns.
  */
 
+import { join } from "path";
+
 import { ConfigService } from "@nestjs/config";
 import { TypeOrmModuleAsyncOptions } from "@nestjs/typeorm";
-import { join } from "path";
 import { SnakeNamingStrategy } from "typeorm-naming-strategies";
 
 export const typeOrmConfig: TypeOrmModuleAsyncOptions = {

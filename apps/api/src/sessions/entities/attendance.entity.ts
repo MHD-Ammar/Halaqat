@@ -4,11 +4,11 @@
  * Represents a student's attendance record for a session.
  */
 
-import { Entity, Column, ManyToOne, JoinColumn, Index, Unique } from "typeorm";
 import { AttendanceStatus } from "@halaqat/types";
+import { Entity, Column, ManyToOne, JoinColumn, Index, Unique } from "typeorm";
 
-import { BaseEntity } from "../../common/entities/base.entity";
 import { Session } from "./session.entity";
+import { BaseEntity } from "../../common/entities/base.entity";
 import { Student } from "../../students/entities/student.entity";
 
 @Entity("attendance")
