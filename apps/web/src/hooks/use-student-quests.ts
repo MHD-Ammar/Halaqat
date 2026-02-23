@@ -9,7 +9,6 @@
  * - Handle level-up state
  */
 
-import { CampaignConfig } from "@halaqat/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
@@ -21,12 +20,14 @@ import { useUserProfile } from "./use-user-profile";
 export interface TodayQuestsResponse {
   hasSubmittedToday: boolean;
   todayXpEarned?: number;
-  config: CampaignConfig;
+  campaignId?: string;
+  config: { questions?: unknown[]; submitted_xp?: number } | null;
 }
 
 export interface SubmitQuestRequest {
   submissionData: Record<string, unknown>;
   campaignKey?: string;
+  campaignId?: string;
   localDate?: string;
 }
 
@@ -95,7 +96,7 @@ export function useSubmitStudentQuests() {
     onSuccess: (_data, variables) => {
       // Invalidate quest status
       queryClient.invalidateQueries({
-        queryKey: studentQuestKeys.today(variables.campaignKey || "ramadan"),
+        queryKey: studentQuestKeys.all,
       });
 
       // Invalidate student profile to update HUD

@@ -2,16 +2,16 @@
  * Daily Quests Page
  *
  * Student portal page for viewing and submitting daily quests.
- * Features:
+ * Uses dynamically fetched active campaign config from the API.
  * - Shows quest completion status
- * - Displays the challenge form
+ * - Displays the challenge form from active campaign
  * - Handles submission with gamification
  * - Triggers level-up celebration
  */
 
 "use client";
 
-import { getCampaignForm } from "@halaqat/types";
+import type { FormQuestion } from "@halaqat/types";
 import { CheckCircle, Zap, Flame } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -49,17 +49,31 @@ export default function QuestsPage() {
   const student = profile as unknown as StudentProfile | undefined;
   const isLoading = isProfileLoading || isQuestsLoading;
   const hasSubmittedToday = questsData?.hasSubmittedToday ?? false;
-  const campaignKey = "ramadan"; // Default for now
-  const formQuestions = getCampaignForm(campaignKey);
+  const campaignId = questsData?.campaignId ?? undefined;
 
-  const handleSubmit = async (formData: Record<string, any>) => {
+  // Extract questions from API config: { questions: FormQuestion[], submitted_xp }
+  const formQuestions: FormQuestion[] = (() => {
+    const config = questsData?.config;
+    if (!config || typeof config !== "object") return [];
+    const q = (config as { questions?: unknown }).questions;
+    if (Array.isArray(q)) return q as FormQuestion[];
+    if (q && typeof q === "object") {
+      return Object.entries(q as Record<string, FormQuestion>).map(([id, v]) => ({
+        ...v,
+        id,
+      })) as FormQuestion[];
+    }
+    return [];
+  })();
+
+  const handleSubmit = async (formData: Record<string, unknown>) => {
 
     setIsSubmitting(true);
 
     try {
       const result = await submitMutation.mutateAsync({
         submissionData: formData,
-        campaignKey: "ramadan",
+        campaignId: campaignId ?? undefined,
       });
 
       // Show success toast

@@ -16,15 +16,21 @@ export interface FormQuestion {
   title: string;
   description?: string;
   type: QuestionType;
+  /** GRID: row labels */
   rows?: string[];
+  /** GRID: column definitions with XP per selection */
   columns?: { label: string; value: string; xp: number }[];
+  /** NUMBER: XP per unit */
   multiplier?: number;
   max?: number;
   min?: number;
   step?: number;
   defaultValue?: number;
+  /** BOOLEAN: XP for true/false */
   xpYes?: number;
   xpNo?: number;
+  /** SELECT: multiple choice options with XP per selection */
+  options?: { label: string; value: string; xp: number }[];
 }
 
 export interface QuestionScoringConfig {
@@ -39,6 +45,7 @@ export interface QuestionScoringConfig {
 export interface CampaignConfig {
   submitted_xp: number;
   questions: Record<string, QuestionScoringConfig>;
+  [key: string]: any;
 }
 
 // ─── Ramadan Form Definition ─────────────────────────────────────────────────

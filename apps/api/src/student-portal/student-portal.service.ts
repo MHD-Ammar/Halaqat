@@ -9,10 +9,7 @@
  * - Atomic database transactions for data integrity
  */
 
-import {
-  QuestionScoringConfig,
-  CampaignConfig,
-} from "@halaqat/types";
+import { FormQuestion } from "@halaqat/types";
 import {
   BadRequestException,
   Injectable,
@@ -91,6 +88,7 @@ export class StudentPortalService {
       hasSubmittedToday,
       todayXpEarned,
       config: activeCampaign.formConfig,
+      campaignId: activeCampaign.id,
     };
   }
 
@@ -233,19 +231,22 @@ export class StudentPortalService {
       throw new NotFoundException("Student not found");
     }
 
-    const activeCampaign = await this.campaignRepo.findOne({
-      where: { isActive: true },
-      order: { createdAt: "DESC" },
-    });
+    // Use provided campaignId or fall back to active campaign
+    const campaign = dto.campaignId
+      ? await this.campaignRepo.findOne({ where: { id: dto.campaignId } })
+      : await this.campaignRepo.findOne({
+          where: { isActive: true },
+          order: { createdAt: "DESC" },
+        });
 
-    if (!activeCampaign) {
-      throw new BadRequestException("No active campaign found");
+    if (!campaign) {
+      throw new BadRequestException(dto.campaignId ? "Campaign not found" : "No active campaign found");
     }
 
-    const campaignId = activeCampaign.id;
-    const config = activeCampaign.formConfig as CampaignConfig;
+    const campaignId = campaign.id;
+    const formConfig = campaign.formConfig;
 
-    if (!config) {
+    if (!formConfig || typeof formConfig !== "object") {
       throw new BadRequestException("Invalid campaign config");
     }
 
@@ -265,8 +266,8 @@ export class StudentPortalService {
       throw new BadRequestException("You have already submitted for today!");
     }
 
-    // Calculate XP
-    const xpEarned = this.calculateXP(dto.submissionData, config);
+    // Calculate XP from campaign formConfig (FormQuestion[] or legacy CampaignConfig)
+    const xpEarned = this.calculateXPFromFormConfig(dto.submissionData, formConfig);
 
     // Calculate streak - campaignId is guaranteed to be a string at this point
     const newStreak = await this.calculateStreak(
@@ -346,41 +347,75 @@ export class StudentPortalService {
   }
 
   /**
-   * Calculate XP based on submission data and campaign config
-   * Supports GRID, BOOLEAN, and NUMBER question types
+   * Calculate XP from submission data and campaign formConfig.
+   * Supports both:
+   * - New format: { submitted_xp, questions: FormQuestion[] }
+   * - Legacy format: { submitted_xp, questions: Record<string, QuestionScoringConfig> }
    */
-  private calculateXP(
+  private calculateXPFromFormConfig(
     submissionData: Record<string, unknown>,
-    config: CampaignConfig,
+    formConfig: Record<string, unknown>,
   ): number {
-    let totalXp = config.submitted_xp || 0;
-    const questions = config.questions || {};
+    const submittedXp = (formConfig.submitted_xp as number) ?? 0;
+    let totalXp = submittedXp;
 
-    for (const [key, qConfig] of Object.entries<QuestionScoringConfig>(
-      questions,
-    )) {
+    const questions = formConfig.questions;
+    if (!questions || typeof questions !== "object") return totalXp;
+
+    // New format: questions is FormQuestion[]
+    if (Array.isArray(questions)) {
+      for (const q of questions as FormQuestion[]) {
+        const val = submissionData[q.id];
+        if (val === undefined || val === null) continue;
+
+        switch (q.type) {
+          case "GRID":
+            if (typeof val === "object" && q.columns) {
+              const xpMap = Object.fromEntries(q.columns.map((c) => [c.value, c.xp]));
+              for (const colVal of Object.values(val)) {
+                totalXp += xpMap[colVal as string] ?? 0;
+              }
+            }
+            break;
+          case "BOOLEAN":
+            totalXp += val === true ? (q.xpYes ?? 0) : (q.xpNo ?? 0);
+            break;
+          case "NUMBER": {
+            const num = Math.min(Number(val) || 0, q.max ?? Infinity);
+            totalXp += num * (q.multiplier ?? 0);
+            break;
+          }
+          case "SELECT":
+            if (q.options) {
+              const opt = q.options.find((o) => o.value === val);
+              totalXp += opt?.xp ?? 0;
+            }
+            break;
+        }
+      }
+      return totalXp;
+    }
+
+    // Legacy format: questions is Record<string, QuestionScoringConfig>
+    const legacy = questions as Record<string, { type: string; xpMap?: Record<string, number>; xpYes?: number; xpNo?: number; multiplier?: number; max?: number }>;
+    for (const [key, qConfig] of Object.entries(legacy)) {
       const val = submissionData[key];
       if (val === undefined || val === null) continue;
 
       switch (qConfig.type) {
-        case "GRID": {
-          // GRID: val is { row: colValue, ... }
+        case "GRID":
           if (typeof val === "object" && qConfig.xpMap) {
-            Object.values(val).forEach((colVal: unknown) => {
-              totalXp += qConfig.xpMap?.[colVal as string] || 0;
-            });
+            for (const colVal of Object.values(val)) {
+              totalXp += qConfig.xpMap[colVal as string] ?? 0;
+            }
           }
           break;
-        }
-        case "BOOLEAN": {
-          // BOOLEAN: true/false with different XP values
-          totalXp += val === true ? (qConfig.xpYes || 0) : (qConfig.xpNo || 0);
+        case "BOOLEAN":
+          totalXp += val === true ? (qConfig.xpYes ?? 0) : (qConfig.xpNo ?? 0);
           break;
-        }
         case "NUMBER": {
-          // NUMBER: multiply value by a multiplier (capped at max)
-          const num = Math.min(Number(val) || 0, qConfig.max || Infinity);
-          totalXp += num * (qConfig.multiplier || 0);
+          const num = Math.min(Number(val) || 0, qConfig.max ?? Infinity);
+          totalXp += num * (qConfig.multiplier ?? 0);
           break;
         }
       }

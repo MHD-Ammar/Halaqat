@@ -38,6 +38,7 @@
     "processing": "جاري المعالجة...",
     "undo": "تراجع",
     "max": "الحد الأقصى",
+    "min": "الحد الأدنى",
     "submitting": "جاري الإرسال...",
     "continue": "متابعة"
   },
@@ -756,9 +757,40 @@
     "xpNo": "نقاط الإجابة بلا",
     "multiplier": "النقاط لكل وحدة",
     "maxLimit": "الحد الأقصى",
+    "select": "اختيار من متعدد",
+    "questionDescription": "الوصف (اختياري)",
+    "gridRows": "عناوين الصفوف",
+    "gridColumns": "الأعمدة (التسمية، القيمة، XP)",
+    "addRow": "إضافة صف",
+    "addColumn": "إضافة عمود",
+    "addOption": "إضافة خيار",
+    "rowLabel": "الصف {n}",
+    "columnLabel": "التسمية",
+    "columnValue": "القيمة",
+    "optionLabel": "تسمية الخيار",
+    "optionValue": "قيمة الخيار",
+    "customGrid": "شبكة مخصصة (صفوف وأعمدة)",
     "gridTemplate": "نموذج الجدول",
     "standardPrayers": "جدول الصلوات الخمس",
-    "saveCampaign": "حفظ الحملة"
+    "saveCampaign": "حفظ الحملة",
+    "formDescription": "قم ببناء نموذج التحدي اليومي لحملتك. كل وحدة تمثل سؤالاً.",
+    "activeDescription": "اجعل هذه الحملة نشطة عالمياً.",
+    "newQuestion": "سؤال جديد",
+    "submissionXp": "نقاط المشاركة",
+    "submissionXpDescription": "نقاط إضافية تمنح بمجرد إرسال التحدي",
+    "min": "الحد الأدنى",
+    "step": "الخطوة",
+    "defaultValue": "القيمة الافتراضية"
+  },
+  "Prayers": {
+    "fajr": "الفجر",
+    "dhuhr": "الظهر",
+    "asr": "العصر",
+    "maghrib": "المغرب",
+    "isha": "العشاء",
+    "mosque": "في المسجد",
+    "home": "في البيت",
+    "late": "قضاء/فائتة"
   }
 }
 

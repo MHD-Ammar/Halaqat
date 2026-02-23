@@ -38,6 +38,7 @@
     "processing": "Processing...",
     "undo": "Undo",
     "max": "Max",
+    "min": "Min",
     "submitting": "Submitting...",
     "continue": "Continue"
   },
@@ -758,7 +759,38 @@
     "maxLimit": "Max Limit",
     "gridTemplate": "Grid Template",
     "standardPrayers": "Standard 5 Prayers Grid",
-    "saveCampaign": "Save Campaign"
+    "select": "Multiple Choice (Select)",
+    "questionDescription": "Description (optional)",
+    "gridRows": "Row Labels",
+    "gridColumns": "Columns (Label, Value, XP)",
+    "addRow": "Add Row",
+    "addColumn": "Add Column",
+    "addOption": "Add Option",
+    "rowLabel": "Row {n}",
+    "columnLabel": "Label",
+    "columnValue": "Value",
+    "optionLabel": "Option Label",
+    "optionValue": "Option Value",
+    "customGrid": "Custom Grid (rows & columns)",
+    "saveCampaign": "Save Campaign",
+    "formDescription": "Build your campaign's daily challenge format. Each block represents a question.",
+    "activeDescription": "Make this campaign active globally.",
+    "newQuestion": "New Question",
+    "submissionXp": "XP for submission",
+    "submissionXpDescription": "Bonus XP awarded just for submitting",
+    "min": "Min",
+    "step": "Step",
+    "defaultValue": "Default Value"
+  },
+  "Prayers": {
+    "fajr": "Fajr",
+    "dhuhr": "Dhuhr",
+    "asr": "Asr",
+    "maghrib": "Maghrib",
+    "isha": "Isha",
+    "mosque": "Mosque",
+    "home": "Home",
+    "late": "Late/Missed"
   }
 }
 

@@ -1,8 +1,6 @@
  import {
   getCampaignConfig,
   getCampaignForm,
-  CampaignConfig,
-  QuestionScoringConfig,
   FormQuestion,
 } from "@halaqat/types";
 import {
@@ -69,8 +67,15 @@ export class DailyChallengeService {
    * Submit daily challenge
    */
   async submit(dto: SubmitDailyChallengeDto) {
-    const rawCampaignParam = (dto as any).campaignId || dto.campaignKey || "ramadan";
-    const resolvedCampaignId = await this.resolveCampaignId(rawCampaignParam);
+    const rawCampaignParam = dto.campaignKey || "ramadan";
+    let resolvedCampaignId: string;
+    if (dto.campaignId) {
+      const c = await this.submissionRepo.manager.findOne(Campaign, { where: { id: dto.campaignId } });
+      if (!c) throw new BadRequestException("Invalid campaign id");
+      resolvedCampaignId = c.id;
+    } else {
+      resolvedCampaignId = await this.resolveCampaignId(rawCampaignParam);
+    }
 
     const campaign = await this.submissionRepo.manager.findOne(Campaign, {
       where: { id: resolvedCampaignId }
@@ -118,8 +123,8 @@ export class DailyChallengeService {
       throw new BadRequestException("You have already submitted for today!");
     }
 
-    // Calculate XP
-    const xpEarned = this.calculateXP(dto.submissionData, config as any);
+    // Calculate XP from formConfig (supports FormQuestion[] and legacy CampaignConfig)
+    const xpEarned = this.calculateXPFromFormConfig(dto.submissionData, config);
 
     // Calculate Streak
     const streak = await this.calculateStreak(dto.studentId, today, resolvedCampaignId);
@@ -139,31 +144,71 @@ export class DailyChallengeService {
   }
 
   /**
-   * Calculate XP based on form data and campaign config (generic)
+   * Calculate XP from submission data and campaign formConfig.
+   * Supports both FormQuestion[] (new) and legacy CampaignConfig formats.
    */
-  private calculateXP(data: any, config: CampaignConfig): number {
-    let totalXp = config.submitted_xp || 0;
-    const questions = config.questions || {};
+  private calculateXPFromFormConfig(
+    submissionData: Record<string, unknown>,
+    formConfig: Record<string, any>,
+  ): number {
+    const submittedXp = (formConfig.submitted_xp as number) ?? 0;
+    let totalXp = submittedXp;
 
-    for (const [key, qConfig] of Object.entries<QuestionScoringConfig>(questions)) {
-      const val = data[key];
+    const questions = formConfig.questions;
+    if (!questions || typeof questions !== "object") return totalXp;
+
+    if (Array.isArray(questions)) {
+      for (const q of questions as FormQuestion[]) {
+        const val = submissionData[q.id];
+        if (val === undefined || val === null) continue;
+
+        switch (q.type) {
+          case "GRID":
+            if (typeof val === "object" && q.columns) {
+              const xpMap = Object.fromEntries(q.columns.map((c) => [c.value, c.xp]));
+              for (const colVal of Object.values(val)) {
+                totalXp += xpMap[colVal as string] ?? 0;
+              }
+            }
+            break;
+          case "BOOLEAN":
+            totalXp += val === true ? (q.xpYes ?? 0) : (q.xpNo ?? 0);
+            break;
+          case "NUMBER": {
+            const num = Math.min(Number(val) || 0, q.max ?? Infinity);
+            totalXp += num * (q.multiplier ?? 0);
+            break;
+          }
+          case "SELECT":
+            if (q.options) {
+              const opt = q.options.find((o) => o.value === val);
+              totalXp += opt?.xp ?? 0;
+            }
+            break;
+        }
+      }
+      return totalXp;
+    }
+
+    const legacy = questions as Record<string, { type: string; xpMap?: Record<string, number>; xpYes?: number; xpNo?: number; multiplier?: number; max?: number }>;
+    for (const [key, qConfig] of Object.entries(legacy)) {
+      const val = submissionData[key];
       if (val === undefined || val === null) continue;
 
       switch (qConfig.type) {
         case "GRID":
-          // val is { row: colValue, ... }
           if (typeof val === "object" && qConfig.xpMap) {
-            Object.values(val).forEach((colVal: any) => {
-              totalXp += qConfig.xpMap?.[colVal] || 0;
-            });
+            for (const colVal of Object.values(val)) {
+              totalXp += qConfig.xpMap[colVal as string] ?? 0;
+            }
           }
           break;
         case "BOOLEAN":
-          totalXp += val === true ? (qConfig.xpYes || 0) : (qConfig.xpNo || 0);
+          totalXp += val === true ? (qConfig.xpYes ?? 0) : (qConfig.xpNo ?? 0);
           break;
         case "NUMBER": {
-          const num = Math.min(Number(val) || 0, qConfig.max || Infinity);
-          totalXp += num * (qConfig.multiplier || 0);
+          const num = Math.min(Number(val) || 0, qConfig.max ?? Infinity);
+          totalXp += num * (qConfig.multiplier ?? 0);
           break;
         }
       }
@@ -193,6 +238,28 @@ export class DailyChallengeService {
     });
 
     return previousSubmission ? previousSubmission.streak + 1 : 1;
+  }
+
+  /**
+   * Get active campaign (Public)
+   * Returns form config for the currently active campaign. Used by /ramadan and student portals.
+   */
+  async getActiveCampaign() {
+    const campaign = await this.submissionRepo.manager.findOne(Campaign, {
+      where: { isActive: true },
+      order: { createdAt: "DESC" },
+      select: ["id", "title", "startDate", "endDate", "formConfig"],
+    });
+    if (!campaign) {
+      return { campaign: null, config: null, campaignId: null };
+    }
+    return {
+      campaignId: campaign.id,
+      title: campaign.title,
+      startDate: campaign.startDate,
+      endDate: campaign.endDate,
+      config: campaign.formConfig,
+    };
   }
 
   /**
@@ -482,15 +549,14 @@ export class DailyChallengeService {
       throw new BadRequestException("Campaign not found");
     }
 
-    // Determine the form questions properly based on fallback logic if necessary
+    // Determine form questions from campaign config (array or record format)
     let formQuestions: FormQuestion[] = [];
-    if (campaign.formConfig && campaign.formConfig.questions) {
-      formQuestions = Object.entries(campaign.formConfig.questions).map(([id, q]: [string, any]) => ({
-        id,
-        ...q
-      }));
+    const q = campaign.formConfig?.questions;
+    if (Array.isArray(q)) {
+      formQuestions = q as FormQuestion[];
+    } else if (q && typeof q === "object") {
+      formQuestions = Object.entries(q).map(([id, v]) => ({ ...(v as any), id } as FormQuestion));
     } else {
-      // old fallback
       formQuestions = getCampaignForm(campaignParam);
     }
 
@@ -691,25 +757,29 @@ export class DailyChallengeService {
 
   /**
    * Reset Streaks (Admin)
-   * Bulk reset the `currentStreak` for all students to 0.
+   * Bulk reset the `current_streak` column to 0 for all students.
+   * Does NOT reset total_xp or max_streak.
    * Optionally filter by mosqueId or circleId.
    */
   async resetStreaks(filters?: { mosqueId?: string; circleId?: string }) {
-    const qb = this.studentRepo.createQueryBuilder()
+    const qb = this.studentRepo
+      .createQueryBuilder()
       .update(Student)
       .set({ currentStreak: 0 });
 
     if (filters?.circleId) {
-      qb.where("circleId = :circleId", { circleId: filters.circleId });
+      qb.where("circle_id = :circleId", { circleId: filters.circleId });
     } else if (filters?.mosqueId) {
-      qb.where("mosqueId = :mosqueId", { mosqueId: filters.mosqueId });
+      qb.where("mosque_id = :mosqueId", { mosqueId: filters.mosqueId });
     }
 
     const result = await qb.execute();
+    const affected = Number(result.affected) || 0;
 
     return {
       success: true,
-      affected: result.affected || 0,
+      affected,
+      message: `Reset currentStreak to 0 for ${affected} student(s)`,
     };
   }
   async createCampaign(dto: Partial<Campaign>) {

@@ -26,6 +26,16 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 export class DailyChallengeController {
   constructor(private readonly challengeService: DailyChallengeService) {}
 
+  @Get("active-campaign")
+  @ApiOperation({
+    summary: "Get active campaign (Public)",
+    description:
+      "Returns the currently active campaign's form config for public/student forms (e.g. /ramadan). No auth required.",
+  })
+  async getActiveCampaign() {
+    return this.challengeService.getActiveCampaign();
+  }
+
   @Get("circles")
   @ApiOperation({
     summary: "List circles for a mosque (Public)",

@@ -15,6 +15,14 @@ export class SubmitStudentQuestDto {
   submissionData!: Record<string, unknown>;
 
   /**
+   * Campaign UUID - links DailySubmission to the correct campaign.
+   * If not provided, uses the currently active campaign.
+   */
+  @IsString()
+  @IsOptional()
+  campaignId?: string;
+
+  /**
    * Local date string (YYYY-MM-DD) for handling timezones
    * If not provided, server uses current UTC date
    */

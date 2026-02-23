@@ -1,8 +1,9 @@
 "use client";
 
+import type { FormQuestion } from "@halaqat/types";
 import { CheckCircle2, ChevronRight, Trophy } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useState , Suspense } from "react";
+import { useState, Suspense } from "react";
 import Confetti from "react-confetti";
 
 import { DynamicFormRenderer } from "@/components/ramadan/dynamic-form-renderer";
@@ -15,8 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RAMADAN_FORM } from "@/config/challenges/ramadan";
 import {
+  useActiveCampaign,
   useDailyChallengeCircles,
   useDailyChallengeStudentInfo,
   useDailyChallengeStudents,
@@ -29,7 +30,29 @@ import { Link } from "@/i18n/routing";
 function RamadanContent() {
   const searchParams = useSearchParams();
   const mosqueId = searchParams.get("mosqueId") || undefined;
-  const CAMPAIGN_KEY = "ramadan";
+
+  // Queries - fetch active campaign config from API (no local RAMADAN_FORM)
+  const { data: activeCampaign, isLoading: isLoadingCampaign } = useActiveCampaign();
+
+  // Derive form questions from active campaign
+  const formQuestions: FormQuestion[] = (() => {
+    const q = activeCampaign?.config?.questions;
+    if (!q) return [];
+    
+    if (Array.isArray(q)) {
+      return q as FormQuestion[];
+    }
+    
+    if (typeof q === "object") {
+      return Object.entries(q).map(
+        ([id, v]) => ({ ...(v as Record<string, unknown>), id } as FormQuestion),
+      );
+    }
+    
+    return [];
+  })();
+
+  const campaignId = activeCampaign?.campaignId ?? undefined;
 
   // State
   const [step, setStep] = useState<"CIRCLE" | "STUDENT" | "FORM" | "SUCCESS">(
@@ -45,7 +68,7 @@ function RamadanContent() {
   const { data: students, isLoading: loadingStudents } =
     useDailyChallengeStudents(circleId);
   const { data: studentInfo } =
-    useDailyChallengeStudentInfo(studentId, CAMPAIGN_KEY);
+    useDailyChallengeStudentInfo(studentId, campaignId || "ramadan");
   const submitMutation = useDailyChallengeSubmit();
 
   // Handlers
@@ -64,9 +87,13 @@ function RamadanContent() {
 
     const localDate = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format (local time)
 
-    // The submitMutation.mutate function now expects a SubmitChallengeDto
     submitMutation.mutate(
-      { studentId, submissionData: data, campaignKey: CAMPAIGN_KEY, localDate },
+      {
+        studentId,
+        submissionData: data,
+        campaignId: campaignId ?? undefined,
+        localDate,
+      },
       {
         onSuccess: (result) => {
           setSubmissionResult(result);
@@ -263,7 +290,27 @@ function RamadanContent() {
     );
   }
 
-  // FORM STEP
+  // FORM STEP - show form or loading/no-campaign states
+  if (isLoadingCampaign) {
+    return (
+      <Card className="bg-background/95 backdrop-blur shadow-xl border-0">
+        <CardContent className="py-12 text-center text-muted-foreground">
+          جاري تحميل التحدي اليومي...
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (formQuestions.length === 0) {
+    return (
+      <Card className="bg-background/95 backdrop-blur shadow-xl border-0">
+        <CardContent className="py-12 text-center text-muted-foreground">
+          لا توجد حملة نشطة حالياً. تواصل مع المشرف.
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* User Info Header */}
@@ -281,7 +328,7 @@ function RamadanContent() {
       </div>
 
       <DynamicFormRenderer
-        questions={RAMADAN_FORM}
+        questions={formQuestions}
         onSubmit={handleSubmit}
         isSubmitting={submitMutation.isPending}
       />
