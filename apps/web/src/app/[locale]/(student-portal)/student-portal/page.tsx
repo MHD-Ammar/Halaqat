@@ -19,6 +19,7 @@ import { useUserProfile } from "@/hooks/use-user-profile";
 import { DailyBonusModal } from "./_components/DailyBonusModal";
 import { DailyQuestCTA } from "./_components/DailyQuestCTA";
 import { RecentRecitations } from "./_components/RecentRecitations";
+import { RewardChests } from "./_components/RewardChests";
 import { StreakCalendar } from "./_components/StreakCalendar";
 
 interface StudentProfile {
@@ -175,6 +176,9 @@ export default function StudentPortalPage() {
       {dashboardData && (
         <StreakCalendar streakCalendar={dashboardData.streakCalendar} />
       )}
+
+      {/* Rewards Chest Section */}
+      <RewardChests />
 
       {/* Middle & Bottom Sections: Interactive elements and recent tracking */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">

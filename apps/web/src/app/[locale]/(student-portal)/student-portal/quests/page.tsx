@@ -1,28 +1,20 @@
-/**
- * Daily Quests Page
- *
- * Student portal page for viewing and submitting daily quests.
- * Uses dynamically fetched active campaign config from the API.
- * - Shows quest completion status
- * - Displays the challenge form from active campaign
- * - Handles submission with gamification
- * - Triggers level-up celebration
- */
-
 "use client";
 
-import type { FormQuestion } from "@halaqat/types";
-import { CheckCircle, Zap, Flame } from "lucide-react";
+import type { QuestCategory } from "@halaqat/types";
+import { motion } from "framer-motion";
+import { Check, Circle, Flame, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { AchievementUnlockedModal } from "@/components/achievement-unlocked-modal";
 import { LevelUpModal } from "@/components/level-up-modal";
-import { DynamicFormRenderer } from "@/components/ramadan/dynamic-form-renderer";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTodayQuests, useSubmitStudentQuests } from "@/hooks/use-student-quests";
+import { type Achievement } from "@/hooks/use-student-achievements";
+import { useCompleteQuest, useStudentQuests } from "@/hooks/use-student-quests";
 import { useToast } from "@/hooks/use-toast";
 import { useUserProfile } from "@/hooks/use-user-profile";
+
 interface StudentProfile {
   id: string;
   name: string;
@@ -33,10 +25,11 @@ interface StudentProfile {
 
 export default function QuestsPage() {
   const t = useTranslations();
+  const tQuestCategory = useTranslations("QuestCategory");
   const { toast } = useToast();
   const { data: profile, isLoading: isProfileLoading } = useUserProfile();
-  const { data: questsData, isLoading: isQuestsLoading } = useTodayQuests();
-  const submitMutation = useSubmitStudentQuests();
+  const { data: groupedQuests, isLoading: isQuestsLoading } = useStudentQuests();
+  const completeQuestMutation = useCompleteQuest();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -45,36 +38,18 @@ export default function QuestsPage() {
     earnedXp: 0,
     newTotalXp: 0,
   });
+  const [showAchievements, setShowAchievements] = useState(false);
+  const [unlockedAchievements, setUnlockedAchievements] = useState<Achievement[]>([]);
 
   const student = profile as unknown as StudentProfile | undefined;
   const isLoading = isProfileLoading || isQuestsLoading;
-  const hasSubmittedToday = questsData?.hasSubmittedToday ?? false;
-  const campaignId = questsData?.campaignId ?? undefined;
 
-  // Extract questions from API config: { questions: FormQuestion[], submitted_xp }
-  const formQuestions: FormQuestion[] = (() => {
-    const config = questsData?.config;
-    if (!config || typeof config !== "object") return [];
-    const q = (config as { questions?: unknown }).questions;
-    if (Array.isArray(q)) return q as FormQuestion[];
-    if (q && typeof q === "object") {
-      return Object.entries(q as Record<string, FormQuestion>).map(([id, v]) => ({
-        ...v,
-        id,
-      })) as FormQuestion[];
-    }
-    return [];
-  })();
-
-  const handleSubmit = async (formData: Record<string, unknown>) => {
-
+  const handleCompleteQuest = async (questId: string) => {
+    if (isSubmitting || completeQuestMutation.isPending) return;
     setIsSubmitting(true);
 
     try {
-      const result = await submitMutation.mutateAsync({
-        submissionData: formData,
-        campaignId: campaignId ?? undefined,
-      });
+      const result = await completeQuestMutation.mutateAsync(questId);
 
       // Show success toast
       toast({
@@ -92,7 +67,11 @@ export default function QuestsPage() {
         setShowLevelUp(true);
       }
 
-      // Don't need to manually reset formData here because the entire component handles its own state
+      // Show achievements modal if applicable
+      if (result.newAchievements && result.newAchievements.length > 0) {
+        setUnlockedAchievements(result.newAchievements);
+        setShowAchievements(true);
+      }
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { message?: string } } };
       const message = axiosError?.response?.data?.message || t("Common.error");
@@ -120,7 +99,7 @@ export default function QuestsPage() {
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold">
-          {t("Quests.dailyQuests")}
+          {t("Quests.habitTracker")}
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
           {t("Quests.submitTodaysQuests")}
@@ -165,55 +144,84 @@ export default function QuestsPage() {
         </Card>
       </div>
 
-      {/* Main Content */}
-      {hasSubmittedToday ? (
-        // Success/Chill State
-        <Card className="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950">
-          <CardContent className="pt-8">
-            <div className="text-center space-y-4">
-              <div className="flex justify-center">
-                <div className="rounded-full bg-green-100 dark:bg-green-900 p-4">
-                  <CheckCircle className="h-12 w-12 text-green-600 dark:text-green-400" />
-                </div>
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-green-900 dark:text-green-100">
-                  {t("Quests.alreadySubmitted")}
+      {/* Habit Sections */}
+      <div className="space-y-4">
+        {groupedQuests &&
+          (Object.keys(groupedQuests) as QuestCategory[]).map((category) => {
+            const quests = groupedQuests[category] ?? [];
+            if (!quests.length) return null;
+
+            return (
+              <section key={category} className="space-y-3">
+                <h2 className="text-lg font-semibold">
+                  {tQuestCategory(category)}
                 </h2>
-                <p className="text-green-700 dark:text-green-200 mt-2">
-                  {t("Quests.earnedXpToday", { xp: questsData?.todayXpEarned ?? 0 })}
-                </p>
-              </div>
-              <p className="text-sm text-green-600 dark:text-green-300">
-                {t("Quests.comeBackTomorrow")}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        // Quest Form State
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("Quests.todaysChallenge")}</CardTitle>
-            <CardDescription>
-              {t("Quests.completeQuestsTips")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {formQuestions.length > 0 ? (
-              <DynamicFormRenderer
-                questions={formQuestions}
-                onSubmit={handleSubmit}
-                isSubmitting={isSubmitting || submitMutation.isPending}
-              />
-            ) : (
-              <p className="text-gray-600 dark:text-gray-400">
-                {t("Quests.noQuestsAvailable")}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
+                <div className="grid gap-3 md:grid-cols-2">
+                  {quests.map((quest) => {
+                    const isCompleted = quest.isCompleted;
+                    return (
+                      <motion.button
+                        key={quest.id}
+                        type="button"
+                        whileTap={{ scale: 0.95 }}
+                        disabled={isCompleted || isSubmitting || completeQuestMutation.isPending}
+                        onClick={() => handleCompleteQuest(quest.id)}
+                        className={`text-left rounded-xl border px-4 py-3 transition-colors ${
+                          isCompleted
+                            ? "border-emerald-200 bg-emerald-50/70 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/60"
+                            : "border-gray-200 bg-card hover:border-amber-300 hover:bg-amber-50/60 dark:border-gray-800 dark:bg-card dark:hover:border-amber-600/60 dark:hover:bg-amber-900/10"
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          {/* Icon */}
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-lg dark:bg-amber-900/40">
+                            <span>{quest.icon || "⭐"}</span>
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="font-semibold truncate">{quest.title}</p>
+                              <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                                +{quest.xpReward} XP
+                              </span>
+                            </div>
+                            {quest.description && (
+                              <p className="line-clamp-2 text-xs text-muted-foreground">
+                                {quest.description}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Status Circle */}
+                          <div className="shrink-0">
+                            {isCompleted ? (
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white">
+                                <Check className="h-4 w-4" />
+                              </div>
+                            ) : (
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-300 bg-white text-amber-500 dark:border-amber-700 dark:bg-amber-950/40">
+                                <Circle className="h-4 w-4" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
+
+        {groupedQuests && Object.values(groupedQuests).every((qs) => !qs?.length) && (
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground">
+              {t("Quests.noQuestsAvailable")}
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Level Up Modal */}
       <LevelUpModal
@@ -222,6 +230,13 @@ export default function QuestsPage() {
         earnedXp={levelUpData.earnedXp}
         newTotalXp={levelUpData.newTotalXp}
         onClose={() => setShowLevelUp(false)}
+      />
+
+      {/* Achievement Unlocked Modal */}
+      <AchievementUnlockedModal
+        isOpen={showAchievements}
+        achievements={unlockedAchievements}
+        onClose={() => setShowAchievements(false)}
       />
     </div>
   );

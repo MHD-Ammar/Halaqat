@@ -9,20 +9,39 @@
  * - Atomic database transactions for data integrity
  */
 
-import { FormQuestion } from "@halaqat/types";
+import { FormQuestion, QuestCategory , QuestFrequency } from "@halaqat/types";
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, Repository } from "typeorm";
+import { DataSource, In, Repository, LessThanOrEqual } from "typeorm";
 
 import { SubmitStudentQuestDto } from "./dto/submit-student-quest.dto";
+import { calculateLevelFromXp } from "../common/constants/leveling-curve";
 import { Campaign } from "../daily-challenge/entities/campaign.entity";
 import { DailySubmission } from "../daily-challenge/entities/daily-submission.entity";
+import { AchievementService } from "../gamification/achievement.service";
+import { Achievement } from "../gamification/entities/achievement.entity";
+import { MilestoneReward, RewardType } from "../gamification/entities/milestone-reward.entity";
+import { StudentMilestone } from "../gamification/entities/student-milestone.entity";
 import { Recitation } from "../progress/entities/recitation.entity";
+import { QuestCompletion } from "../quests/entities/quest-completion.entity";
+import { Quest } from "../quests/entities/quest.entity";
 import { Student } from "../students/entities/student.entity";
+
+export interface QuestWithCompletion {
+  id: string;
+  title: string;
+  description: string | null;
+  category: QuestCategory;
+  frequency: QuestFrequency;
+  xpReward: number;
+  icon: string;
+  isCompleted: boolean;
+}
 
 @Injectable()
 export class StudentPortalService {
@@ -30,8 +49,6 @@ export class StudentPortalService {
    * XP thresholds for leveling.
    * Formula: totalXp / 500 + 1 (e.g., 0-499 XP = Level 1, 500-999 = Level 2, etc.)
    */
-  private readonly XP_PER_LEVEL = 500;
-
   constructor(
     @InjectRepository(Student)
     private studentRepo: Repository<Student>,
@@ -41,8 +58,265 @@ export class StudentPortalService {
     private recitationRepo: Repository<Recitation>,
     @InjectRepository(Campaign)
     private campaignRepo: Repository<Campaign>,
+    @InjectRepository(Quest)
+    private questRepo: Repository<Quest>,
+    @InjectRepository(QuestCompletion)
+    private questCompletionRepo: Repository<QuestCompletion>,
+    @InjectRepository(StudentMilestone)
+    private studentMilestoneRepo: Repository<StudentMilestone>,
     private readonly dataSource: DataSource,
+    private readonly achievementService: AchievementService,
   ) {}
+
+  private async processMilestoneUnlocks(
+    manager: any,
+    studentId: string,
+    newLevel: number,
+  ): Promise<StudentMilestone[]> {
+    const eligibleMilestones = await manager.find(MilestoneReward, {
+      where: { targetLevel: LessThanOrEqual(newLevel) },
+    });
+    if (eligibleMilestones.length === 0) return [];
+
+    const existing = await manager.find(StudentMilestone, {
+      where: { studentId },
+    });
+    const existingIds = new Set(existing.map((sm: StudentMilestone) => sm.milestoneId));
+
+    const missing = eligibleMilestones.filter((m: MilestoneReward) => !existingIds.has(m.id));
+    if (missing.length === 0) return [];
+
+    const newStudentMilestones = missing.map((m: MilestoneReward) =>
+      manager.create(StudentMilestone, {
+        studentId,
+        milestoneId: m.id,
+        isClaimed: false,
+        unlockedAt: new Date(),
+      }),
+    );
+    return manager.save(StudentMilestone, newStudentMilestones);
+  }
+
+  /**
+   * Get all active quests grouped by category with completion status
+   */
+  async getQuests(studentId: string): Promise<Record<QuestCategory, QuestWithCompletion[]>> {
+    const quests = await this.questRepo.find({
+      where: { isActive: true },
+      order: { category: "ASC", title: "ASC" },
+    });
+
+    if (quests.length === 0) {
+      return this.emptyGroupedQuests();
+    }
+
+    const { todayStart, todayEnd, weekStart, weekEnd } = this.getDateBounds();
+
+    const questIds = quests.map((q) => q.id);
+    const completions = await this.questCompletionRepo.find({
+      where: {
+        studentId,
+        questId: In(questIds),
+      },
+    });
+
+    // Filter completions by time window per quest
+    const completionSet = new Set<string>();
+    for (const q of quests) {
+      const qCompletions = completions.filter((c) => c.questId === q.id);
+      const isCompleted = this.isQuestCompletedInWindow(
+        q,
+        qCompletions,
+        todayStart,
+        todayEnd,
+        weekStart,
+        weekEnd,
+      );
+      if (isCompleted) {
+        completionSet.add(q.id);
+      }
+    }
+
+    const withStatus: QuestWithCompletion[] = quests.map((q) => ({
+      id: q.id,
+      title: q.title,
+      description: q.description,
+      category: q.category,
+      frequency: q.frequency,
+      xpReward: q.xpReward,
+      icon: q.icon,
+      isCompleted: completionSet.has(q.id),
+    }));
+
+    const grouped: Record<string, QuestWithCompletion[]> = {};
+    for (const cat of Object.values(QuestCategory)) {
+      grouped[cat] = withStatus.filter((q) => q.category === cat);
+    }
+    return grouped as Record<QuestCategory, QuestWithCompletion[]>;
+  }
+
+  private emptyGroupedQuests(): Record<QuestCategory, QuestWithCompletion[]> {
+    const empty: Record<string, QuestWithCompletion[]> = {};
+    for (const cat of Object.values(QuestCategory)) {
+      empty[cat] = [];
+    }
+    return empty as Record<QuestCategory, QuestWithCompletion[]>;
+  }
+
+  private getDateBounds(): {
+    todayStart: Date;
+    todayEnd: Date;
+    weekStart: Date;
+    weekEnd: Date;
+  } {
+    const now = new Date();
+    const todayStr = now.toISOString().split("T")[0]!;
+    const todayStart = new Date(`${todayStr}T00:00:00.000Z`);
+    const todayEnd = new Date(`${todayStr}T23:59:59.999Z`);
+
+    const dayOfWeek = now.getUTCDay();
+    const weekStartDate = new Date(now);
+    weekStartDate.setUTCDate(weekStartDate.getUTCDate() - dayOfWeek);
+    weekStartDate.setUTCHours(0, 0, 0, 0);
+    const weekEndDate = new Date(weekStartDate);
+    weekEndDate.setUTCDate(weekEndDate.getUTCDate() + 6);
+    weekEndDate.setUTCHours(23, 59, 59, 999);
+
+    return {
+      todayStart,
+      todayEnd,
+      weekStart: weekStartDate,
+      weekEnd: weekEndDate,
+    };
+  }
+
+  private isQuestCompletedInWindow(
+    quest: Quest,
+    completions: QuestCompletion[],
+    todayStart: Date,
+    todayEnd: Date,
+    weekStart: Date,
+    weekEnd: Date,
+  ): boolean {
+    if (completions.length === 0) return false;
+    for (const c of completions) {
+      const at = new Date(c.completedAt);
+      switch (quest.frequency) {
+        case QuestFrequency.DAILY:
+          if (at >= todayStart && at <= todayEnd) return true;
+          break;
+        case QuestFrequency.WEEKLY:
+          if (at >= weekStart && at <= weekEnd) return true;
+          break;
+        case QuestFrequency.ONETIME:
+          return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Complete a quest for a student
+   */
+  async completeQuest(
+    studentId: string,
+    questId: string,
+  ): Promise<{
+    success: true;
+    earnedXp: number;
+    newTotalXp: number;
+    levelUp: boolean;
+    newLevel: number;
+    unlockedMilestones: StudentMilestone[];
+    newAchievements: Achievement[];
+  }> {
+    const quest = await this.questRepo.findOne({ where: { id: questId } });
+    if (!quest) {
+      throw new NotFoundException("Quest not found");
+    }
+    if (!quest.isActive) {
+      throw new BadRequestException("Quest is not active");
+    }
+
+    const student = await this.studentRepo.findOne({ where: { id: studentId } });
+    if (!student) {
+      throw new NotFoundException("Student not found");
+    }
+
+    const { todayStart, todayEnd, weekStart, weekEnd } = this.getDateBounds();
+
+    const existingCompletions = await this.questCompletionRepo.find({
+      where: { studentId, questId },
+    });
+
+    const alreadyCompleted = this.isQuestCompletedInWindow(
+      quest,
+      existingCompletions,
+      todayStart,
+      todayEnd,
+      weekStart,
+      weekEnd,
+    );
+    if (alreadyCompleted) {
+      throw new ConflictException("Quest already completed for this period");
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const completion = queryRunner.manager.create(QuestCompletion, {
+        studentId,
+        questId,
+        earnedXp: quest.xpReward,
+      });
+      await queryRunner.manager.save(completion);
+
+      const freshStudent = await queryRunner.manager.findOne(Student, {
+        where: { id: studentId },
+        lock: { mode: "pessimistic_write" },
+      });
+      if (!freshStudent) {
+        throw new NotFoundException("Student not found");
+      }
+
+      const oldLevel = freshStudent.currentLevel;
+      freshStudent.totalXp += quest.xpReward;
+      freshStudent.currentLevel = this.calculateLevel(freshStudent.totalXp);
+      const levelUp = freshStudent.currentLevel > oldLevel;
+
+      let unlockedMilestones: StudentMilestone[] = [];
+      if (levelUp) {
+        unlockedMilestones = await this.processMilestoneUnlocks(
+          queryRunner.manager,
+          studentId,
+          freshStudent.currentLevel,
+        );
+      }
+
+      // Evaluate achievements dynamically
+      const newAchievements = await this.achievementService.evaluateAchievements(studentId, queryRunner.manager);
+
+      await queryRunner.manager.save(freshStudent);
+      await queryRunner.commitTransaction();
+
+      return {
+        success: true,
+        earnedXp: quest.xpReward,
+        newTotalXp: freshStudent.totalXp,
+        levelUp,
+        newLevel: freshStudent.currentLevel,
+        unlockedMilestones,
+        newAchievements,
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
 
   /**
    * Get today's quest status for a student
@@ -313,6 +587,16 @@ export class StudentPortalService {
       const levelUp = newLevel > oldLevel;
       freshStudent.currentLevel = newLevel;
 
+      // Unlock milestones if leveled up
+      let unlockedMilestones: StudentMilestone[] = [];
+      if (levelUp) {
+        unlockedMilestones = await this.processMilestoneUnlocks(
+          queryRunner.manager,
+          studentId,
+          freshStudent.currentLevel,
+        );
+      }
+
       // Update streak
       freshStudent.currentStreak = newStreak;
 
@@ -337,6 +621,7 @@ export class StudentPortalService {
         newLevel,
         currentStreak: newStreak,
         maxStreak: freshStudent.maxStreak,
+        unlockedMilestones,
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -434,7 +719,77 @@ export class StudentPortalService {
    * - etc.
    */
   private calculateLevel(totalXp: number): number {
-    return Math.floor(totalXp / this.XP_PER_LEVEL) + 1;
+    return calculateLevelFromXp(totalXp);
+  }
+
+  /**
+   * Get all milestones for a student
+   */
+  async getStudentMilestones(studentId: string) {
+    return this.studentMilestoneRepo.find({
+      where: { studentId },
+      relations: ["milestone"],
+      order: { milestone: { targetLevel: "ASC" } },
+    });
+  }
+
+  /**
+   * Get all achievements and unlock status for a student
+   */
+  async getAchievements(studentId: string) {
+    return this.achievementService.getStudentAchievements(studentId);
+  }
+
+  /**
+   * Claim a milestone reward (The Loot Box Claiming Logic).
+   */
+  async claimMilestone(studentId: string, milestoneId: string) {
+    const studentMilestone = await this.studentMilestoneRepo.findOne({
+      where: { id: milestoneId, studentId },
+      relations: ["milestone"],
+    });
+
+    if (!studentMilestone) {
+      throw new NotFoundException("Milestone not found or not unlocked yet");
+    }
+
+    if (studentMilestone.isClaimed) {
+      throw new BadRequestException("Milestone already claimed");
+    }
+
+    studentMilestone.isClaimed = true;
+
+    let rewardGiven = false;
+    let newTotalXp: number | undefined;
+
+    if (studentMilestone.milestone.rewardType === RewardType.BONUS_XP) {
+      const bonusXp = parseInt(studentMilestone.milestone.rewardValue, 10);
+      if (!isNaN(bonusXp)) {
+        const student = await this.studentRepo.findOne({ where: { id: studentId } });
+        if (student) {
+          student.totalXp += bonusXp;
+          student.currentLevel = this.calculateLevel(student.totalXp);
+          await this.studentRepo.save(student);
+          newTotalXp = student.totalXp;
+          rewardGiven = true;
+        }
+      }
+    } else {
+      // Logic for title, avatar frame goes here
+      rewardGiven = true;
+    }
+
+    await this.studentMilestoneRepo.save(studentMilestone);
+
+    return {
+      success: true,
+      rewardDetails: {
+        type: studentMilestone.milestone.rewardType,
+        value: studentMilestone.milestone.rewardValue,
+        applied: rewardGiven,
+      },
+      newTotalXp,
+    };
   }
 
   /**

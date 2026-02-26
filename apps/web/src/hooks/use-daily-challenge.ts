@@ -36,6 +36,11 @@ export interface ChallengeLeaderboardEntry {
   streak: number;
 }
 
+export interface SubmitChallengeResponse {
+  xpEarned: number;
+  streak: number;
+}
+
 export interface CircleAverage {
   circleId: string;
   circleName: string;
@@ -145,7 +150,7 @@ export function useDailyChallengeSubmit() {
 
   return useMutation({
     mutationFn: async (dto: SubmitChallengeDto) => {
-      const { data } = await api.post("/daily-challenge/submit", dto);
+      const { data } = await api.post<SubmitChallengeResponse>("/daily-challenge/submit", dto);
       return data;
     },
     onSuccess: (_, variables) => {

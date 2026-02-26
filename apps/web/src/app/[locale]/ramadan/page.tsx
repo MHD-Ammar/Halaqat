@@ -22,6 +22,7 @@ import {
   useDailyChallengeStudentInfo,
   useDailyChallengeStudents,
   useDailyChallengeSubmit,
+  type SubmitChallengeResponse,
 } from "@/hooks/use-daily-challenge";
 import { Link } from "@/i18n/routing";
 
@@ -60,7 +61,7 @@ function RamadanContent() {
   );
   const [circleId, setCircleId] = useState<string | null>(null);
   const [studentId, setStudentId] = useState<string | null>(null);
-  const [submissionResult, setSubmissionResult] = useState<any>(null);
+  const [submissionResult, setSubmissionResult] = useState<SubmitChallengeResponse | null>(null);
 
   // Queries
   const { data: circles, isLoading: loadingCircles } =
@@ -82,7 +83,7 @@ function RamadanContent() {
     setStep("FORM");
   };
 
-  const handleSubmit = (data: Record<string, any>) => {
+  const handleSubmit = (data: Record<string, unknown>) => {
     if (!studentId) return;
 
     const localDate = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format (local time)
@@ -99,7 +100,7 @@ function RamadanContent() {
           setSubmissionResult(result);
           setStep("SUCCESS");
         },
-        onError: (err: any) => {
+        onError: (err: unknown) => {
           // alert(err.response?.data?.message || "Something went wrong");
           console.error(err);
         },

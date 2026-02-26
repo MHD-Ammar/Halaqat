@@ -13,6 +13,7 @@ import {
   Get,
   Post,
   Body,
+  Param,
   UseGuards,
   UseInterceptors,
   ClassSerializerInterceptor,
@@ -39,6 +40,48 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 @UseInterceptors(ClassSerializerInterceptor)
 export class StudentPortalController {
   constructor(private readonly studentPortalService: StudentPortalService) {}
+
+  /**
+   * GET /student-portal/quests
+   *
+   * Fetch all active quests grouped by category, with completion status
+   * for the current student and time window (today for DAILY, this week for WEEKLY, ever for ONETIME).
+   */
+  @Get("quests")
+  @ApiOperation({
+    summary: "Get quests grouped by category",
+    description:
+      "Returns all active quests with completion status for the current student.",
+  })
+  @ApiResponse({ status: 200, description: "Grouped quests returned" })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 403, description: "Forbidden - STUDENT role required" })
+  async getQuests(@CurrentUser() user: { id: string; studentId: string }) {
+    return this.studentPortalService.getQuests(user.studentId);
+  }
+
+  /**
+   * POST /student-portal/quests/:questId/complete
+   *
+   * Mark a quest as completed. Awards XP and updates level atomically.
+   */
+  @Post("quests/:questId/complete")
+  @ApiOperation({
+    summary: "Complete a quest",
+    description:
+      "Mark a quest as completed. Awards XP and updates level. Throws Conflict if already completed for the current period.",
+  })
+  @ApiResponse({ status: 201, description: "Quest completed successfully" })
+  @ApiResponse({ status: 404, description: "Quest not found" })
+  @ApiResponse({ status: 409, description: "Already completed for this period" })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 403, description: "Forbidden - STUDENT role required" })
+  async completeQuest(
+    @CurrentUser() user: { id: string; studentId: string },
+    @Param("questId") questId: string,
+  ) {
+    return this.studentPortalService.completeQuest(user.studentId, questId);
+  }
 
   /**
    * GET /student-portal/quests/today
@@ -114,6 +157,71 @@ export class StudentPortalController {
     @Body() dto: SubmitStudentQuestDto,
   ) {
     return this.studentPortalService.submitQuest(user.studentId, dto);
+  }
+
+  /**
+   * GET /student-portal/milestones
+   *
+   * Fetch all milestones for the current student
+   */
+  @Get("milestones")
+  @ApiOperation({
+    summary: "Get student milestones",
+    description: "Returns all unlocked and claimed milestones for the student.",
+  })
+  @ApiResponse({ status: 200, description: "Milestones returned" })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 403, description: "Forbidden" })
+  async getMilestones(@CurrentUser() user: { id: string; studentId: string }) {
+    return this.studentPortalService.getStudentMilestones(user.studentId);
+  }
+
+  /**
+   * GET /student-portal/achievements
+   *
+   * Fetch all achievements for the current student
+   */
+  @Get("achievements")
+  @ApiOperation({
+    summary: "Get student achievements",
+    description: "Returns all achievements, with unlock status and dates for the student.",
+  })
+  @ApiResponse({ status: 200, description: "Achievements returned" })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 403, description: "Forbidden" })
+  async getAchievements(@CurrentUser() user: { id: string; studentId: string }) {
+    return this.studentPortalService.getAchievements(user.studentId);
+  }
+
+  /**
+   * POST /student-portal/milestones/:id/claim
+   *
+   * Claim an unlocked milestone reward
+   *
+   * Response: {
+   *   success: true,
+   *   rewardDetails: { type, value, applied },
+   *   newTotalXp?: number
+   * }
+   */
+  @Post("milestones/:id/claim")
+  @ApiOperation({
+    summary: "Claim a milestone reward",
+    description: "Marks a StudentMilestone as claimed and applies the reward (e.g. bonus XP).",
+  })
+  @ApiResponse({
+    status: 201,
+    description: "Milestone claimed successfully",
+  })
+  @ApiResponse({ status: 400, description: "Already claimed" })
+  @ApiResponse({ status: 404, description: "Milestone not found or unlocked" })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 403, description: "Forbidden" })
+  async claimMilestone(
+    @CurrentUser() user: { id: string; studentId: string },
+    @Param("id") milestoneId: string,
+  ) {
+    return this.studentPortalService.claimMilestone(user.studentId, milestoneId);
   }
 
   /**

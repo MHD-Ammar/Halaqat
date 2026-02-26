@@ -366,7 +366,8 @@
     "logout": "Logout",
     "xpProgress": "XP Progress",
     "keepItUp": "Keep up the great work!",
-    "startTodayQuests": "Start Today's Quests 🚀"
+    "startTodayQuests": "Start Today's Quests 🚀",
+    "trophyRoom": "Trophy Room"
   },
   "Exams": {
     "title": "Exams",
@@ -711,8 +712,16 @@
     "streak": "Streak",
     "maxStreak": "Max Streak"
   },
+  "QuestCategory": {
+    "PRAYER": "Prayers",
+    "QURAN": "Quran",
+    "ADHKAR": "Adhkar",
+    "BEHAVIOR": "Behavior",
+    "GENERAL": "General"
+  },
   "Quests": {
     "dailyQuests": "Daily Quests",
+    "habitTracker": "Habit Tracker",
     "submitTodaysQuests": "Complete your daily quests to earn XP and boost your streak!",
     "todaysChallenge": "Today's Challenge",
     "completeQuestsTips": "Answer all questions to complete your daily quests",

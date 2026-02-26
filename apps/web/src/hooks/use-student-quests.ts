@@ -3,12 +3,13 @@
 /**
  * useStudentQuests Hook
  *
- * React Query hook for managing student daily quests:
- * - Fetch today's quest status
- * - Submit daily quests with gamification
- * - Handle level-up state
+ * React Query hook for managing student quests:
+ * - Granular quests (useStudentQuests): fetch grouped quests with completion status
+ * - Complete individual quest (useCompleteQuest): POST complete, invalidates quests & profile
+ * - Legacy: useTodayQuests, useSubmitStudentQuests (campaign form submission)
  */
 
+import type { QuestCategory } from "@halaqat/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
@@ -16,6 +17,33 @@ import { api } from "@/lib/api";
 import { useUserProfile } from "./use-user-profile";
 
 // --- Types ---
+
+export interface QuestWithCompletion {
+  id: string;
+  title: string;
+  description: string | null;
+  category: QuestCategory;
+  frequency: string;
+  xpReward: number;
+  icon: string;
+  isCompleted: boolean;
+}
+
+export type GroupedQuestsResponse = Record<QuestCategory, QuestWithCompletion[]>;
+
+export interface CompleteQuestResponse {
+  success: true;
+  earnedXp: number;
+  newTotalXp: number;
+  levelUp: boolean;
+  newLevel: number;
+  newAchievements?: {
+    id: string;
+    title: string;
+    description: string;
+    badgeIcon: string;
+  }[];
+}
 
 export interface TodayQuestsResponse {
   hasSubmittedToday: boolean;
@@ -45,6 +73,7 @@ export interface SubmitQuestResponse {
 
 export const studentQuestKeys = {
   all: ["student-quests"] as const,
+  quests: () => [...studentQuestKeys.all, "grouped"] as const,
   today: (campaignKey: string = "ramadan") =>
     [...studentQuestKeys.all, "today", campaignKey] as const,
   submit: ["student-quests-submit"] as const,
@@ -53,7 +82,51 @@ export const studentQuestKeys = {
 // --- Hooks ---
 
 /**
- * Fetch today's quest status and campaign config
+ * Fetch all quests grouped by category with completion status
+ */
+export function useStudentQuests() {
+  const { data: userProfile, isLoading: isProfileLoading } = useUserProfile();
+
+  const query = useQuery({
+    queryKey: studentQuestKeys.quests(),
+    queryFn: async () => {
+      const response = await api.get<GroupedQuestsResponse>(
+        "/student-portal/quests",
+      );
+      return response.data;
+    },
+    enabled: !!userProfile && userProfile.role === "STUDENT",
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+
+  return {
+    ...query,
+    isLoading: isProfileLoading || query.isLoading,
+  };
+}
+
+/**
+ * Complete a quest mutation. On success invalidates useStudentQuests and useUserProfile.
+ */
+export function useCompleteQuest() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (questId: string) => {
+      const response = await api.post<CompleteQuestResponse>(
+        `/student-portal/quests/${questId}/complete`,
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: studentQuestKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["user", "profile"] });
+    },
+  });
+}
+
+/**
+ * Fetch today's quest status and campaign config (legacy)
  */
 export function useTodayQuests(campaignKey: string = "ramadan") {
   const { data: userProfile, isLoading: isProfileLoading } = useUserProfile();
@@ -93,15 +166,15 @@ export function useSubmitStudentQuests() {
       );
       return response.data;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data) => {
       // Invalidate quest status
       queryClient.invalidateQueries({
         queryKey: studentQuestKeys.all,
       });
 
-      // Invalidate student profile to update HUD
+      // Invalidate user profile (HUD) - students get profile from auth
       queryClient.invalidateQueries({
-        queryKey: ["student-profile"],
+        queryKey: ["user", "profile"],
       });
 
       // Invalidate daily challenge student info

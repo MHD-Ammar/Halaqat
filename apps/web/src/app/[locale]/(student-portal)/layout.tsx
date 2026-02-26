@@ -8,7 +8,7 @@
 "use client";
 
 import Cookies from "js-cookie";
-import { Flame, LogOut, Rocket, Shield, Star } from "lucide-react";
+import { Flame, LogOut, Rocket, Shield, Star, Trophy } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ReactNode, useCallback, useEffect, useState } from "react";
 
@@ -16,7 +16,7 @@ import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUserProfile } from "@/hooks/use-user-profile";
-import { useRouter } from "@/i18n/routing";
+import { Link, useRouter } from "@/i18n/routing";
 import { TOKEN_COOKIE_NAME } from "@/lib/api";
 
 interface StudentProfile {
@@ -126,7 +126,7 @@ export default function StudentPortalLayout({
 
             {/* Level Badge */}
             <div
-              className="flex items-center gap-1.5 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20"
+              className="hidden sm:flex items-center gap-1.5 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20"
               title={t("level")}
             >
               <Shield className="w-4 h-4 text-indigo-500" />
@@ -134,6 +134,15 @@ export default function StudentPortalLayout({
                 {t("levelBadge", { level: studentProfile?.currentLevel ?? 1 })}
               </span>
             </div>
+
+            {/* Trophy Room Link */}
+            <Link
+              href="/student-portal/achievements"
+              className="flex items-center gap-1.5 p-2 rounded-full hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+              title={t("trophyRoom") || "غرفة الجوائز"}
+            >
+              <Trophy className="w-5 h-5 text-yellow-500 hover:scale-110 transition-transform" />
+            </Link>
 
             {/* Logout */}
             <Button
