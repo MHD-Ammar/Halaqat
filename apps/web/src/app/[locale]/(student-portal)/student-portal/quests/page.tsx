@@ -69,7 +69,7 @@ export default function QuestsPage() {
 
       // Show achievements modal if applicable
       if (result.newAchievements && result.newAchievements.length > 0) {
-        setUnlockedAchievements(result.newAchievements);
+        setUnlockedAchievements(result.newAchievements as Achievement[]);
         setShowAchievements(true);
       }
     } catch (error: unknown) {

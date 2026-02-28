@@ -54,7 +54,151 @@
     "usersManagement": "Users",
     "settings": "Settings",
     "challenges": "Challenges",
-    "campaigns": "Campaigns"
+    "campaigns": "Campaigns",
+    "gamification": "Gamification Hub"
+  },
+  "GamificationHub": {
+    "title": "Gamification Hub",
+    "subtitle": "Manage quests, milestones, and achievements",
+    "tabs": {
+      "quests": "Quests",
+      "milestones": "Milestones",
+      "achievements": "Achievements"
+    },
+    "quests": {
+      "title": "Quests",
+      "createBtn": "Create Quest",
+      "createTitle": "Create Quest",
+      "editTitle": "Edit Quest",
+      "emptyState": {
+        "title": "No quests found",
+        "description": "Create a quest to get started"
+      },
+      "form": {
+        "title": "Title",
+        "titlePlaceholder": "e.g. Read 1 Page of Quran",
+        "description": "Description (Optional)",
+        "descPlaceholder": "Detailed description...",
+        "category": "Category",
+        "selectCategory": "Select a category",
+        "frequency": "Frequency",
+        "selectFrequency": "Select frequency",
+        "xpReward": "XP Reward",
+        "icon": "Icon (Emoji)",
+        "activeStatus": "Active Status",
+        "activeDesc": "Students can only see active quests.",
+        "cancel": "Cancel",
+        "create": "Create",
+        "save": "Save Changes"
+      },
+      "columns": {
+        "icon": "Icon",
+        "title": "Title",
+        "category": "Category",
+        "frequency": "Frequency",
+        "xp": "XP",
+        "status": "Status",
+        "active": "Active",
+        "inactive": "Inactive",
+        "actions": "Actions"
+      },
+      "delete": {
+        "title": "Delete Quest",
+        "description": "Are you sure you want to delete this quest? This cannot be undone."
+      },
+      "toast": {
+        "created": "Quest created successfully",
+        "updated": "Quest updated successfully",
+        "deleted": "Quest deleted successfully",
+        "operationFailed": "Operation failed",
+        "deleteFailed": "Delete failed"
+      }
+    },
+    "milestones": {
+      "title": "Milestones",
+      "createBtn": "Create Milestone",
+      "createTitle": "Create Milestone",
+      "editTitle": "Edit Milestone",
+      "emptyState": {
+        "title": "No milestones found",
+        "description": "Create a milestone reward to get started"
+      },
+      "levelBadge": "Level {level}",
+      "form": {
+        "targetLevel": "Target Level",
+        "title": "Title",
+        "titlePlaceholder": "e.g. Bronze Pioneer",
+        "rewardType": "Reward Type",
+        "selectType": "Select type",
+        "rewardValue": "Reward Value / Link",
+        "valuePlaceholder": "e.g. 500 or image_url.png",
+        "cancel": "Cancel",
+        "create": "Create",
+        "save": "Save Changes"
+      },
+      "columns": {
+        "level": "Lvl",
+        "title": "Title",
+        "rewardType": "Reward Type",
+        "value": "Value / Details",
+        "actions": "Actions"
+      },
+      "delete": {
+        "title": "Delete Milestone",
+        "description": "Are you sure you want to delete this milestone? This cannot be undone."
+      },
+      "toast": {
+        "created": "Milestone created successfully",
+        "updated": "Milestone updated successfully",
+        "deleted": "Milestone deleted successfully",
+        "operationFailed": "Operation failed",
+        "deleteFailed": "Delete failed"
+      }
+    },
+    "achievements": {
+      "title": "Achievements",
+      "createBtn": "Create Achievement",
+      "createTitle": "Create Achievement",
+      "editTitle": "Edit Achievement",
+      "emptyState": {
+        "title": "No achievements found",
+        "description": "Create an achievement to gamify the platform"
+      },
+      "form": {
+        "title": "Title",
+        "titlePlaceholder": "e.g. 7-Day Streak Master",
+        "description": "Description",
+        "descPlaceholder": "Awarded for logging in 7 days in a row",
+        "icon": "Icon (Emoji/URL)",
+        "criteriaType": "Criteria Type",
+        "selectType": "Select type",
+        "goalTarget": "Goal Target",
+        "goalTargetDesc": "E.g. 7 for '7 days streak'",
+        "questCategoryFocus": "Quest Category Focus",
+        "selectCategory": "Select Category",
+        "cancel": "Cancel",
+        "create": "Create",
+        "save": "Save Changes"
+      },
+      "columns": {
+        "icon": "Icon",
+        "title": "Title",
+        "criteria": "Criteria",
+        "target": "Target",
+        "actions": "Actions"
+      },
+      "delete": {
+        "title": "Delete Achievement",
+        "description": "Are you sure you want to delete this achievement? This could affect students who have already unlocked it."
+      },
+      "toast": {
+        "created": "Achievement created successfully",
+        "updated": "Achievement updated successfully",
+        "deleted": "Achievement deleted successfully",
+        "operationFailed": "Operation failed",
+        "deleteFailed": "Delete failed"
+      }
+    }
   },
   "Auth": {
     "welcomeBack": "Welcome back",

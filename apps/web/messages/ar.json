@@ -54,7 +54,151 @@
     "settings": "الإعدادات",
     "myStudents": "طلابي",
     "challenges": "التحديات",
-    "campaigns": "الحملات"
+    "campaigns": "الحملات",
+    "gamification": "مركز التحفيز"
+  },
+  "GamificationHub": {
+    "title": "مركز التحفيز",
+    "subtitle": "إدارة المهام والمحطات والأوسمة",
+    "tabs": {
+      "quests": "المهام",
+      "milestones": "المحطات والجوائز",
+      "achievements": "الأوسمة"
+    },
+    "quests": {
+      "title": "المهام",
+      "createBtn": "إنشاء مهمة",
+      "createTitle": "إنشاء مهمة جديدة",
+      "editTitle": "تعديل المهمة",
+      "emptyState": {
+        "title": "لا توجد مهام",
+        "description": "أنشئ مهمة للبدء"
+      },
+      "form": {
+        "title": "العنوان",
+        "titlePlaceholder": "مثال: قراءة صفحة من القرآن",
+        "description": "الوصف (اختياري)",
+        "descPlaceholder": "وصف مفصل...",
+        "category": "الفئة",
+        "selectCategory": "اختر فئة",
+        "frequency": "التكرار",
+        "selectFrequency": "اختر التكرار",
+        "xpReward": "المكافأة (XP)",
+        "icon": "الرمز (إيموجي)",
+        "activeStatus": "الحالة",
+        "activeDesc": "الطلاب يمكنهم رؤية المهام النشطة فقط.",
+        "cancel": "إلغاء",
+        "create": "إنشاء",
+        "save": "حفظ التغييرات"
+      },
+      "columns": {
+        "icon": "الرمز",
+        "title": "العنوان",
+        "category": "الفئة",
+        "frequency": "التكرار",
+        "xp": "XP",
+        "status": "الحالة",
+        "active": "نشط",
+        "inactive": "غير نشط",
+        "actions": "الإجراءات"
+      },
+      "delete": {
+        "title": "حذف المهمة",
+        "description": "هل أنت متأكد من حذف هذه المهمة؟ لا يمكن التراجع عن هذا الإجراء."
+      },
+      "toast": {
+        "created": "تم إنشاء المهمة بنجاح",
+        "updated": "تم تحديث المهمة بنجاح",
+        "deleted": "تم حذف المهمة بنجاح",
+        "operationFailed": "فشلت العملية",
+        "deleteFailed": "فشل الحذف"
+      }
+    },
+    "milestones": {
+      "title": "المحطات والجوائز",
+      "createBtn": "إنشاء محطة",
+      "createTitle": "إنشاء محطة جديدة",
+      "editTitle": "تعديل المحطة",
+      "emptyState": {
+        "title": "لا توجد محطات",
+        "description": "أنشئ محطة للبدء"
+      },
+      "levelBadge": "مستوى {level}",
+      "form": {
+        "targetLevel": "المستوى المستهدف",
+        "title": "العنوان",
+        "titlePlaceholder": "مثال: رائد برونزي",
+        "rewardType": "نوع الجائزة",
+        "selectType": "اختر النوع",
+        "rewardValue": "قيمة الجائزة / رابط",
+        "valuePlaceholder": "مثال: 500 أو image_url.png",
+        "cancel": "إلغاء",
+        "create": "إنشاء",
+        "save": "حفظ التغييرات"
+      },
+      "columns": {
+        "level": "المستوى",
+        "title": "العنوان",
+        "rewardType": "نوع الجائزة",
+        "value": "القيمة / التفاصيل",
+        "actions": "الإجراءات"
+      },
+      "delete": {
+        "title": "حذف المحطة",
+        "description": "هل أنت متأكد من حذف هذه المحطة؟ لا يمكن التراجع عن هذا الإجراء."
+      },
+      "toast": {
+        "created": "تم إنشاء المحطة بنجاح",
+        "updated": "تم تحديث المحطة بنجاح",
+        "deleted": "تم حذف المحطة بنجاح",
+        "operationFailed": "فشلت العملية",
+        "deleteFailed": "فشل الحذف"
+      }
+    },
+    "achievements": {
+      "title": "الأوسمة",
+      "createBtn": "إنشاء وسام",
+      "createTitle": "إنشاء وسام جديد",
+      "editTitle": "تعديل الوسام",
+      "emptyState": {
+        "title": "لا توجد أوسمة",
+        "description": "أنشئ وساماً لتحفيز الطلاب"
+      },
+      "form": {
+        "title": "العنوان",
+        "titlePlaceholder": "مثال: بطل الـ 7 أيام",
+        "description": "الوصف",
+        "descPlaceholder": "تمنح عند تسجيل الدخول 7 أيام متتالية",
+        "icon": "الرمز (إيموجي/رابط)",
+        "criteriaType": "نوع المعيار",
+        "selectType": "اختر النوع",
+        "goalTarget": "الهدف",
+        "goalTargetDesc": "مثال: 7 لـ 'سلسلة 7 أيام'",
+        "questCategoryFocus": "فئة المهمة",
+        "selectCategory": "اختر الفئة",
+        "cancel": "إلغاء",
+        "create": "إنشاء",
+        "save": "حفظ التغييرات"
+      },
+      "columns": {
+        "icon": "الرمز",
+        "title": "العنوان",
+        "criteria": "المعيار",
+        "target": "الهدف",
+        "actions": "الإجراءات"
+      },
+      "delete": {
+        "title": "حذف الوسام",
+        "description": "هل أنت متأكد من حذف هذا الوسام؟ قد يؤثر ذلك على الطلاب الذين حصلوا عليه بالفعل."
+      },
+      "toast": {
+        "created": "تم إنشاء الوسام بنجاح",
+        "updated": "تم تحديث الوسام بنجاح",
+        "deleted": "تم حذف الوسام بنجاح",
+        "operationFailed": "فشلت العملية",
+        "deleteFailed": "فشل الحذف"
+      }
+    }
   },
   "Auth": {
     "welcomeBack": "مرحباً بعودتك",

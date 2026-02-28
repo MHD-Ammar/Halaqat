@@ -18,6 +18,7 @@ import { envValidationSchema, typeOrmConfig } from "./config";
 import { CurriculumModule } from "./curriculum/curriculum.module";
 import { DailyChallengeModule } from "./daily-challenge/daily-challenge.module";
 import { ExamsModule } from "./exams/exams.module";
+import { GamificationModule } from "./gamification/gamification.module";
 import { MosquesModule } from "./mosques/mosques.module";
 import { PointsModule } from "./points/points.module";
 import { ProgressModule } from "./progress/progress.module";
@@ -57,6 +58,7 @@ import { UsersModule } from "./users/users.module";
     ExamsModule,
     MosquesModule,
     DailyChallengeModule,
+    GamificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

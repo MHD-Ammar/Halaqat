@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
    * Standalone mode is enabled via environment variable for production/CI/Linux environments
    * to avoid EPERM symlink errors on Windows dev machines.
    */
-  output: "standalone",
+  output: process.env.STANDALONE_OUTPUT === "true" ? "standalone" : undefined,
 
   // Allow tracing files outside the app directory (monorepo support)
   outputFileTracingRoot: path.join(__dirname, "../../"),

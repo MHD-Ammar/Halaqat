@@ -42,6 +42,11 @@ export interface CompleteQuestResponse {
     title: string;
     description: string;
     badgeIcon: string;
+    criteriaType?: string;
+    criteriaTarget?: number;
+    criteriaCategory?: QuestCategory | null;
+    isUnlocked?: boolean;
+    unlockedAt?: string | null;
   }[];
 }
 
