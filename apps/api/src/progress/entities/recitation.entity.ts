@@ -96,4 +96,18 @@ export class Recitation extends BaseEntity {
    */
   @Column({ name: "surah_id", type: "int", nullable: true })
   surahId!: number | null;
+
+  // ── Gamification XP ──────────────────────────────────────────
+
+  /**
+   * The amount of XP awarded for this specific recitation
+   */
+  @Column({ name: "xp_awarded", type: "int", default: 0 })
+  xpAwarded!: number;
+
+  /**
+   * Whether the student has seen the "Surprise Loot" XP reward notification
+   */
+  @Column({ name: "reward_seen", type: "boolean", default: false })
+  rewardSeen!: boolean;
 }

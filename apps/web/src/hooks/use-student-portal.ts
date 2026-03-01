@@ -80,6 +80,12 @@ export interface DashboardData {
   currentStreak: number;
   totalXp: number;
   currentLevel: number;
+  hasUnseenRecitationReward: boolean;
+  unseenRecitationReward: {
+    id: string;
+    quality: string;
+    xpAwarded: number;
+  } | null;
 }
 
 export interface ClaimLoginBonusResponse {
@@ -125,6 +131,25 @@ export function useClaimLoginBonus() {
         queryClient.invalidateQueries({ queryKey: ["student-portal-dashboard"] });
         queryClient.invalidateQueries({ queryKey: ["student-portal"] });
       }
+    },
+  });
+}
+
+/**
+ * Mark a recitation reward as seen
+ */
+export function useMarkRecitationRewardSeen() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (recitationId: string) => {
+      const response = await api.patch(
+        `/student-portal/recitation-reward/${recitationId}/seen`,
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["student-portal-dashboard"] });
     },
   });
 }

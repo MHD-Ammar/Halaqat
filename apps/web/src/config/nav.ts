@@ -69,6 +69,13 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ["TEACHER"],
   },
   {
+    titleKey: "circleQuests",
+    href: "/my-circle/quests",
+    icon: Gamepad2,
+    description: "Custom quests for your circle",
+    roles: ["TEACHER"],
+  },
+  {
     titleKey: "myStudents",
     href: "/my-students",
     icon: Users,

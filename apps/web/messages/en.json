@@ -55,7 +55,8 @@
     "settings": "Settings",
     "challenges": "Challenges",
     "campaigns": "Campaigns",
-    "gamification": "Gamification Hub"
+    "gamification": "Gamification Hub",
+    "circleQuests": "Circle Quests"
   },
   "GamificationHub": {
     "title": "Gamification Hub",
@@ -491,6 +492,16 @@
   "StudentPortal": {
     "title": "My Portal",
     "subtitle": "View your progress and information",
+    "leaderboard": "Leaderboard",
+    "leaderboardDesc": "Compete with your friends and climb to the top!",
+    "myCircle": "My Circle",
+    "myLeague": "Champions League",
+    "globalRank": "Global Rank",
+    "rank": "Rank",
+    "yourRank": "Your Rank",
+    "noCircleAssigned": "You are not assigned to a circle yet, or your circle has no students.",
+    "noStudentsInLeague": "There are no students in this league yet.",
+    "noLeaderboardData": "No leaderboard data available for the mosque yet.",
     "progress": "Progress",
     "myQr": "My QR",
     "pagesMemorized": "Pages Memorized",
@@ -500,7 +511,7 @@
     "scanQrDescription": "Show this QR code for quick attendance",
     "noData": "No data available yet",
     "welcomeHero": "Welcome to your adventure, hero! 🚀",
-    "welcomeSubtitle": "Keep going and reach new levels!",
+    "welcomeSubtitle": "Keep your streak going and earn rewards",
     "streak": "Streak",
     "bestStreak": "Best Streak",
     "streakDays": "{count} Days",
@@ -944,6 +955,49 @@
     "mosque": "Mosque",
     "home": "Home",
     "late": "Late/Missed"
+  },
+  "CircleQuests": {
+    "title": "Circle Quests",
+    "createBtn": "Create Quest",
+    "createTitle": "Create Quest",
+    "editTitle": "Edit Quest",
+    "emptyState": {
+      "title": "No circle quests yet",
+      "description": "Create a custom quest for your students"
+    },
+    "form": {
+      "title": "Title",
+      "titlePlaceholder": "e.g. Memorize 1 Page",
+      "description": "Description (Optional)",
+      "descPlaceholder": "Detailed description...",
+      "category": "Category",
+      "selectCategory": "Select a category",
+      "frequency": "Frequency",
+      "selectFrequency": "Select frequency",
+      "xpReward": "XP Reward",
+      "icon": "Icon (Emoji)",
+      "cancel": "Cancel",
+      "create": "Create",
+      "save": "Save Changes"
+    },
+    "columns": {
+      "icon": "Icon",
+      "title": "Title",
+      "category": "Category",
+      "frequency": "Frequency",
+      "xp": "XP",
+      "actions": "Actions"
+    },
+    "delete": {
+      "title": "Delete Quest",
+      "description": "Are you sure you want to delete this quest? This cannot be undone."
+    },
+    "toast": {
+      "created": "Quest created successfully",
+      "updated": "Quest updated successfully",
+      "deleted": "Quest deleted successfully",
+      "operationFailed": "Operation failed",
+      "deleteFailed": "Delete failed"
+    }
   }
 }
-

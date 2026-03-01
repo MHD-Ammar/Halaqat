@@ -17,7 +17,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, In, Repository, LessThanOrEqual } from "typeorm";
+import { DataSource, In, IsNull, Repository, LessThanOrEqual, MoreThan } from "typeorm";
 
 import { SubmitStudentQuestDto } from "./dto/submit-student-quest.dto";
 import { calculateLevelFromXp } from "../common/constants/leveling-curve";
@@ -98,11 +98,32 @@ export class StudentPortalService {
   }
 
   /**
-   * Get all active quests grouped by category with completion status
+   * Get all active quests grouped by category with completion status.
+   * Returns both global quests (circleId IS NULL) and circle-scoped quests
+   * matching the student's circleId.
    */
   async getQuests(studentId: string): Promise<Record<QuestCategory, QuestWithCompletion[]>> {
+    // Fetch student to get their circleId
+    const student = await this.studentRepo.findOne({
+      where: { id: studentId },
+      select: ["id", "circleId"],
+    });
+
+    if (!student) {
+      return this.emptyGroupedQuests();
+    }
+
+    // Build where conditions: global quests + circle-specific quests
+    const whereConditions: Array<Record<string, unknown>> = [
+      { isActive: true, circleId: IsNull() }, // Global quests
+    ];
+
+    if (student.circleId) {
+      whereConditions.push({ isActive: true, circleId: student.circleId });
+    }
+
     const quests = await this.questRepo.find({
-      where: { isActive: true },
+      where: whereConditions,
       order: { category: "ASC", title: "ASC" },
     });
 
@@ -470,6 +491,25 @@ export class StudentPortalService {
       type: r.type,
     }));
 
+    // Find the first unseen recitation reward with XP
+    const unseenRewardRecitation = await this.recitationRepo.findOne({
+      where: { 
+        studentId, 
+        rewardSeen: false,
+        xpAwarded: MoreThan(0),
+      },
+      order: { createdAt: "ASC" },
+    });
+
+    const hasUnseenRecitationReward = !!unseenRewardRecitation;
+    const unseenRecitationReward = unseenRewardRecitation 
+      ? {
+          id: unseenRewardRecitation.id,
+          quality: unseenRewardRecitation.quality,
+          xpAwarded: unseenRewardRecitation.xpAwarded,
+        }
+      : null;
+
     const todayStr = today.toISOString().split("T")[0]!;
     const hasSubmittedToday = streakCalendar[todayStr] ?? false;
 
@@ -480,6 +520,8 @@ export class StudentPortalService {
       currentStreak: student.currentStreak,
       totalXp: student.totalXp,
       currentLevel: student.currentLevel,
+      hasUnseenRecitationReward,
+      unseenRecitationReward,
     };
   }
 
@@ -707,6 +749,24 @@ export class StudentPortalService {
     }
 
     return totalXp;
+  }
+
+  /**
+   * Mark a recitation reward as seen (so the popup doesn't show again)
+   */
+  async markRecitationRewardSeen(studentId: string, recitationId: string) {
+    const recitation = await this.recitationRepo.findOne({
+      where: { id: recitationId, studentId },
+    });
+
+    if (!recitation) {
+      throw new NotFoundException("Recitation not found");
+    }
+
+    recitation.rewardSeen = true;
+    await this.recitationRepo.save(recitation);
+
+    return { success: true };
   }
 
   /**

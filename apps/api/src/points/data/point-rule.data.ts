@@ -60,6 +60,44 @@ export const POINT_RULE_DATA: PointRuleSeedData[] = [
     isVisibleToTeacher: false 
   },
 
+  // Recitation XP (System only, used for gamification leveling)
+  { 
+    key: "XP_RECITATION_EXCELLENT", 
+    description: "XP for excellent recitation with no mistakes", 
+    points: 50, 
+    isSystem: true, 
+    isVisibleToTeacher: false 
+  },
+  { 
+    key: "XP_RECITATION_VERY_GOOD", 
+    description: "XP for very good recitation with few mistakes", 
+    points: 40, 
+    isSystem: true, 
+    isVisibleToTeacher: false 
+  },
+  { 
+    key: "XP_RECITATION_GOOD", 
+    description: "XP for good recitation", 
+    points: 30, 
+    isSystem: true, 
+    isVisibleToTeacher: false 
+  },
+  { 
+    key: "XP_RECITATION_ACCEPTABLE", 
+    description: "XP for acceptable recitation", 
+    points: 15, 
+    isSystem: true, 
+    isVisibleToTeacher: false 
+  },
+  { 
+    key: "XP_RECITATION_POOR", 
+    description: "XP for poor recitation (encouragement only)", 
+    points: 10, 
+    isSystem: true, 
+    isVisibleToTeacher: false 
+  },
+
+
   // Attendance-based points (System only)
   { 
     key: "ATTENDANCE_ON_TIME", 

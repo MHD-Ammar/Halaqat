@@ -8,6 +8,8 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
+import { LeaderboardController } from "./leaderboard.controller";
+import { StudentPortalLeaderboardService } from "./leaderboard.service";
 import { StudentPortalController } from "./student-portal.controller";
 import { StudentPortalService } from "./student-portal.service";
 import { Campaign } from "../daily-challenge/entities/campaign.entity";
@@ -37,8 +39,8 @@ import { Student } from "../students/entities/student.entity";
       StudentAchievement,
     ]),
   ],
-  controllers: [StudentPortalController],
-  providers: [StudentPortalService, AchievementService],
+  controllers: [StudentPortalController, LeaderboardController],
+  providers: [StudentPortalService, AchievementService, StudentPortalLeaderboardService],
   exports: [StudentPortalService],
 })
 export class StudentPortalModule {}

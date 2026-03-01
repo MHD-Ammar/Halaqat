@@ -55,7 +55,8 @@
     "myStudents": "طلابي",
     "challenges": "التحديات",
     "campaigns": "الحملات",
-    "gamification": "مركز التحفيز"
+    "gamification": "مركز التحفيز",
+    "circleQuests": "مهام الحلقة"
   },
   "GamificationHub": {
     "title": "مركز التحفيز",
@@ -491,6 +492,16 @@
   "StudentPortal": {
     "title": "بوابتي",
     "subtitle": "عرض تقدمك ومعلوماتك",
+    "leaderboard": "لوحة الصدارة",
+    "leaderboardDesc": "تنافس مع أصدقائك واصعد إلى القمة!",
+    "myCircle": "حلقتي",
+    "myLeague": "دوري الأبطال",
+    "globalRank": "الترتيب العام",
+    "rank": "المرتبة",
+    "yourRank": "مرتبتك",
+    "noCircleAssigned": "لم يتم تعيينك لحلقة بعد أو لا يوجد طلاب في حلقتك.",
+    "noStudentsInLeague": "لا يوجد طلاب في هذا الدوري بعد.",
+    "noLeaderboardData": "لا توجد بيانات للصدارة في المسجد بعد.",
     "progress": "التقدم",
     "myQr": "رمز QR",
     "pagesMemorized": "الصفحات المحفوظة",
@@ -944,6 +955,49 @@
     "mosque": "في المسجد",
     "home": "في البيت",
     "late": "قضاء/فائتة"
+  },
+  "CircleQuests": {
+    "title": "مهام الحلقة",
+    "createBtn": "إنشاء مهمة",
+    "createTitle": "إنشاء مهمة جديدة",
+    "editTitle": "تعديل المهمة",
+    "emptyState": {
+      "title": "لا توجد مهام للحلقة بعد",
+      "description": "أنشئ مهمة مخصصة لطلابك"
+    },
+    "form": {
+      "title": "العنوان",
+      "titlePlaceholder": "مثال: حفظ صفحة واحدة",
+      "description": "الوصف (اختياري)",
+      "descPlaceholder": "وصف مفصل...",
+      "category": "الفئة",
+      "selectCategory": "اختر فئة",
+      "frequency": "التكرار",
+      "selectFrequency": "اختر التكرار",
+      "xpReward": "المكافأة (XP)",
+      "icon": "الرمز (إيموجي)",
+      "cancel": "إلغاء",
+      "create": "إنشاء",
+      "save": "حفظ التغييرات"
+    },
+    "columns": {
+      "icon": "الرمز",
+      "title": "العنوان",
+      "category": "الفئة",
+      "frequency": "التكرار",
+      "xp": "XP",
+      "actions": "الإجراءات"
+    },
+    "delete": {
+      "title": "حذف المهمة",
+      "description": "هل أنت متأكد من حذف هذه المهمة؟ لا يمكن التراجع عن هذا الإجراء."
+    },
+    "toast": {
+      "created": "تم إنشاء المهمة بنجاح",
+      "updated": "تم تحديث المهمة بنجاح",
+      "deleted": "تم حذف المهمة بنجاح",
+      "operationFailed": "فشلت العملية",
+      "deleteFailed": "فشل الحذف"
+    }
   }
 }
-

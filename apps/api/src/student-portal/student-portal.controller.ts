@@ -17,6 +17,7 @@ import {
   UseGuards,
   UseInterceptors,
   ClassSerializerInterceptor,
+  Patch,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -260,17 +261,26 @@ export class StudentPortalController {
   @Get("dashboard")
   @ApiOperation({
     summary: "Get student dashboard data",
-    description: "Aggregated data including streak, recitations, and more.",
+    description: "Returns aggregated stats, streak calendar, and recent recitations for the dashboard",
   })
-  @ApiResponse({
-    status: 200,
-    description: "Dashboard data returned",
-  })
-  @ApiResponse({ status: 401, description: "Unauthorized" })
-  @ApiResponse({ status: 403, description: "Forbidden" })
   async getDashboard(
     @CurrentUser() user: { id: string; studentId: string },
   ) {
     return this.studentPortalService.getDashboardData(user.studentId);
+  }
+
+  @Patch("recitation-reward/:id/seen")
+  @ApiOperation({
+    summary: "Mark recitation reward as seen",
+    description: "Dismisses the surprise loot popup for a specific recitation",
+  })
+  async markRecitationRewardSeen(
+    @CurrentUser() user: { id: string; studentId: string },
+    @Param("id") recitationId: string,
+  ) {
+    return this.studentPortalService.markRecitationRewardSeen(
+      user.studentId,
+      recitationId,
+    );
   }
 }

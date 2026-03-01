@@ -2,13 +2,15 @@
  * Quest Entity
  *
  * Represents a granular task/habit that students can complete for XP rewards.
+ * Quests can be global (circleId = null, created by admins) or circle-scoped
+ * (circleId set, created by teachers for their circle).
  */
 
 import { QuestCategory, QuestFrequency } from "@halaqat/types";
-import { Entity, Column, Index, OneToMany } from "typeorm";
-
+import { Entity, Column, Index, OneToMany, ManyToOne, JoinColumn } from "typeorm";
 
 import { QuestCompletion } from "./quest-completion.entity";
+import { Circle } from "../../circles/entities/circle.entity";
 import { BaseEntity } from "../../common/entities/base.entity";
 
 @Entity("quest")
@@ -42,6 +44,17 @@ export class Quest extends BaseEntity {
   @Column({ name: "is_active", type: "boolean", default: true })
   @Index()
   isActive!: boolean;
+
+  // ── Circle Scoping ────────────────────────────────────────────
+  // null = global quest (admin-created), set = circle-specific (teacher-created)
+
+  @ManyToOne(() => Circle, { nullable: true, onDelete: "CASCADE" })
+  @JoinColumn({ name: "circle_id" })
+  circle!: Circle | null;
+
+  @Column({ name: "circle_id", type: "uuid", nullable: true })
+  @Index()
+  circleId!: string | null;
 
   @OneToMany(() => QuestCompletion, (completion) => completion.quest)
   completions!: QuestCompletion[];

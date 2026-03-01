@@ -13,12 +13,13 @@ import { useEffect, useState } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useStudentDashboard, useClaimLoginBonus } from "@/hooks/use-student-portal";
+import { useStudentDashboard, useClaimLoginBonus, useMarkRecitationRewardSeen } from "@/hooks/use-student-portal";
 import { useUserProfile } from "@/hooks/use-user-profile";
 
 import { DailyBonusModal } from "./_components/DailyBonusModal";
 import { DailyQuestCTA } from "./_components/DailyQuestCTA";
 import { RecentRecitations } from "./_components/RecentRecitations";
+import { RecitationRewardModal } from "./_components/RecitationRewardModal";
 import { RewardChests } from "./_components/RewardChests";
 import { StreakCalendar } from "./_components/StreakCalendar";
 
@@ -39,9 +40,21 @@ export default function StudentPortalPage() {
 
   const { data: dashboardData, isLoading: isDashboardLoading } = useStudentDashboard("ramadan");
   const claimBonus = useClaimLoginBonus();
+  const markRecitationRewardSeen = useMarkRecitationRewardSeen();
 
   const [bonusModalOpen, setBonusModalOpen] = useState(false);
   const [bonusXp, setBonusXp] = useState(0);
+
+  const [recitationModalOpen, setRecitationModalOpen] = useState(false);
+  const [recitationReward, setRecitationReward] = useState<{ id: string; xpAwarded: number; quality: string } | null>(null);
+
+  // Handle Dashboard check for unseen recitation rewards
+  useEffect(() => {
+    if (dashboardData?.hasUnseenRecitationReward && dashboardData.unseenRecitationReward && !recitationModalOpen) {
+      setRecitationReward(dashboardData.unseenRecitationReward);
+      setRecitationModalOpen(true);
+    }
+  }, [dashboardData, recitationModalOpen]);
 
   useEffect(() => {
     // Attempt to claim login bonus silently. 
@@ -200,6 +213,18 @@ export default function StudentPortalPage() {
         onClose={() => setBonusModalOpen(false)} 
         xpAwarded={bonusXp} 
       />
+
+      {recitationReward && (
+        <RecitationRewardModal
+          isOpen={recitationModalOpen}
+          xpAwarded={recitationReward.xpAwarded}
+          quality={recitationReward.quality}
+          onClose={() => {
+            setRecitationModalOpen(false);
+            markRecitationRewardSeen.mutate(recitationReward.id);
+          }}
+        />
+      )}
     </div>
   );
 }
