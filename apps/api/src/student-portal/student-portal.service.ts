@@ -26,6 +26,7 @@ import { DailySubmission } from "../daily-challenge/entities/daily-submission.en
 import { AchievementService } from "../gamification/achievement.service";
 import { Achievement } from "../gamification/entities/achievement.entity";
 import { MilestoneReward, RewardType } from "../gamification/entities/milestone-reward.entity";
+import { StudentAchievement } from "../gamification/entities/student-achievement.entity";
 import { StudentMilestone } from "../gamification/entities/student-milestone.entity";
 import { Recitation } from "../progress/entities/recitation.entity";
 import { QuestCompletion } from "../quests/entities/quest-completion.entity";
@@ -65,6 +66,8 @@ export class StudentPortalService {
     private questCompletionRepo: Repository<QuestCompletion>,
     @InjectRepository(StudentMilestone)
     private studentMilestoneRepo: Repository<StudentMilestone>,
+    @InjectRepository(StudentAchievement)
+    private studentAchievementRepo: Repository<StudentAchievement>,
     private readonly dataSource: DataSource,
     private readonly achievementService: AchievementService,
   ) {}
@@ -880,5 +883,66 @@ export class StudentPortalService {
     });
 
     return previousSubmission ? previousSubmission.streak + 1 : 1;
+  }
+
+  /**
+   * Get Live Social Feed
+   * Returns recent events (Quests, Achievements, Milestones) for the student's mosque
+   */
+  async getLiveFeed(studentId: string) {
+    const student = await this.studentRepo.findOne({
+      where: { id: studentId },
+    });
+
+    if (!student) {
+      throw new NotFoundException("Student not found");
+    }
+
+    const mosqueId = student.mosqueId;
+
+    const [recentQuests, recentAchievements, recentMilestones] = await Promise.all([
+      this.questCompletionRepo.find({
+        where: { student: { mosqueId } },
+        relations: ["student", "quest"],
+        order: { completedAt: "DESC" },
+        take: 5,
+      }),
+      this.studentAchievementRepo.find({
+        where: { student: { mosqueId } },
+        relations: ["student", "achievement"],
+        order: { unlockedAt: "DESC" },
+        take: 5,
+      }),
+      this.studentMilestoneRepo.find({
+        where: { student: { mosqueId } },
+        relations: ["student", "milestone"],
+        order: { unlockedAt: "DESC" },
+        take: 5,
+      }),
+    ]);
+
+    const feedItems = [
+      ...recentQuests.map((q) => ({
+        id: `q-${q.id}`,
+        date: q.completedAt || new Date(),
+        emoji: "🏆",
+        text: `${q.student?.name} أكمل مهمة ${q.quest?.title}!`,
+      })),
+      ...recentAchievements.map((a) => ({
+        id: `a-${a.id}`,
+        date: a.unlockedAt || new Date(),
+        emoji: "🔥",
+        text: `${a.student?.name} حصل على وسام ${a.achievement?.title}!`,
+      })),
+      ...recentMilestones.map((m) => ({
+        id: `m-${m.id}`,
+        date: m.unlockedAt || m.createdAt || new Date(),
+        emoji: "🎁",
+        text: `${m.student?.name} فتح مكافأة ${m.milestone?.title}!`,
+      })),
+    ];
+
+    feedItems.sort((a, b) => b.date.getTime() - a.date.getTime());
+    return feedItems.slice(0, 5).map(({ id, emoji, text }) => ({ id, emoji, text }));
   }
 }

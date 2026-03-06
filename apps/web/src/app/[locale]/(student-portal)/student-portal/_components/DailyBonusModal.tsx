@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Confetti from "react-confetti";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface DailyBonusModalProps {
   xpAwarded: number;
@@ -49,7 +49,7 @@ export function DailyBonusModal({ xpAwarded, isOpen, onClose }: DailyBonusModalP
               <Gift className="h-12 w-12 text-yellow-900" />
             </div>
             
-            <h2 className="text-3xl font-black mb-2 tracking-tight">مكافأة الدخول اليومي!</h2>
+            <DialogTitle className="text-3xl font-black mb-2 tracking-tight text-center">مكافأة الدخول اليومي!</DialogTitle>
             <p className="text-yellow-900/80 mb-6 font-medium">عدت مجدداً.. استمر يا بطل!</p>
             
             <div className="bg-yellow-950/10 rounded-2xl p-4 w-full mb-6 max-w-[200px]">

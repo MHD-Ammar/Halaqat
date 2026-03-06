@@ -154,3 +154,20 @@ export function useMarkRecitationRewardSeen() {
     },
   });
 }
+
+/**
+ * Fetch live social feed items
+ */
+export function useLiveFeed() {
+  return useQuery({
+    queryKey: ["student-portal", "live-feed"],
+    queryFn: async () => {
+      const res = await api.get<{ id: string; emoji: string; text: string }[]>(
+        "/student-portal/live-feed",
+      );
+      return res.data;
+    },
+    staleTime: 60 * 1000, // 1 minute
+    refetchInterval: 60 * 1000,
+  });
+}

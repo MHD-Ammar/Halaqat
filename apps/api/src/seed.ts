@@ -368,6 +368,87 @@ async function seed() {
     console.log("");
 
     // ========================================
+    // 7. Gamification: Quests, Milestones, Achievements
+    // ========================================
+    console.log("🎮 Seeding gamification (Quests, Milestones, Achievements)...");
+
+    const quests = [
+      { id: "q1111111-1111-4111-a111-111111111111", title: "صلاة الفجر في المسجد", category: "PRAYER", frequency: "DAILY", xpReward: 20, icon: "🕌" },
+      { id: "q2222222-2222-4222-a222-222222222222", title: "ورد القرآن اليومي", category: "QURAN", frequency: "DAILY", xpReward: 15, icon: "📖" },
+      { id: "q3333333-3333-4333-a333-333333333333", title: "أذكار الصباح والمساء", category: "ADHKAR", frequency: "DAILY", xpReward: 10, icon: "📿" },
+      { id: "q4444444-4444-4444-a444-444444444444", title: "حفظ سورة الكهف", category: "QURAN", frequency: "WEEKLY", xpReward: 100, icon: "🌟" },
+    ];
+
+    for (const quest of quests) {
+      // NOTE: Using a real UUID for Postgres to avoid error if 'q11...' is rejected.
+      // Replacing 'q' with '9' to make it a valid UUID format:
+      const questId = quest.id.replace('q', '9');
+      await dataSource.query(
+        `
+        INSERT INTO "quest" (id, title, category, frequency, xp_reward, icon, is_active, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, true, NOW(), NOW())
+        ON CONFLICT (id) DO UPDATE SET
+          title = EXCLUDED.title,
+          category = EXCLUDED.category,
+          frequency = EXCLUDED.frequency,
+          xp_reward = EXCLUDED.xp_reward,
+          icon = EXCLUDED.icon
+      `,
+        [questId, quest.title, quest.category, quest.frequency, quest.xpReward, quest.icon],
+      );
+      console.log(`   ✓ Quest: ${quest.title}`);
+    }
+
+    const milestones = [
+      { id: "m1111111-1111-4111-a111-111111111111", targetLevel: 2, title: "صندوق المبتدئين", rewardType: "BONUS_XP", rewardValue: "100" },
+      { id: "m2222222-2222-4222-a222-222222222222", targetLevel: 5, title: "صندوق المثابر", rewardType: "BONUS_XP", rewardValue: "300" },
+      { id: "m3333333-3333-4333-a333-333333333333", targetLevel: 10, title: "الصندوق الفضي", rewardType: "BONUS_XP", rewardValue: "500" },
+    ];
+
+    for (const m of milestones) {
+      const milestoneId = m.id.replace('m', '9');
+      await dataSource.query(
+        `
+        INSERT INTO "milestone_rewards" (id, target_level, title, reward_type, reward_value, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        ON CONFLICT (id) DO UPDATE SET
+          target_level = EXCLUDED.target_level,
+          title = EXCLUDED.title,
+          reward_type = EXCLUDED.reward_type,
+          reward_value = EXCLUDED.reward_value
+      `,
+        [milestoneId, m.targetLevel, m.title, m.rewardType, m.rewardValue],
+      );
+      console.log(`   ✓ Milestone: ${m.title}`);
+    }
+
+    const achievements = [
+      { id: "a1111111-1111-4111-a111-111111111111", title: "فارس الفجر", badgeIcon: "🏅", criteriaType: "STREAK_DAYS", criteriaTarget: 7, criteriaCategory: null, description: "واظب على أداء المهام 7 أيام متتالية" },
+      { id: "a2222222-2222-4222-a222-222222222222", title: "القارئ الماهر", badgeIcon: "📚", criteriaType: "TOTAL_QUESTS_CATEGORY", criteriaTarget: 50, criteriaCategory: "QURAN", description: "أكمل 50 مهمة في القرآن الكريم" },
+      { id: "a3333333-3333-4333-a333-333333333333", title: "شعلة النشاط", badgeIcon: "🔥", criteriaType: "TOTAL_XP", criteriaTarget: 1000, criteriaCategory: null, description: "اجمع 1000 نقطة خبرة" },
+    ];
+
+    for (const a of achievements) {
+      const achievementId = a.id.replace('a', '9');
+      await dataSource.query(
+        `
+        INSERT INTO "achievement" (id, title, description, badge_icon, criteria_type, criteria_target, criteria_category, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+        ON CONFLICT (id) DO UPDATE SET
+          title = EXCLUDED.title,
+          description = EXCLUDED.description,
+          badge_icon = EXCLUDED.badge_icon,
+          criteria_type = EXCLUDED.criteria_type,
+          criteria_target = EXCLUDED.criteria_target,
+          criteria_category = EXCLUDED.criteria_category
+      `,
+        [achievementId, a.title, a.description, a.badgeIcon, a.criteriaType, a.criteriaTarget, a.criteriaCategory],
+      );
+      console.log(`   ✓ Achievement: ${a.title}`);
+    }
+    console.log("");
+
+    // ========================================
     // Summary
     // ========================================
     console.log("═══════════════════════════════════════════");

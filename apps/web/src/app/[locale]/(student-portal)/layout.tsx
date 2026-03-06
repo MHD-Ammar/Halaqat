@@ -7,6 +7,7 @@
 
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import Cookies from "js-cookie";
 import { Flame, LogOut, Rocket, Shield, Star, Trophy } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -43,6 +44,7 @@ export default function StudentPortalLayout({
   children: ReactNode;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isChecking, setIsChecking] = useState(true);
   const t = useTranslations("StudentPortal");
   
@@ -75,9 +77,10 @@ export default function StudentPortalLayout({
 
   const handleLogout = useCallback(() => {
     Cookies.remove(TOKEN_COOKIE_NAME);
+    queryClient.clear();
     router.push("/student-login");
     router.refresh();
-  }, [router]);
+  }, [queryClient, router]);
 
   if (isChecking || isLoading) {
     return (

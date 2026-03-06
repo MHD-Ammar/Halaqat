@@ -269,6 +269,23 @@ export class StudentPortalController {
     return this.studentPortalService.getDashboardData(user.studentId);
   }
 
+  /**
+   * GET /student-portal/live-feed
+   *
+   * Fetch real social feed data
+   */
+  @Get("live-feed")
+  @ApiOperation({
+    summary: "Get live social feed",
+    description: "Returns the 10 most recent gamification events.",
+  })
+  @ApiResponse({ status: 200, description: "Feed returned" })
+  async getLiveFeed(
+    @CurrentUser() user: { id: string; studentId: string },
+  ) {
+    return this.studentPortalService.getLiveFeed(user.studentId);
+  }
+
   @Patch("recitation-reward/:id/seen")
   @ApiOperation({
     summary: "Mark recitation reward as seen",

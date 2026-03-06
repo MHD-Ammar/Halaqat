@@ -19,6 +19,8 @@ export interface ColumnDef<T> {
   header: ReactNode;
   /** The key from the data object to display (optional, use if `cell` is not provided) */
   accessorKey?: keyof T;
+  /** Custom data accessor function (optional) */
+  accessorFn?: (item: T) => ReactNode;
   /** Custom render function for the cell (optional, overrides `accessorKey`) */
   cell?: (item: T) => ReactNode;
   /** Additional CSS classes for the column (e.g., "text-right" or "w-[200px]") */
@@ -119,6 +121,8 @@ export function DataTable<T>({
                   <TableCell key={colIdx} className={col.className}>
                     {col.cell
                       ? col.cell(item)
+                      : col.accessorFn
+                      ? col.accessorFn(item)
                       : col.accessorKey
                       ? (item[col.accessorKey] as ReactNode)
                       : null}

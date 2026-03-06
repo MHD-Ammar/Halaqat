@@ -3,14 +3,10 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
-// Mock data for the live feed
-const MOCK_FEED_ITEMS = [
-  { id: "1", emoji: "🔥", text: "أحمد وصل للمستوى 5!" },
-  { id: "2", emoji: "🏆", text: "محمود أنهى مهامه اليومية!" },
-  { id: "3", emoji: "🏅", text: "حلقة أبو بكر تتقدم في الترتيب العام!" },
-];
+import { useLiveFeed } from "@/hooks/use-student-portal";
 
 export function CircleLiveFeed() {
+  const { data: feedItems, isLoading } = useLiveFeed();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [mounted, setMounted] = useState(false);
 
@@ -19,18 +15,22 @@ export function CircleLiveFeed() {
   }, []);
 
   useEffect(() => {
-    if (!mounted || MOCK_FEED_ITEMS.length === 0) return;
+    if (!mounted || !feedItems || feedItems.length === 0) return;
 
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % MOCK_FEED_ITEMS.length);
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % feedItems.length);
     }, 3500);
 
     return () => clearInterval(interval);
-  }, [mounted]);
+  }, [mounted, feedItems]);
 
-  if (!mounted || MOCK_FEED_ITEMS.length === 0) return null;
+  if (!mounted || isLoading) return null;
 
-  const currentItem = MOCK_FEED_ITEMS[currentIndex];
+  const displayItems = feedItems && feedItems.length > 0 
+    ? feedItems 
+    : [{ id: "fallback", emoji: "🌟", text: "ابدأ بإنجاز مهامك لتتصدر القائمة!" }];
+
+  const currentItem = displayItems[currentIndex % displayItems.length];
 
   if (!currentItem) return null;
 

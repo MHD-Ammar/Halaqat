@@ -36,6 +36,8 @@ export function QuestCard({ quest, onComplete, isSubmitting }: QuestCardProps) {
       // Remove the "just completed" highlight after animation finishes
       setTimeout(() => setJustCompleted(false), 2000);
     } catch {
+      // Error is handled upstream
+    } finally {
       setIsPending(false);
     }
   };
