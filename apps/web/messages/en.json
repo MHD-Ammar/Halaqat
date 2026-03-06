@@ -887,7 +887,14 @@
     "comeBackTomorrow": "Come back tomorrow to submit new quests",
     "fillAllFields": "Please fill in all required fields",
     "submitQuests": "Submit Quests",
-    "noQuestsAvailable": "No quests available right now"
+    "noQuestsAvailable": "No quests available right now",
+    "dailyTab": "Daily",
+    "halqahTab": "Halqah",
+    "extraTab": "Extra",
+    "allDoneHero": "You've completed everything here, champ! 🏆",
+    "allDoneSubtext": "Rest up and get ready for new quests!",
+    "completed": "Done ✅",
+    "completeNow": "Complete Now"
   },
   "AdminCampaigns": {
     "title": "Campaign Management",

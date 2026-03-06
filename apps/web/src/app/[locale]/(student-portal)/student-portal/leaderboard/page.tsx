@@ -23,7 +23,7 @@ export default function StudentLeaderboardPage() {
   const currentUserId = portalData?.student?.id;
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 pb-12">
+    <div className="mx-auto w-full max-w-4xl space-y-6 pb-4">
       <div>
         <h1 className="pb-2 text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">
           {t("leaderboard", { fallback: "لوحة الصدارة" })}

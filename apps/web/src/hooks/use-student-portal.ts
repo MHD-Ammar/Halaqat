@@ -85,6 +85,7 @@ export interface DashboardData {
     id: string;
     quality: string;
     xpAwarded: number;
+    surahName: string;
   } | null;
 }
 

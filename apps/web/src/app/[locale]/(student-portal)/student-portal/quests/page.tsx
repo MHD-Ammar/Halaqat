@@ -1,33 +1,22 @@
 "use client";
 
-import type { QuestCategory } from "@halaqat/types";
 import { motion } from "framer-motion";
-import { Check, Circle, Flame, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { AchievementUnlockedModal } from "@/components/achievement-unlocked-modal";
 import { LevelUpModal } from "@/components/level-up-modal";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type Achievement } from "@/hooks/use-student-achievements";
-import { useCompleteQuest, useStudentQuests } from "@/hooks/use-student-quests";
+import { QuestWithCompletion, useCompleteQuest, useStudentQuests } from "@/hooks/use-student-quests";
 import { useToast } from "@/hooks/use-toast";
-import { useUserProfile } from "@/hooks/use-user-profile";
 
-interface StudentProfile {
-  id: string;
-  name: string;
-  currentLevel?: number;
-  currentStreak?: number;
-  totalXp?: number;
-}
+import { QuestCard } from "../_components/QuestCard";
 
 export default function QuestsPage() {
   const t = useTranslations();
-  const tQuestCategory = useTranslations("QuestCategory");
   const { toast } = useToast();
-  const { data: profile, isLoading: isProfileLoading } = useUserProfile();
   const { data: groupedQuests, isLoading: isQuestsLoading } = useStudentQuests();
   const completeQuestMutation = useCompleteQuest();
 
@@ -41,9 +30,6 @@ export default function QuestsPage() {
   const [showAchievements, setShowAchievements] = useState(false);
   const [unlockedAchievements, setUnlockedAchievements] = useState<Achievement[]>([]);
 
-  const student = profile as unknown as StudentProfile | undefined;
-  const isLoading = isProfileLoading || isQuestsLoading;
-
   const handleCompleteQuest = async (questId: string) => {
     if (isSubmitting || completeQuestMutation.isPending) return;
     setIsSubmitting(true);
@@ -51,13 +37,11 @@ export default function QuestsPage() {
     try {
       const result = await completeQuestMutation.mutateAsync(questId);
 
-      // Show success toast
       toast({
         title: t("Quests.submissionSuccess"),
         description: t("Quests.earnedXpDescription", { xp: result.earnedXp }),
       });
 
-      // Show level-up modal if applicable
       if (result.levelUp) {
         setLevelUpData({
           newLevel: result.newLevel,
@@ -67,7 +51,6 @@ export default function QuestsPage() {
         setShowLevelUp(true);
       }
 
-      // Show achievements modal if applicable
       if (result.newAchievements && result.newAchievements.length > 0) {
         setUnlockedAchievements(result.newAchievements as Achievement[]);
         setShowAchievements(true);
@@ -85,159 +68,202 @@ export default function QuestsPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-32 w-full rounded-lg" />
-        <Skeleton className="h-96 w-full rounded-lg" />
-      </div>
-    );
+  if (isQuestsLoading) {
+    return <QuestsPageSkeleton />;
   }
 
+  // Regroup quests into our 3 Tabs: Daily, Halqah, Extra
+  const allQuests: QuestWithCompletion[] = groupedQuests 
+    ? Object.values(groupedQuests).flat() 
+    : [];
+
+  const tabData = {
+    daily: allQuests.filter((q) => q.frequency === "DAILY" && !q.circleId),
+    halqah: allQuests.filter((q) => q.circleId !== null),
+    extra: allQuests.filter(
+      (q) => (q.frequency === "WEEKLY" || q.frequency === "ONETIME") && !q.circleId
+    ),
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold">
-          {t("Quests.habitTracker")}
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          {t("Quests.submitTodaysQuests")}
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-10">
+      <motion.div 
+        className="space-y-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
+        {/* Page Header */}
+        <div>
+          <h1 className="text-3xl font-bold">
+            {t("Quests.habitTracker")}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            {t("Quests.submitTodaysQuests")}
+          </p>
+        </div>
 
-      {/* Stats Bar */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400 mb-2">
-                <Zap className="h-4 w-4" />
-                <span className="text-sm font-medium">{t("Gamification.xp")}</span>
-              </div>
-              <p className="text-2xl font-bold">{student?.totalXp ?? 0}</p>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Tabs Interface */}
+        <Tabs defaultValue="daily" className="w-full" dir="rtl">
+          <TabsList className="grid w-full grid-cols-3 h-12 rounded-2xl bg-muted/50 p-1 mb-6">
+            <TabsTrigger value="daily" className="rounded-xl data-[state=active]:shadow-md text-sm md:text-base transition-all">
+              🌅 {t("Quests.dailyTab")}
+              {tabData.daily.filter(q => !q.isCompleted).length > 0 && (
+                <span className="ml-2 inline-flex h-2 w-2 rounded-full bg-amber-500"></span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="halqah" className="rounded-xl data-[state=active]:shadow-md text-sm md:text-base transition-all">
+              📖 {t("Quests.halqahTab")}
+              {tabData.halqah.filter(q => !q.isCompleted).length > 0 && (
+                <span className="ml-2 inline-flex h-2 w-2 rounded-full bg-amber-500"></span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="extra" className="rounded-xl data-[state=active]:shadow-md text-sm md:text-base transition-all">
+              🎯 {t("Quests.extraTab")}
+              {tabData.extra.filter(q => !q.isCompleted).length > 0 && (
+                <span className="ml-2 inline-flex h-2 w-2 rounded-full bg-amber-500"></span>
+              )}
+            </TabsTrigger>
+          </TabsList>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 text-blue-600 dark:text-blue-400 mb-2">
-                <span className="text-sm font-medium">{t("Gamification.level")}</span>
-              </div>
-              <p className="text-2xl font-bold">{student?.currentLevel ?? 1}</p>
-            </div>
-          </CardContent>
-        </Card>
+          <TabsContent value="daily" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+            <QuestList 
+              quests={tabData.daily} 
+              onComplete={handleCompleteQuest} 
+              isSubmitting={isSubmitting || completeQuestMutation.isPending} 
+            />
+          </TabsContent>
+          
+          <TabsContent value="halqah" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+            <QuestList 
+               quests={tabData.halqah} 
+               onComplete={handleCompleteQuest} 
+               isSubmitting={isSubmitting || completeQuestMutation.isPending} 
+            />
+          </TabsContent>
+          
+          <TabsContent value="extra" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+            <QuestList 
+               quests={tabData.extra} 
+               onComplete={handleCompleteQuest} 
+               isSubmitting={isSubmitting || completeQuestMutation.isPending} 
+            />
+          </TabsContent>
+        </Tabs>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 text-red-600 dark:text-red-400 mb-2">
-                <Flame className="h-4 w-4" />
-                <span className="text-sm font-medium">{t("Gamification.streak")}</span>
-              </div>
-              <p className="text-2xl font-bold">{student?.currentStreak ?? 0}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        {/* Level Up Modal */}
+        <LevelUpModal
+          isOpen={showLevelUp}
+          newLevel={levelUpData.newLevel}
+          earnedXp={levelUpData.earnedXp}
+          newTotalXp={levelUpData.newTotalXp}
+          onClose={() => setShowLevelUp(false)}
+        />
 
-      {/* Habit Sections */}
-      <div className="space-y-4">
-        {groupedQuests &&
-          (Object.keys(groupedQuests) as QuestCategory[]).map((category) => {
-            const quests = groupedQuests[category] ?? [];
-            if (!quests.length) return null;
-
-            return (
-              <section key={category} className="space-y-3">
-                <h2 className="text-lg font-semibold">
-                  {tQuestCategory(category)}
-                </h2>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {quests.map((quest) => {
-                    const isCompleted = quest.isCompleted;
-                    return (
-                      <motion.button
-                        key={quest.id}
-                        type="button"
-                        whileTap={{ scale: 0.95 }}
-                        disabled={isCompleted || isSubmitting || completeQuestMutation.isPending}
-                        onClick={() => handleCompleteQuest(quest.id)}
-                        className={`text-left rounded-xl border px-4 py-3 transition-colors ${
-                          isCompleted
-                            ? "border-emerald-200 bg-emerald-50/70 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/60"
-                            : "border-gray-200 bg-card hover:border-amber-300 hover:bg-amber-50/60 dark:border-gray-800 dark:bg-card dark:hover:border-amber-600/60 dark:hover:bg-amber-900/10"
-                        }`}
-                      >
-                        <div className="flex items-center gap-4">
-                          {/* Icon */}
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-lg dark:bg-amber-900/40">
-                            <span>{quest.icon || "⭐"}</span>
-                          </div>
-
-                          {/* Content */}
-                          <div className="flex-1 space-y-1">
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="font-semibold truncate">{quest.title}</p>
-                              <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
-                                +{quest.xpReward} XP
-                              </span>
-                            </div>
-                            {quest.description && (
-                              <p className="line-clamp-2 text-xs text-muted-foreground">
-                                {quest.description}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Status Circle */}
-                          <div className="shrink-0">
-                            {isCompleted ? (
-                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white">
-                                <Check className="h-4 w-4" />
-                              </div>
-                            ) : (
-                              <div className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-300 bg-white text-amber-500 dark:border-amber-700 dark:bg-amber-950/40">
-                                <Circle className="h-4 w-4" />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </motion.button>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })}
-
-        {groupedQuests && Object.values(groupedQuests).every((qs) => !qs?.length) && (
-          <Card>
-            <CardContent className="py-8 text-center text-muted-foreground">
-              {t("Quests.noQuestsAvailable")}
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* Level Up Modal */}
-      <LevelUpModal
-        isOpen={showLevelUp}
-        newLevel={levelUpData.newLevel}
-        earnedXp={levelUpData.earnedXp}
-        newTotalXp={levelUpData.newTotalXp}
-        onClose={() => setShowLevelUp(false)}
-      />
-
-      {/* Achievement Unlocked Modal */}
-      <AchievementUnlockedModal
-        isOpen={showAchievements}
-        achievements={unlockedAchievements}
-        onClose={() => setShowAchievements(false)}
-      />
+        {/* Achievement Unlocked Modal */}
+        <AchievementUnlockedModal
+          isOpen={showAchievements}
+          achievements={unlockedAchievements}
+          onClose={() => setShowAchievements(false)}
+        />
+      </motion.div>
     </div>
   );
 }
+
+// Helper component to render the list
+function QuestList({ 
+  quests, 
+  onComplete, 
+  isSubmitting 
+}: { 
+  quests: QuestWithCompletion[], 
+  onComplete: (id: string) => Promise<void>,
+  isSubmitting: boolean
+}) {
+  const t = useTranslations();
+  
+  if (quests.length === 0) {
+    return (
+      <motion.div
+        className="flex flex-col items-center justify-center py-16 text-center"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="text-6xl mb-6">🏆</div>
+        <h3 className="text-xl font-bold text-foreground">
+          {t("Quests.allDoneHero")}
+        </h3>
+        <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">
+          {t("Quests.allDoneSubtext")}
+        </p>
+      </motion.div>
+    );
+  }
+
+  // Sort: uncompleted first, then completed. Stable otherwise.
+  const sortedQuests = [...quests].sort((a, b) => {
+    if (a.isCompleted === b.isCompleted) return 0;
+    return a.isCompleted ? 1 : -1;
+  });
+
+  return (
+    <motion.div
+      className="grid gap-3 md:grid-cols-2"
+      initial="hidden"
+      animate="visible"
+      variants={{
+        visible: { transition: { staggerChildren: 0.06 } },
+      }}
+    >
+      {sortedQuests.map((quest) => (
+        <motion.div
+          key={quest.id}
+          layout
+          variants={{
+            hidden: { opacity: 0, y: 15 },
+            visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
+          }}
+        >
+          <QuestCard 
+            quest={quest} 
+            onComplete={onComplete} 
+            isSubmitting={isSubmitting} 
+          />
+        </motion.div>
+      ))}
+    </motion.div>
+  );
+}
+
+// Skeleton Loader
+function QuestsPageSkeleton() {
+  return (
+    <div className="space-y-6">
+      {/* Header text skeleton */}
+      <div>
+        <Skeleton className="h-9 w-48 mb-2" />
+        <Skeleton className="h-5 w-72" />
+      </div>
+
+      {/* Tab skeleton */}
+      <Skeleton className="h-12 w-full rounded-2xl mb-6" />
+      
+      {/* Card skeletons */}
+      <div className="grid gap-3 md:grid-cols-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-4 rounded-2xl border p-4 bg-card">
+            <Skeleton className="h-12 w-12 shrink-0 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+            <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+

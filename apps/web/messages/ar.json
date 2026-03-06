@@ -887,7 +887,14 @@
     "comeBackTomorrow": "عد غداً لإرسال مهام جديدة",
     "fillAllFields": "يرجى ملء جميع الحقول المطلوبة",
     "submitQuests": "إرسال المهام",
-    "noQuestsAvailable": "لا توجد مهام متاحة حالياً"
+    "noQuestsAvailable": "لا توجد مهام متاحة حالياً",
+    "dailyTab": "مهام اليوم",
+    "halqahTab": "مهام الحلقة",
+    "extraTab": "مهام إضافية",
+    "allDoneHero": "أنجزت كل المهام هنا يا بطل! 🏆",
+    "allDoneSubtext": "استرح يا بطل واستعد لمهام جديدة!",
+    "completed": "أنجزت ✅",
+    "completeNow": "أكمل الآن"
   },
   "AdminCampaigns": {
     "title": "إدارة الحملات",

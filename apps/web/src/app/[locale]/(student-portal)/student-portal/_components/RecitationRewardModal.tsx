@@ -20,11 +20,12 @@ const QUALITY_LABELS: Record<string, string> = {
 interface RecitationRewardModalProps {
   xpAwarded: number;
   quality: string;
+  surahName?: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function RecitationRewardModal({ xpAwarded, quality, isOpen, onClose }: RecitationRewardModalProps) {
+export function RecitationRewardModal({ xpAwarded, quality, surahName, isOpen, onClose }: RecitationRewardModalProps) {
   const [mounted, setMounted] = useState(false);
   const [windowDimension, setWindowDimension] = useState({ width: 0, height: 0 });
 
@@ -79,10 +80,10 @@ export function RecitationRewardModal({ xpAwarded, quality, isOpen, onClose }: R
                   <Star className="h-12 w-12 text-white fill-white" />
                 </motion.div>
                 
-                <h2 className="text-3xl font-black mb-3 text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-yellow-600 tracking-tight">مفاجأة!</h2>
+                <h2 className="text-3xl font-black mb-3 text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-yellow-600 tracking-tight">مفاجأة سارة! 🌟</h2>
                 
                 <p className="text-slate-600 mb-6 font-semibold leading-relaxed text-lg">
-                  أستاذك قيّم تسميعك اليوم بـ<br/>
+                  أستاذك قيّم تسميعك لـ <span className="font-bold text-amber-700">{surahName || "تسميعك"}</span> بـ<br/>
                   <span className="inline-block mt-2 px-4 py-1.5 bg-yellow-100 text-yellow-800 rounded-full font-bold border border-yellow-200">&quot;{qualityText}&quot; 🌟</span>
                 </p>
                 
@@ -97,7 +98,7 @@ export function RecitationRewardModal({ xpAwarded, quality, isOpen, onClose }: R
                   className="w-full rounded-2xl bg-slate-900 text-white hover:bg-slate-800 hover:scale-105 active:scale-95 transition-all shadow-xl h-14 text-lg font-bold border-b-4 border-slate-950"
                   onClick={onClose}
                 >
-                  رائع!
+                  رائع! استلم النقاط
                 </Button>
               </div>
             </motion.div>

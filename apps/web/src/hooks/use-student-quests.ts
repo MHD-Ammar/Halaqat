@@ -27,6 +27,7 @@ export interface QuestWithCompletion {
   xpReward: number;
   icon: string;
   isCompleted: boolean;
+  circleId: string | null;
 }
 
 export type GroupedQuestsResponse = Record<QuestCategory, QuestWithCompletion[]>;

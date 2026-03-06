@@ -31,7 +31,7 @@ export default function TrophyRoomPage() {
   });
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="space-y-8 pb-4">
       {/* Header */}
       <div className="flex flex-col gap-2">
         <h1 className="text-4xl font-black bg-gradient-to-r from-amber-500 to-yellow-600 bg-clip-text text-transparent drop-shadow-sm">

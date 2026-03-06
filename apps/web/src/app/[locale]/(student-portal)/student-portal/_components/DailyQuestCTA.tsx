@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Coffee, Rocket } from "lucide-react";
 import Link from "next/link";
 
@@ -40,14 +41,19 @@ export function DailyQuestCTA({ hasSubmittedToday }: DailyQuestCTAProps) {
               <h2 className="text-2xl font-bold">لديك مهام جديدة!</h2>
               <p className="text-muted-foreground font-medium">أكمل وردك اليومي لتحافظ على سلسلة الحضور واكسب المزيد من نقاط الخبرة.</p>
             </div>
-            <Link href="/student-portal/quests" className="w-full sm:w-auto mt-2">
-              <Button size="lg" className="h-14 w-full rounded-full text-lg shadow-lg hover:scale-105 transition-transform sm:w-auto px-10 relative overflow-hidden group">
-                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                <span className="relative z-10 flex items-center gap-2">
-                  🚀 انطلق لإنجاز مهام اليوم!
-                </span>
-              </Button>
-            </Link>
+            <motion.div
+              animate={{ scale: [1, 1.03, 1] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+            >
+              <Link href="/student-portal/quests" className="w-full sm:w-auto mt-2">
+                <Button size="lg" className="h-14 w-full rounded-full text-lg shadow-lg hover:scale-105 transition-transform sm:w-auto px-10 relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                  <span className="relative z-10 flex items-center gap-2">
+                    🚀 انطلق لإنجاز مهام اليوم!
+                  </span>
+                </Button>
+              </Link>
+            </motion.div>
           </>
         )}
       </div>

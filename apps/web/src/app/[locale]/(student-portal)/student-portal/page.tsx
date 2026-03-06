@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useStudentDashboard, useClaimLoginBonus, useMarkRecitationRewardSeen } from "@/hooks/use-student-portal";
 import { useUserProfile } from "@/hooks/use-user-profile";
 
+import { CircleLiveFeed } from "./_components/CircleLiveFeed";
 import { DailyBonusModal } from "./_components/DailyBonusModal";
 import { DailyQuestCTA } from "./_components/DailyQuestCTA";
 import { RecentRecitations } from "./_components/RecentRecitations";
@@ -46,7 +47,7 @@ export default function StudentPortalPage() {
   const [bonusXp, setBonusXp] = useState(0);
 
   const [recitationModalOpen, setRecitationModalOpen] = useState(false);
-  const [recitationReward, setRecitationReward] = useState<{ id: string; xpAwarded: number; quality: string } | null>(null);
+  const [recitationReward, setRecitationReward] = useState<{ id: string; xpAwarded: number; quality: string; surahName: string } | null>(null);
 
   // Handle Dashboard check for unseen recitation rewards
   useEffect(() => {
@@ -94,7 +95,10 @@ export default function StudentPortalPage() {
   }
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="space-y-8 pb-4">
+      {/* Social Ticker */}
+      <CircleLiveFeed />
+
       {/* Welcome Hero */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 p-6 md:p-8 text-white shadow-xl shadow-orange-500/20">
         {/* Decorative circles */}
@@ -190,22 +194,18 @@ export default function StudentPortalPage() {
         <StreakCalendar streakCalendar={dashboardData.streakCalendar} />
       )}
 
+      {/* Daily Quest CTA - Full Width Focus */}
+      {dashboardData && (
+        <DailyQuestCTA hasSubmittedToday={dashboardData.hasSubmittedToday} />
+      )}
+
       {/* Rewards Chest Section */}
       <RewardChests />
 
-      {/* Middle & Bottom Sections: Interactive elements and recent tracking */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        <div className="flex flex-col h-full">
-          {dashboardData && (
-            <DailyQuestCTA hasSubmittedToday={dashboardData.hasSubmittedToday} />
-          )}
-        </div>
-        <div className="flex flex-col h-full">
-          {dashboardData && (
-            <RecentRecitations recitations={dashboardData.recentRecitations} />
-          )}
-        </div>
-      </div>
+      {/* Recent Recitations */}
+      {dashboardData && (
+        <RecentRecitations recitations={dashboardData.recentRecitations} />
+      )}
       
       {/* Modals and Overlays */}
       <DailyBonusModal 
@@ -219,6 +219,7 @@ export default function StudentPortalPage() {
           isOpen={recitationModalOpen}
           xpAwarded={recitationReward.xpAwarded}
           quality={recitationReward.quality}
+          surahName={recitationReward.surahName}
           onClose={() => {
             setRecitationModalOpen(false);
             markRecitationRewardSeen.mutate(recitationReward.id);

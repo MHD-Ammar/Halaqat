@@ -41,6 +41,7 @@ export interface QuestWithCompletion {
   xpReward: number;
   icon: string;
   isCompleted: boolean;
+  circleId: string | null;
 }
 
 @Injectable()
@@ -167,6 +168,7 @@ export class StudentPortalService {
       xpReward: q.xpReward,
       icon: q.icon,
       isCompleted: completionSet.has(q.id),
+      circleId: q.circleId,
     }));
 
     const grouped: Record<string, QuestWithCompletion[]> = {};
@@ -498,6 +500,7 @@ export class StudentPortalService {
         rewardSeen: false,
         xpAwarded: MoreThan(0),
       },
+      relations: ["surah"],
       order: { createdAt: "ASC" },
     });
 
@@ -507,6 +510,7 @@ export class StudentPortalService {
           id: unseenRewardRecitation.id,
           quality: unseenRewardRecitation.quality,
           xpAwarded: unseenRewardRecitation.xpAwarded,
+          surahName: unseenRewardRecitation.surah?.nameArabic || "سورة غير معروفة",
         }
       : null;
 
