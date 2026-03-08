@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import Confetti from "react-confetti";
 
 import { Button } from "@/components/ui/button";
+import { soundManager } from "@/lib/sounds";
 
 interface LevelUpModalProps {
   isOpen: boolean;
@@ -57,6 +58,12 @@ export function LevelUpModal({
     }
     return undefined;
   }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      void soundManager.play("levelUp");
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

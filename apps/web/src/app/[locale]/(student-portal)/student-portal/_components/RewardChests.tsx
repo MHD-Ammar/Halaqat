@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Gift, Lock, CheckCircle2, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import Confetti from "react-confetti";
 
@@ -9,8 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStudentMilestones, useClaimMilestone, StudentMilestone } from "@/hooks/use-student-milestones";
+import { soundManager } from "@/lib/sounds";
 
 export function RewardChests() {
+  const t = useTranslations("StudentPortal");
+  const c = useTranslations("Common");
   const { data: milestones, isLoading } = useStudentMilestones();
   const claimMutation = useClaimMilestone();
 
@@ -29,8 +33,12 @@ export function RewardChests() {
   const handleClaim = (milestone: StudentMilestone) => {
     claimMutation.mutate(milestone.id, {
       onSuccess: () => {
+        void soundManager.play("chestOpen");
         setClaimedReward(milestone);
         setCelebrationOpen(true);
+      },
+      onError: () => {
+        void soundManager.play("error");
       },
     });
   };
@@ -39,11 +47,13 @@ export function RewardChests() {
     <div className="space-y-4">
       <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
         <Sparkles className="w-6 h-6 text-yellow-500" />
-        صناديق الجوائز
+        {t("rewardChests")}
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {milestones.map((sm) => {
+        {milestones
+          .filter((sm) => sm.milestone) // Defensive guard
+          .map((sm) => {
           const isLocked = !sm.unlockedAt;
           const isClaimed = sm.isClaimed;
           const isReady = !isLocked && !isClaimed;
@@ -80,7 +90,7 @@ export function RewardChests() {
                   <div className="flex flex-col items-center">
                     <CheckCircle2 className="w-16 h-16 text-green-500 mb-3" />
                     <h3 className="font-bold text-lg text-green-700 dark:text-green-400">
-                      تم الفتح
+                      {t("opened")}
                     </h3>
                   </div>
                 ) : isReady ? (
@@ -92,21 +102,21 @@ export function RewardChests() {
                        <Gift className="w-16 h-16 text-yellow-600 dark:text-yellow-400 mb-3 drop-shadow-lg" />
                      </motion.div>
                     <h3 className="font-bold text-lg text-yellow-800 dark:text-yellow-200 mb-4">
-                      {sm.milestone?.title || "صندوق الجوائز"}
+                      {sm.milestone?.title || t("chest")}
                     </h3>
                     <Button 
                       onClick={() => handleClaim(sm)} 
                       disabled={claimMutation.isPending}
                       className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shadow-md font-bold rounded-xl"
                     >
-                      {claimMutation.isPending ? "جاري الفتح..." : "افتح الصندوق 🎁"}
+                      {claimMutation.isPending ? t("opening") : t("openChest")}
                     </Button>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center opacity-70">
                     <Lock className="w-16 h-16 text-gray-400 mb-3" />
                     <h3 className="font-semibold text-gray-600 dark:text-gray-300">
-                      يفتح في المستوى {sm.milestone?.targetLevel}
+                      {t("unlockedAtLevel", { level: sm.milestone?.targetLevel })}
                     </h3>
                   </div>
                 )}
@@ -133,13 +143,13 @@ export function RewardChests() {
                <Gift className="w-12 h-12 text-yellow-400" />
              </div>
              <DialogTitle className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-yellow-500 mb-2">
-              مبروك!
+              {t("congratulations")}
             </DialogTitle>
             <DialogDescription className="text-lg text-indigo-100 flex flex-col items-center gap-2">
-              <span>لقد نجحت في فتح {claimedReward?.milestone?.title}!</span>
+              <span>{t("claimedRewardMessage", { title: claimedReward?.milestone?.title || t("reward") })}</span>
               {claimedReward?.milestone?.rewardType === "BONUS_XP" && (
                 <span className="bg-white/10 px-4 py-2 rounded-xl mt-2 font-black text-2xl text-yellow-300 backdrop-blur-sm border border-white/10">
-                  +{claimedReward.milestone.rewardValue} XP
+                  +{claimedReward?.milestone?.rewardValue} XP
                 </span>
               )}
             </DialogDescription>
@@ -149,7 +159,7 @@ export function RewardChests() {
                 onClick={() => setCelebrationOpen(false)}
                 className="w-full bg-white text-indigo-900 hover:bg-gray-100 font-bold rounded-xl h-12 text-lg"
              >
-               متابعة
+               {c("continue")}
              </Button>
           </div>
         </DialogContent>

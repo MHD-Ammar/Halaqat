@@ -2,20 +2,12 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import Confetti from "react-confetti";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-
-// Maps the RecitationQuality enum to Arabic labels
-const QUALITY_LABELS: Record<string, string> = {
-  EXCELLENT: "ممتاز",
-  VERY_GOOD: "جيد جداً",
-  GOOD: "جيد",
-  ACCEPTABLE: "مقبول",
-  POOR: "يحتاج للمزيد من الجهد",
-};
 
 interface RecitationRewardModalProps {
   xpAwarded: number;
@@ -26,17 +18,31 @@ interface RecitationRewardModalProps {
 }
 
 export function RecitationRewardModal({ xpAwarded, quality, surahName, isOpen, onClose }: RecitationRewardModalProps) {
+  const t = useTranslations("StudentPortal");
+  const ta = useTranslations("StudentAction");
+  
   const [mounted, setMounted] = useState(false);
   const [windowDimension, setWindowDimension] = useState({ width: 0, height: 0 });
 
+  // Maps the RecitationQuality enum to translation keys
+  const QUALITY_LABELS: Record<string, string> = {
+    EXCELLENT: ta("excellent"),
+    VERY_GOOD: ta("veryGood"),
+    GOOD: ta("good"),
+    ACCEPTABLE: ta("acceptable"),
+    POOR: ta("poor"),
+  };
+
   useEffect(() => {
     setMounted(true);
-    setWindowDimension({ width: window.innerWidth, height: window.innerHeight });
+    if (typeof window !== "undefined") {
+      setWindowDimension({ width: window.innerWidth, height: window.innerHeight });
+    }
   }, []);
 
   if (!mounted) return null;
 
-  const qualityText = QUALITY_LABELS[quality] || "رائع";
+  const qualityText = QUALITY_LABELS[quality] || t("awesome");
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -80,17 +86,17 @@ export function RecitationRewardModal({ xpAwarded, quality, surahName, isOpen, o
                   <Star className="h-12 w-12 text-white fill-white" />
                 </motion.div>
                 
-                <h2 className="text-3xl font-black mb-3 text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-yellow-600 tracking-tight">مفاجأة سارة! 🌟</h2>
+                <h2 className="text-3xl font-black mb-3 text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-yellow-600 tracking-tight">{t("surprise")}</h2>
                 
                 <p className="text-slate-600 mb-6 font-semibold leading-relaxed text-lg">
-                  أستاذك قيّم تسميعك لـ <span className="font-bold text-amber-700">{surahName || "تسميعك"}</span> بـ<br/>
+                  {t("recitationEvaluation", { surah: surahName || t("yourRecitation") })} بـ<br/>
                   <span className="inline-block mt-2 px-4 py-1.5 bg-yellow-100 text-yellow-800 rounded-full font-bold border border-yellow-200">&quot;{qualityText}&quot; 🌟</span>
                 </p>
                 
                 <div className="bg-gradient-to-b from-amber-500 to-amber-600 rounded-2xl p-5 w-full mb-8 shadow-lg shadow-amber-500/20 relative overflow-hidden group">
                   <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                   <div className="relative text-5xl font-extrabold text-white mb-1 drop-shadow-md">+{xpAwarded}</div>
-                  <div className="relative text-sm font-bold uppercase tracking-widest text-amber-100">نقطة خبرة إضافية</div>
+                  <div className="relative text-sm font-bold uppercase tracking-widest text-amber-100">{t("extraXp")}</div>
                 </div>
                 
                 <Button 
@@ -98,7 +104,7 @@ export function RecitationRewardModal({ xpAwarded, quality, surahName, isOpen, o
                   className="w-full rounded-2xl bg-slate-900 text-white hover:bg-slate-800 hover:scale-105 active:scale-95 transition-all shadow-xl h-14 text-lg font-bold border-b-4 border-slate-950"
                   onClick={onClose}
                 >
-                  رائع! استلم النقاط
+                  {t("claimPoints")}
                 </Button>
               </div>
             </motion.div>
@@ -108,3 +114,4 @@ export function RecitationRewardModal({ xpAwarded, quality, surahName, isOpen, o
     </Dialog>
   );
 }
+

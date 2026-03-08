@@ -6,6 +6,7 @@ import Confetti from "react-confetti";
 
 import { Button } from "@/components/ui/button";
 import { Achievement } from "@/hooks/use-student-achievements";
+import { soundManager } from "@/lib/sounds";
 
 interface AchievementUnlockedModalProps {
   isOpen: boolean;
@@ -41,6 +42,12 @@ export function AchievementUnlockedModal({
     }
     return undefined;
   }, []);
+
+  useEffect(() => {
+    if (isOpen && achievements.length > 0) {
+      void soundManager.play("achievementUnlock");
+    }
+  }, [isOpen, achievements.length]);
 
   if (!isOpen || achievements.length === 0) return null;
 
