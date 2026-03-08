@@ -14,6 +14,7 @@ import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { AdminGamificationService } from "./admin-gamification.service";
 import { Achievement } from "./entities/achievement.entity";
 import { MilestoneReward } from "./entities/milestone-reward.entity";
+import { LeagueService } from "./league.service";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
@@ -24,7 +25,10 @@ import { Quest } from "../quests/entities/quest.entity";
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
 export class AdminGamificationController {
-  constructor(private readonly gamificationService: AdminGamificationService) {}
+  constructor(
+    private readonly gamificationService: AdminGamificationService,
+    private readonly leagueService: LeagueService,
+  ) {}
 
   // --- Quests ---
   @Get("quests")
@@ -105,5 +109,11 @@ export class AdminGamificationController {
   @ApiOperation({ summary: "Delete an achievement (Admin)" })
   async deleteAchievement(@Param("id") id: string) {
     return this.gamificationService.deleteAchievement(id);
+  }
+
+  @Post("leagues/process-weekly-reset")
+  @ApiOperation({ summary: "Process weekly league reset now (Admin)" })
+  async processWeeklyLeagueReset() {
+    return this.leagueService.processWeeklyReset();
   }
 }

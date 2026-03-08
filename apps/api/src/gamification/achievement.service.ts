@@ -62,7 +62,7 @@ export class AchievementService {
 
       switch (achievement.criteriaType) {
         case AchievementCriteriaType.STREAK_DAYS:
-          conditionMet = student.currentStreak >= achievement.criteriaTarget;
+          conditionMet = student.maxStreak >= achievement.criteriaTarget;
           break;
         case AchievementCriteriaType.TOTAL_XP:
           conditionMet = student.totalXp >= achievement.criteriaTarget;
@@ -94,6 +94,35 @@ export class AchievementService {
     return newUnlockedAchievements;
   }
 
+  private async getProgressForAchievement(
+    achievement: Achievement,
+    studentId: string,
+    student: Student | null,
+    totalQuestsCountCache: Record<string, number>
+  ): Promise<number> {
+    switch (achievement.criteriaType) {
+      case AchievementCriteriaType.TOTAL_XP:
+        return student?.totalXp ?? 0;
+      case AchievementCriteriaType.STREAK_DAYS:
+        return student?.maxStreak ?? 0;
+      case AchievementCriteriaType.TOTAL_QUESTS_CATEGORY: {
+        if (!achievement.criteriaCategory) return 0;
+        if (totalQuestsCountCache[achievement.criteriaCategory] !== undefined) {
+          return totalQuestsCountCache[achievement.criteriaCategory] ?? 0;
+        }
+        const count = await this.questCompletionRepo
+          .createQueryBuilder("qc")
+          .innerJoin("quest", "q", "qc.quest_id = q.id")
+          .where("qc.student_id = :studentId", { studentId })
+          .andWhere("q.category = :category", { category: achievement.criteriaCategory })
+          .getCount();
+        totalQuestsCountCache[achievement.criteriaCategory] = count;
+        return count;
+      }
+    }
+    return 0;
+  }
+
   async getStudentAchievements(studentId: string) {
     const allAchievements = await this.achievementRepo.find({ order: { title: "ASC" } });
     const studentAchievements = await this.studentAchievementRepo.find({ where: { studentId } });
@@ -103,11 +132,38 @@ export class AchievementService {
       unlockedMap.set(sa.achievementId, sa.unlockedAt);
     }
     
-    return allAchievements.map(a => ({
-      ...a,
-      isUnlocked: unlockedMap.has(a.id),
-      unlockedAt: unlockedMap.get(a.id) || null,
-    }));
+    const student = await this.studentRepo.findOne({ where: { id: studentId } });
+    const totalQuestsCountCache: Record<string, number> = {};
+    const results = [];
+
+    for (const a of allAchievements) {
+      const isUnlocked = unlockedMap.has(a.id);
+      let currentProgress = 0;
+      let progressPercent = 0;
+
+      if (isUnlocked) {
+        currentProgress = a.criteriaTarget;
+        progressPercent = 100;
+      } else {
+        currentProgress = await this.getProgressForAchievement(a, studentId, student, totalQuestsCountCache);
+        
+        if (a.criteriaTarget <= 0) {
+          progressPercent = 100;
+        } else {
+          progressPercent = Math.min(Math.round((currentProgress / a.criteriaTarget) * 100), 100);
+        }
+      }
+
+      results.push({
+        ...a,
+        isUnlocked,
+        unlockedAt: unlockedMap.get(a.id) || null,
+        currentProgress,
+        progressPercent,
+      });
+    }
+
+    return results;
   }
 }
 

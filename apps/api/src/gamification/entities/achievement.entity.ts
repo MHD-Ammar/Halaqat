@@ -9,6 +9,13 @@ export enum AchievementCriteriaType {
   TOTAL_XP = "TOTAL_XP",
 }
 
+export enum AchievementRarity {
+  COMMON = "COMMON",
+  RARE = "RARE",
+  EPIC = "EPIC",
+  LEGENDARY = "LEGENDARY",
+}
+
 @Entity("achievement")
 export class Achievement extends BaseEntity {
   @Column({ type: "varchar", length: 255 })
@@ -37,4 +44,12 @@ export class Achievement extends BaseEntity {
     nullable: true,
   })
   criteriaCategory!: QuestCategory | null;
+
+  @Column({
+    name: "rarity",
+    type: "enum",
+    enum: AchievementRarity,
+    default: AchievementRarity.COMMON,
+  })
+  rarity!: AchievementRarity;
 }
