@@ -32,6 +32,7 @@ import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
+import { StoreService } from "../gamification/store.service";
 
 @ApiTags("Student Portal")
 @ApiBearerAuth("JWT-auth")
@@ -40,7 +41,10 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 @Roles(UserRole.STUDENT)
 @UseInterceptors(ClassSerializerInterceptor)
 export class StudentPortalController {
-  constructor(private readonly studentPortalService: StudentPortalService) {}
+  constructor(
+    private readonly studentPortalService: StudentPortalService,
+    private readonly storeService: StoreService,
+  ) {}
 
   /**
    * GET /student-portal/quests
@@ -253,6 +257,28 @@ export class StudentPortalController {
     return this.studentPortalService.claimLoginBonus(user.studentId);
   }
 
+  @Get("league/last-week-result")
+  @ApiOperation({
+    summary: "Get last week league result",
+    description: "Returns the unseen promotion/relegation/stay result from the previous week.",
+  })
+  async getLastWeekLeagueResult(
+    @CurrentUser() user: { id: string; studentId: string; mosqueId: string },
+  ) {
+    return this.studentPortalService.getLastWeekLeagueResult(user.studentId, user.mosqueId);
+  }
+
+  @Post("league/last-week-result/seen")
+  @ApiOperation({
+    summary: "Mark last week league result as seen",
+    description: "Marks the previous week result modal as acknowledged for this student.",
+  })
+  async markLastWeekLeagueResultSeen(
+    @CurrentUser() user: { id: string; studentId: string; mosqueId: string },
+  ) {
+    return this.studentPortalService.markLastWeekLeagueResultSeen(user.studentId, user.mosqueId);
+  }
+
   /**
    * GET /student-portal/dashboard
    *
@@ -299,5 +325,24 @@ export class StudentPortalController {
       user.studentId,
       recitationId,
     );
+  }
+
+  @Get("store")
+  @ApiOperation({ summary: "Get available store items" })
+  @ApiResponse({ status: 200, description: "Store items returned" })
+  async getStoreItems(@CurrentUser() user: { id: string; studentId: string }) {
+    const student = await this.studentPortalService.getStudent(user.studentId);
+    return this.storeService.getStoreItems(user.studentId, student.mosqueId);
+  }
+
+  @Post("store/:itemId/purchase")
+  @ApiOperation({ summary: "Purchase a store item" })
+  @ApiResponse({ status: 201, description: "Item purchased successfully" })
+  @ApiResponse({ status: 400, description: "Not enough XP or item out of stock" })
+  async purchaseItem(
+    @CurrentUser() user: { id: string; studentId: string },
+    @Param("itemId") itemId: string,
+  ) {
+    return this.storeService.purchaseItem(user.studentId, itemId);
   }
 }

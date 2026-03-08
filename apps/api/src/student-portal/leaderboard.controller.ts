@@ -54,7 +54,7 @@ export class LeaderboardController {
 
   @Get("league")
   @ApiOperation({ summary: "Get League Leaderboard" })
-  @ApiResponse({ status: 200, description: "Top 30 students in the same league tier." })
+  @ApiResponse({ status: 200, description: "Weekly league leaderboard for students in the same tier." })
   async getLeagueLeaderboard(
     @CurrentUser() user: { id: string; studentId: string; mosqueId: string },
   ) {

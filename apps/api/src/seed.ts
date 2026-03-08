@@ -10,6 +10,7 @@
  */
 
 import { Gender, UserRole, SessionStatus, ExamStatus } from "@halaqat/types";
+import "dotenv/config";
 import { NestFactory } from "@nestjs/core";
 import * as bcrypt from "bcrypt";
 import { DataSource } from "typeorm";
@@ -445,6 +446,65 @@ async function seed() {
         [achievementId, a.title, a.description, a.badgeIcon, a.criteriaType, a.criteriaTarget, a.criteriaCategory],
       );
       console.log(`   ✓ Achievement: ${a.title}`);
+    }
+    console.log("");
+
+    // ========================================
+    // 8. League Tiers
+    // ========================================
+    console.log("🏆 Seeding league tiers...");
+
+    const leagueTiers = [
+      { rank: 1, name: "Bronze", nameAr: "البرونزي", icon: "🥉", color: "amber", promotionSlots: 10, relegationSlots: 0, xpBonus: 0 },
+      { rank: 2, name: "Silver", nameAr: "الفضي", icon: "🥈", color: "slate", promotionSlots: 8, relegationSlots: 5, xpBonus: 50 },
+      { rank: 3, name: "Gold", nameAr: "الذهبي", icon: "🥇", color: "yellow", promotionSlots: 5, relegationSlots: 5, xpBonus: 100 },
+      { rank: 4, name: "Diamond", nameAr: "الماسي", icon: "💎", color: "cyan", promotionSlots: 3, relegationSlots: 5, xpBonus: 250 },
+      { rank: 5, name: "Champions", nameAr: "الأبطال", icon: "👑", color: "violet", promotionSlots: 0, relegationSlots: 5, xpBonus: 500 },
+    ];
+
+    for (const tier of leagueTiers) {
+      await dataSource.query(
+        `
+        INSERT INTO "league_tier" (rank, name, name_ar, icon, color, promotion_slots, relegation_slots, xp_bonus)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        ON CONFLICT (rank) DO UPDATE SET
+          name = EXCLUDED.name,
+          name_ar = EXCLUDED.name_ar,
+          icon = EXCLUDED.icon,
+          color = EXCLUDED.color,
+          promotion_slots = EXCLUDED.promotion_slots,
+          relegation_slots = EXCLUDED.relegation_slots,
+          xp_bonus = EXCLUDED.xp_bonus
+      `,
+        [tier.rank, tier.name, tier.nameAr, tier.icon, tier.color, tier.promotionSlots, tier.relegationSlots, tier.xpBonus],
+      );
+      console.log(`   ✓ Tier: ${tier.nameAr}`);
+    }
+    console.log("");
+
+    // ========================================
+    // 9. Store Items
+    // ========================================
+    console.log("🛍️ Seeding store items...");
+
+    const storeItems = [
+      { name: "Streak Shield", nameAr: "درع الحماية", type: "STREAK_SHIELD", xpCost: 200, rewardValue: "1", icon: "🛡️", minLevel: 3, maxPerStudent: 3 },
+      { name: "Gold Frame", nameAr: "إطار ذهبي", type: "AVATAR_FRAME", xpCost: 500, rewardValue: "gold", icon: "🖼️", minLevel: 5, maxPerStudent: 1 },
+      { name: "Emerald Frame", nameAr: "إطار زمردي", type: "AVATAR_FRAME", xpCost: 750, rewardValue: "emerald", icon: "💚", minLevel: 7, maxPerStudent: 1 },
+      { name: "Scholar Title", nameAr: "لقب العالم", type: "TITLE", xpCost: 300, rewardValue: "العالم", icon: "⭐", minLevel: 5, maxPerStudent: 1 },
+      { name: "XP Boost", nameAr: "تعزيز النقاط", type: "DOUBLE_XP", xpCost: 400, rewardValue: "100", icon: "⚡", minLevel: 1, maxPerStudent: null },
+    ];
+
+    for (const item of storeItems) {
+      await dataSource.query(
+        `
+        INSERT INTO "store_item" (name, name_ar, type, xp_cost, reward_value, icon, min_level, max_per_student, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+        ON CONFLICT DO NOTHING
+      `,
+        [item.name, item.nameAr, item.type, item.xpCost, item.rewardValue, item.icon, item.minLevel, item.maxPerStudent],
+      );
+      console.log(`   ✓ Store Item: ${item.nameAr}`);
     }
     console.log("");
 

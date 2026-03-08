@@ -7,6 +7,7 @@
 
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { ScheduleModule } from "@nestjs/schedule";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { AnalyticsModule } from "./analytics/analytics.module";
@@ -43,6 +44,7 @@ import { UsersModule } from "./users/users.module";
 
     // TypeORM Database Module
     TypeOrmModule.forRootAsync(typeOrmConfig),
+    ScheduleModule.forRoot(),
 
     // Feature Modules
     UsersModule,

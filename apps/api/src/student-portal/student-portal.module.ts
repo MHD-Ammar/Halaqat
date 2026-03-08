@@ -19,6 +19,7 @@ import { Achievement } from "../gamification/entities/achievement.entity";
 import { MilestoneReward } from "../gamification/entities/milestone-reward.entity";
 import { StudentAchievement } from "../gamification/entities/student-achievement.entity";
 import { StudentMilestone } from "../gamification/entities/student-milestone.entity";
+import { GamificationModule } from "../gamification/gamification.module";
 import { Recitation } from "../progress/entities/recitation.entity";
 import { QuestCompletion } from "../quests/entities/quest-completion.entity";
 import { Quest } from "../quests/entities/quest.entity";
@@ -38,6 +39,7 @@ import { Student } from "../students/entities/student.entity";
       Achievement,
       StudentAchievement,
     ]),
+    GamificationModule,
   ],
   controllers: [StudentPortalController, LeaderboardController],
   providers: [StudentPortalService, AchievementService, StudentPortalLeaderboardService],

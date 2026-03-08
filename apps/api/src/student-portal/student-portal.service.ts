@@ -14,13 +14,17 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, In, IsNull, Repository, LessThanOrEqual, MoreThan } from "typeorm";
+import { DataSource, EntityManager, In, IsNull, Repository, LessThanOrEqual, MoreThan } from "typeorm";
 
 import { SubmitStudentQuestDto } from "./dto/submit-student-quest.dto";
-import { calculateLevelFromXp } from "../common/constants/leveling-curve";
+import { calculateLevelFromXp, XP_LEVEL_CURVE } from "../common/constants/leveling-curve";
+import { getNextMultiplierTier, getStreakMultiplier } from "../common/constants/streak-multiplier";
+import { getTitleKeyForLevel } from "../common/constants/student-titles";
 import { Campaign } from "../daily-challenge/entities/campaign.entity";
 import { DailySubmission } from "../daily-challenge/entities/daily-submission.entity";
 import { AchievementService } from "../gamification/achievement.service";
@@ -28,6 +32,7 @@ import { Achievement } from "../gamification/entities/achievement.entity";
 import { MilestoneReward, RewardType } from "../gamification/entities/milestone-reward.entity";
 import { StudentAchievement } from "../gamification/entities/student-achievement.entity";
 import { StudentMilestone } from "../gamification/entities/student-milestone.entity";
+import { LastWeekLeagueResultResponse, LeagueService } from "../gamification/league.service";
 import { Recitation } from "../progress/entities/recitation.entity";
 import { QuestCompletion } from "../quests/entities/quest-completion.entity";
 import { Quest } from "../quests/entities/quest.entity";
@@ -47,6 +52,8 @@ export interface QuestWithCompletion {
 
 @Injectable()
 export class StudentPortalService {
+  private readonly logger = new Logger(StudentPortalService.name);
+
   /**
    * XP thresholds for leveling.
    * Formula: totalXp / 500 + 1 (e.g., 0-499 XP = Level 1, 500-999 = Level 2, etc.)
@@ -70,10 +77,11 @@ export class StudentPortalService {
     private studentAchievementRepo: Repository<StudentAchievement>,
     private readonly dataSource: DataSource,
     private readonly achievementService: AchievementService,
+    private readonly leagueService: LeagueService,
   ) {}
 
   private async processMilestoneUnlocks(
-    manager: any,
+    manager: EntityManager,
     studentId: string,
     newLevel: number,
   ): Promise<StudentMilestone[]> {
@@ -99,6 +107,15 @@ export class StudentPortalService {
       }),
     );
     return manager.save(StudentMilestone, newStudentMilestones);
+  }
+
+  /**
+   * Get student details
+   */
+  async getStudent(studentId: string): Promise<Student> {
+    const student = await this.studentRepo.findOne({ where: { id: studentId } });
+    if (!student) throw new NotFoundException("Student not found");
+    return student;
   }
 
   /**
@@ -250,6 +267,8 @@ export class StudentPortalService {
   ): Promise<{
     success: true;
     earnedXp: number;
+    baseXp: number;
+    multiplier: number;
     newTotalXp: number;
     levelUp: boolean;
     newLevel: number;
@@ -307,8 +326,12 @@ export class StudentPortalService {
         throw new NotFoundException("Student not found");
       }
 
+      const { multiplier } = getStreakMultiplier(freshStudent.currentStreak);
+      const baseXp = quest.xpReward;
+      const earnedXp = Math.round(baseXp * multiplier);
+
       const oldLevel = freshStudent.currentLevel;
-      freshStudent.totalXp += quest.xpReward;
+      freshStudent.totalXp += earnedXp;
       freshStudent.currentLevel = this.calculateLevel(freshStudent.totalXp);
       const levelUp = freshStudent.currentLevel > oldLevel;
 
@@ -319,6 +342,9 @@ export class StudentPortalService {
           studentId,
           freshStudent.currentLevel,
         );
+        const newTitle = getTitleKeyForLevel(freshStudent.currentLevel);
+        // Auto-assign the level-based title (students can also have milestone titles)
+        freshStudent.activeTitle = newTitle;
       }
 
       // Evaluate achievements dynamically
@@ -326,10 +352,17 @@ export class StudentPortalService {
 
       await queryRunner.manager.save(freshStudent);
       await queryRunner.commitTransaction();
+      try {
+        await this.leagueService.addWeeklyXp(studentId, earnedXp);
+      } catch (error) {
+        this.logger.error(`Failed to add weekly league XP after completeQuest: ${String(error)}`);
+      }
 
       return {
         success: true,
-        earnedXp: quest.xpReward,
+        earnedXp,
+        baseXp,
+        multiplier,
         newTotalXp: freshStudent.totalXp,
         levelUp,
         newLevel: freshStudent.currentLevel,
@@ -413,7 +446,10 @@ export class StudentPortalService {
       return { claimed: false };
     }
 
-    const xpAwarded = 20;
+    const { multiplier } = getStreakMultiplier(student.currentStreak);
+    const baseXp = 20;
+    const xpAwarded = Math.round(baseXp * multiplier);
+
     student.totalXp += xpAwarded;
 
     const oldLevel = student.currentLevel;
@@ -424,6 +460,11 @@ export class StudentPortalService {
     student.lastLoginBonusAt = new Date();
 
     await this.studentRepo.save(student);
+    try {
+      await this.leagueService.addWeeklyXp(studentId, xpAwarded);
+    } catch (error) {
+      this.logger.error(`Failed to add weekly league XP after claimLoginBonus: ${String(error)}`);
+    }
 
     return {
       claimed: true,
@@ -440,7 +481,7 @@ export class StudentPortalService {
   async getDashboardData(studentId: string) {
     const student = await this.studentRepo.findOne({
       where: { id: studentId },
-      select: ["id", "totalXp", "currentLevel", "currentStreak"],
+      select: ["id", "totalXp", "currentLevel", "currentStreak", "streakShields", "lastShieldUsedAt", "activeTitle", "activeAvatarFrame"],
     });
 
     if (!student) {
@@ -448,33 +489,33 @@ export class StudentPortalService {
     }
 
     const today = new Date();
-    const last7Days: string[] = [];
-    for (let i = 0; i < 7; i++) {
+    const last30Days: string[] = [];
+    for (let i = 0; i < 30; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
-      last7Days.push(d.toISOString().split("T")[0]!);
+      last30Days.push(d.toISOString().split("T")[0]!);
     }
+
+    const query = this.submissionRepo
+      .createQueryBuilder("sub")
+      .where("sub.student_id = :studentId", { studentId })
+      .andWhere("sub.submission_date IN (:...dates)", { dates: last30Days });
 
     const activeCampaign = await this.campaignRepo.findOne({
       where: { isActive: true },
       order: { createdAt: "DESC" },
     });
 
-    const query = this.submissionRepo
-      .createQueryBuilder("sub")
-      .where("sub.student_id = :studentId", { studentId })
-      .andWhere("sub.submission_date IN (:...dates)", { dates: last7Days });
-
     if (activeCampaign) {
       query.andWhere("sub.campaign_id = :campaignId", { campaignId: activeCampaign.id });
     } else {
-      query.andWhere("1 = 0"); // Return no submissions if no active campaign
+      query.andWhere("1 = 0"); // No active campaign = no submissions
     }
 
     const recentSubmissions = await query.getMany();
 
     const streakCalendar: Record<string, boolean> = {};
-    for (const date of last7Days) {
+    for (const date of last30Days) {
       streakCalendar[date] = false;
     }
     for (const sub of recentSubmissions) {
@@ -520,6 +561,29 @@ export class StudentPortalService {
     const todayStr = today.toISOString().split("T")[0]!;
     const hasSubmittedToday = streakCalendar[todayStr] ?? false;
 
+    const currentLevelThreshold = XP_LEVEL_CURVE[student.currentLevel - 1] ?? 0;
+    const isMaxLevel = student.currentLevel >= XP_LEVEL_CURVE.length;
+    
+    let nextLevelXp = 0;
+    const currentLevelXp = currentLevelThreshold;
+    let xpProgress = 100;
+    let xpToNextLevel = 0;
+
+    if (isMaxLevel) {
+      nextLevelXp = student.totalXp;
+      xpProgress = 100;
+      xpToNextLevel = 0;
+    } else {
+      nextLevelXp = XP_LEVEL_CURVE[student.currentLevel] ?? (currentLevelThreshold + 500);
+      const xpIntoLevel = Math.max(0, student.totalXp - currentLevelThreshold);
+      const xpNeededForLevel = nextLevelXp - currentLevelThreshold;
+      xpProgress = xpNeededForLevel > 0 ? Math.min(Math.round((xpIntoLevel / xpNeededForLevel) * 100), 100) : 100;
+      xpToNextLevel = Math.max(0, nextLevelXp - student.totalXp);
+    }
+
+    const streakMultiplier = getStreakMultiplier(student.currentStreak);
+    const nextTier = getNextMultiplierTier(student.currentStreak);
+
     return {
       streakCalendar,
       recentRecitations: formattedRecitations,
@@ -529,6 +593,20 @@ export class StudentPortalService {
       currentLevel: student.currentLevel,
       hasUnseenRecitationReward,
       unseenRecitationReward,
+      nextLevelXp,
+      currentLevelXp,
+      xpProgress,
+      xpToNextLevel,
+      streakMultiplier: streakMultiplier.multiplier,
+      streakMultiplierLabel: streakMultiplier.labelAr,
+      streakMultiplierTier: streakMultiplier.tier,
+      nextMultiplierDaysNeeded: nextTier?.daysNeeded ?? null,
+      nextMultiplierLabel: nextTier?.nextMultiplier ?? null,
+      streakShields: student.streakShields,
+      maxStreakShields: 3,
+      lastShieldUsedAt: student.lastShieldUsedAt,
+      activeTitle: student.activeTitle,
+      activeAvatarFrame: student.activeAvatarFrame,
     };
   }
 
@@ -593,7 +671,7 @@ export class StudentPortalService {
     const xpEarned = this.calculateXPFromFormConfig(dto.submissionData, formConfig);
 
     // Calculate streak - campaignId is guaranteed to be a string at this point
-    const newStreak = await this.calculateStreak(
+    const { newStreak, shieldUsed } = await this.calculateStreak(
       studentId,
       today,
       campaignId,
@@ -627,8 +705,12 @@ export class StudentPortalService {
         throw new NotFoundException("Student not found");
       }
 
+      const { multiplier } = getStreakMultiplier(freshStudent.currentStreak);
+      const baseXp = xpEarned;
+      const adjustedXp = Math.round(baseXp * multiplier);
+
       // Update XP
-      freshStudent.totalXp += xpEarned;
+      freshStudent.totalXp += adjustedXp;
 
       // Calculate new level based on updated XP
       const oldLevel = freshStudent.currentLevel;
@@ -644,6 +726,9 @@ export class StudentPortalService {
           studentId,
           freshStudent.currentLevel,
         );
+        const newTitle = getTitleKeyForLevel(freshStudent.currentLevel);
+        // Auto-assign the level-based title (students can also have milestone titles)
+        freshStudent.activeTitle = newTitle;
       }
 
       // Update streak
@@ -654,6 +739,9 @@ export class StudentPortalService {
         freshStudent.maxStreak = newStreak;
       }
 
+      // Check shield reward
+      const shieldEarned = this.checkShieldReward(freshStudent, newStreak);
+
       // Update last login
       freshStudent.lastLoginAt = new Date();
 
@@ -661,16 +749,24 @@ export class StudentPortalService {
       await queryRunner.manager.save(freshStudent);
 
       await queryRunner.commitTransaction();
+      try {
+        await this.leagueService.addWeeklyXp(studentId, adjustedXp);
+      } catch (error) {
+        this.logger.error(`Failed to add weekly league XP after submitQuest: ${String(error)}`);
+      }
 
       return {
         success: true,
-        earnedXp: xpEarned,
+        earnedXp: adjustedXp,
         newTotalXp: freshStudent.totalXp,
         levelUp,
         newLevel,
         currentStreak: newStreak,
         maxStreak: freshStudent.maxStreak,
         unlockedMilestones,
+        shieldUsed,
+        shieldEarned,
+        streakShields: freshStudent.streakShields,
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -793,11 +889,13 @@ export class StudentPortalService {
    * Get all milestones for a student
    */
   async getStudentMilestones(studentId: string) {
-    return this.studentMilestoneRepo.find({
+    const milestones = await this.studentMilestoneRepo.find({
       where: { studentId },
       relations: ["milestone"],
       order: { milestone: { targetLevel: "ASC" } },
     });
+    // Filter out orphaned records where the milestone definition is missing
+    return milestones.filter((sm) => sm.milestone);
   }
 
   /**
@@ -829,6 +927,12 @@ export class StudentPortalService {
     let rewardGiven = false;
     let newTotalXp: number | undefined;
 
+    if (!studentMilestone.milestone) {
+      throw new InternalServerErrorException(
+        `Milestone definition not found for student milestone ${milestoneId}. This usually happens if the milestone_rewards table was wiped but student records remain.`,
+      );
+    }
+
     if (studentMilestone.milestone.rewardType === RewardType.BONUS_XP) {
       const bonusXp = parseInt(studentMilestone.milestone.rewardValue, 10);
       if (!isNaN(bonusXp)) {
@@ -841,9 +945,24 @@ export class StudentPortalService {
           rewardGiven = true;
         }
       }
+    } else if (studentMilestone.milestone.rewardType === RewardType.TITLE) {
+      const student = await this.studentRepo.findOne({ where: { id: studentId } });
+      if (student) {
+        student.activeTitle = studentMilestone.milestone.rewardValue;
+        await this.studentRepo.save(student);
+        rewardGiven = true;
+      }
+    } else if (studentMilestone.milestone.rewardType === RewardType.AVATAR_FRAME) {
+      const student = await this.studentRepo.findOne({ where: { id: studentId } });
+      if (student) {
+        student.activeAvatarFrame = studentMilestone.milestone.rewardValue;
+        await this.studentRepo.save(student);
+        rewardGiven = true;
+      }
     } else {
-      // Logic for title, avatar frame goes here
-      rewardGiven = true;
+      // Unknown reward type — log a warning but don't crash
+      this.logger.warn(`Unknown reward type: ${studentMilestone.milestone.rewardType} for milestone ${milestoneId}`);
+      rewardGiven = false;
     }
 
     await this.studentMilestoneRepo.save(studentMilestone);
@@ -860,15 +979,30 @@ export class StudentPortalService {
   }
 
   /**
+   * Check if a student earned a new streak shield
+   */
+  private checkShieldReward(student: Student, newStreak: number): boolean {
+    const SHIELD_REWARD_STREAKS = [7, 14, 21, 30]; // Earn a shield at these streak milestones
+    const MAX_SHIELDS = 3;
+    
+    if (SHIELD_REWARD_STREAKS.includes(newStreak) && student.streakShields < MAX_SHIELDS) {
+      student.streakShields += 1;
+      return true; // Shield earned
+    }
+    return false;
+  }
+
+  /**
    * Calculate the current streak
    * Checks if there was a submission yesterday. If yes, increment previous streak.
-   * If no previous submission, start at 1.
+   * If no submission but student has shields > 0 and streak > 0, auto-consume a shield.
+   * If no previous submission and no shields, start at 1.
    */
   private async calculateStreak(
     studentId: string,
     todayStr: string,
     campaignId: string,
-  ): Promise<number> {
+  ): Promise<{ newStreak: number; shieldUsed: boolean }> {
     // Treat the input string as a UTC date to avoid local timezone shifts
     const yesterdayDate = new Date(`${todayStr}T00:00:00Z`);
     yesterdayDate.setUTCDate(yesterdayDate.getUTCDate() - 1);
@@ -882,7 +1016,35 @@ export class StudentPortalService {
       },
     });
 
-    return previousSubmission ? previousSubmission.streak + 1 : 1;
+    if (previousSubmission) {
+      return { newStreak: previousSubmission.streak + 1, shieldUsed: false };
+    }
+
+    // No submission yesterday — check for shield
+    const student = await this.studentRepo.findOne({ where: { id: studentId } });
+    if (student && student.streakShields > 0 && student.currentStreak > 0) {
+      // Consume a shield to protect the streak
+      student.streakShields -= 1;
+      student.lastShieldUsedAt = new Date();
+      await this.studentRepo.save(student);
+      return { newStreak: student.currentStreak + 1, shieldUsed: true };
+    }
+
+    return { newStreak: 1, shieldUsed: false };
+  }
+
+  async getLastWeekLeagueResult(
+    studentId: string,
+    mosqueId: string,
+  ): Promise<LastWeekLeagueResultResponse | null> {
+    return this.leagueService.getLastWeekResult(studentId, mosqueId);
+  }
+
+  async markLastWeekLeagueResultSeen(
+    studentId: string,
+    mosqueId: string,
+  ): Promise<{ success: true }> {
+    return this.leagueService.markLastWeekResultSeen(studentId, mosqueId);
   }
 
   /**
@@ -924,25 +1086,38 @@ export class StudentPortalService {
     const feedItems = [
       ...recentQuests.map((q) => ({
         id: `q-${q.id}`,
+        type: "QUEST" as const,
         date: q.completedAt || new Date(),
         emoji: "🏆",
-        text: `${q.student?.name} أكمل مهمة ${q.quest?.title}!`,
+        studentName: q.student?.name || "طالب",
+        studentTitle: q.student?.activeTitle || null,
+        itemName: q.quest?.title || "مهمة",
       })),
       ...recentAchievements.map((a) => ({
         id: `a-${a.id}`,
+        type: "ACHIEVEMENT" as const,
         date: a.unlockedAt || new Date(),
         emoji: "🔥",
-        text: `${a.student?.name} حصل على وسام ${a.achievement?.title}!`,
+        studentName: a.student?.name || "طالب",
+        studentTitle: a.student?.activeTitle || null,
+        itemName: a.achievement?.title || "وسام",
       })),
-      ...recentMilestones.map((m) => ({
-        id: `m-${m.id}`,
-        date: m.unlockedAt || m.createdAt || new Date(),
-        emoji: "🎁",
-        text: `${m.student?.name} فتح مكافأة ${m.milestone?.title}!`,
-      })),
+      ...recentMilestones
+        .filter((m) => m.milestone) // Defensive guard
+        .map((m) => ({
+          id: `m-${m.id}`,
+          type: "MILESTONE" as const,
+          date: m.unlockedAt || m.createdAt || new Date(),
+          emoji: "🎁",
+          studentName: m.student?.name || "طالب",
+          studentTitle: m.student?.activeTitle || null,
+          itemName: m.milestone?.title || "مكافأة",
+        })),
     ];
 
     feedItems.sort((a, b) => b.date.getTime() - a.date.getTime());
-    return feedItems.slice(0, 5).map(({ id, emoji, text }) => ({ id, emoji, text }));
+    return feedItems.slice(0, 5).map(({ id, emoji, type, studentName, studentTitle, itemName }) => ({ 
+      id, emoji, type, studentName, studentTitle, itemName 
+    }));
   }
 }
