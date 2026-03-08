@@ -12,6 +12,7 @@
 import type { QuestCategory } from "@halaqat/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 
 import { useUserProfile } from "./use-user-profile";
@@ -35,6 +36,8 @@ export type GroupedQuestsResponse = Record<QuestCategory, QuestWithCompletion[]>
 export interface CompleteQuestResponse {
   success: true;
   earnedXp: number;
+  baseXp: number;
+  multiplier: number;
   newTotalXp: number;
   levelUp: boolean;
   newLevel: number;
@@ -73,6 +76,9 @@ export interface SubmitQuestResponse {
   newLevel: number;
   currentStreak: number;
   maxStreak: number;
+  shieldUsed: boolean;
+  shieldEarned?: boolean;
+  streakShields: number;
 }
 
 // --- Query Keys ---
@@ -163,6 +169,7 @@ export function useTodayQuests(campaignKey: string = "ramadan") {
  */
 export function useSubmitStudentQuests() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (data: SubmitQuestRequest) => {
@@ -172,7 +179,7 @@ export function useSubmitStudentQuests() {
       );
       return response.data;
     },
-    onSuccess: (_data) => {
+    onSuccess: (data) => {
       // Invalidate quest status
       queryClient.invalidateQueries({
         queryKey: studentQuestKeys.all,
@@ -187,6 +194,20 @@ export function useSubmitStudentQuests() {
       queryClient.invalidateQueries({
         queryKey: ["daily-challenge"],
       });
+
+      if (data.shieldUsed) {
+        toast({
+          title: "🛡️ تم حماية سلسلتك!",
+          description: `تم استخدام درع تلقائياً — باقي لديك ${data.streakShields} دروع.`,
+        });
+      }
+
+      if (data.shieldEarned) {
+        toast({
+          title: "🎉 حصلت على درع جديد!",
+          description: `لديك الآن ${data.streakShields}/3 دروع.`,
+        });
+      }
     },
   });
 }

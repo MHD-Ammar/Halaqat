@@ -88,6 +88,12 @@ export {
 } from "./use-users";
 export { useCreateUser } from "./use-create-user";
 export { useToast } from "./use-toast";
+export * from "./use-student-quests";
+export * from "./use-teacher-quests";
+export * from "./use-student-milestones";
+export * from "./use-student-achievements";
+export * from "./use-student-leaderboard";
+export * from "./use-student-store";
 export {
   useMosqueSettings,
   useUpdateMosque,

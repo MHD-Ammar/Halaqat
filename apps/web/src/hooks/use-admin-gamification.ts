@@ -38,6 +38,7 @@ export interface Achievement {
   criteriaTarget: number;
   criteriaCategory: QuestCategory | null;
   createdAt: string;
+  rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
 }
 
 // --- Query Keys ---

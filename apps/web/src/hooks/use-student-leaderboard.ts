@@ -10,6 +10,11 @@ export interface LeaderboardEntry {
   name: string;
   totalXp: number;
   currentLevel: number;
+  activeTitle: string | null;
+  activeAvatarFrame: string | null;
+  weeklyXp?: number;
+  promotionZone?: boolean;
+  relegationZone?: boolean;
 }
 
 export interface LeaderboardResponse {
@@ -20,6 +25,12 @@ export interface LeaderboardResponse {
 export interface LeagueLeaderboardResponse extends LeaderboardResponse {
   leagueName: string;
   leagueNameAr: string;
+  leagueIcon: string;
+  leagueRank: number;
+  weekEndsAt: string;
+  promotionThreshold: number;
+  relegationThreshold: number;
+  myWeeklyXp: number;
 }
 
 export function useCircleLeaderboard() {

@@ -17,6 +17,9 @@ export interface Achievement {
   criteriaCategory: QuestCategory | null;
   isUnlocked: boolean;
   unlockedAt: string | null;
+  rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
+  currentProgress: number;
+  progressPercent: number;
 }
 
 export const achievementKeys = {

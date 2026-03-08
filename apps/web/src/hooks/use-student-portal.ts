@@ -87,6 +87,20 @@ export interface DashboardData {
     xpAwarded: number;
     surahName: string;
   } | null;
+  nextLevelXp: number;
+  currentLevelXp: number;
+  xpProgress: number; // 0-100
+  xpToNextLevel: number;
+  streakMultiplier: number;
+  streakMultiplierLabel: string;
+  streakMultiplierTier: number;
+  nextMultiplierDaysNeeded: number | null;
+  nextMultiplierLabel: string | null;
+  streakShields: number;
+  maxStreakShields: number;
+  lastShieldUsedAt: string | null;
+  activeTitle: string | null;
+  activeAvatarFrame: string | null;
 }
 
 export interface ClaimLoginBonusResponse {
@@ -95,6 +109,23 @@ export interface ClaimLoginBonusResponse {
   newTotalXp?: number;
   levelUp?: boolean;
   newLevel?: number;
+}
+
+export interface LeagueTierSummary {
+  id: number;
+  rank: number;
+  name: string;
+  nameAr: string;
+  icon: string;
+}
+
+export interface LastWeekLeagueResultResponse {
+  result: "promoted" | "relegated" | "stayed";
+  finalRank: number | null;
+  weeklyXp: number;
+  weekStart: string;
+  fromTier: LeagueTierSummary;
+  toTier: LeagueTierSummary;
 }
 
 /**
@@ -155,6 +186,45 @@ export function useMarkRecitationRewardSeen() {
   });
 }
 
+export function useLastWeekLeagueResult() {
+  return useQuery({
+    queryKey: ["student-portal", "league", "last-week-result"],
+    queryFn: async () => {
+      const response = await api.get<LastWeekLeagueResultResponse | null>(
+        "/student-portal/league/last-week-result",
+      );
+      return response.data;
+    },
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useMarkLastWeekLeagueResultSeen() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const response = await api.post<{ success: boolean }>(
+        "/student-portal/league/last-week-result/seen",
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["student-portal", "league", "last-week-result"] });
+      queryClient.invalidateQueries({ queryKey: ["student-leaderboard", "league"] });
+    },
+  });
+}
+
+export interface LiveFeedItem {
+  id: string;
+  emoji: string;
+  type: "QUEST" | "ACHIEVEMENT" | "MILESTONE";
+  studentName: string;
+  studentTitle: string | null;
+  itemName: string;
+}
+
 /**
  * Fetch live social feed items
  */
@@ -162,7 +232,7 @@ export function useLiveFeed() {
   return useQuery({
     queryKey: ["student-portal", "live-feed"],
     queryFn: async () => {
-      const res = await api.get<{ id: string; emoji: string; text: string }[]>(
+      const res = await api.get<LiveFeedItem[]>(
         "/student-portal/live-feed",
       );
       return res.data;
