@@ -53,6 +53,7 @@ const achievementSchema = z.object({
   criteriaType: z.enum(["STREAK_DAYS", "TOTAL_XP", "TOTAL_QUESTS_CATEGORY"] as const),
   criteriaTarget: z.number().min(1, "Target must be at least 1"),
   criteriaCategory: z.nativeEnum(QuestCategory).nullable().optional(),
+  rarity: z.enum(["COMMON", "RARE", "EPIC", "LEGENDARY"]),
 }).refine(
   (data) => {
     // If criteria type requires a category, ensure it's provided
@@ -92,6 +93,7 @@ export function AchievementsTab() {
       criteriaType: "TOTAL_XP",
       criteriaTarget: 1000,
       criteriaCategory: null,
+      rarity: "COMMON",
     },
   });
 
@@ -106,6 +108,7 @@ export function AchievementsTab() {
       criteriaType: "TOTAL_XP",
       criteriaTarget: 1000,
       criteriaCategory: null,
+      rarity: "COMMON",
     });
     setIsDialogOpen(true);
   };
@@ -119,6 +122,7 @@ export function AchievementsTab() {
       criteriaType: achievement.criteriaType,
       criteriaTarget: achievement.criteriaTarget,
       criteriaCategory: achievement.criteriaCategory || null,
+      rarity: achievement.rarity || "COMMON",
     });
     setIsDialogOpen(true);
   };
@@ -348,6 +352,29 @@ export function AchievementsTab() {
                   )}
                 />
               )}
+              <FormField
+                control={form.control}
+                name="rarity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("form.rarity")}</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("form.selectRarity")} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="COMMON">{t("form.rarity_common")}</SelectItem>
+                        <SelectItem value="RARE">{t("form.rarity_rare")}</SelectItem>
+                        <SelectItem value="EPIC">{t("form.rarity_epic")}</SelectItem>
+                        <SelectItem value="LEGENDARY">{t("form.rarity_legendary")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <div className="flex justify-end gap-2 pt-4">

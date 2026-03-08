@@ -122,10 +122,10 @@ export function DataTable<T>({
                     {col.cell
                       ? col.cell(item)
                       : col.accessorFn
-                      ? col.accessorFn(item)
-                      : col.accessorKey
-                      ? (item[col.accessorKey] as ReactNode)
-                      : null}
+                        ? col.accessorFn(item)
+                        : col.accessorKey
+                          ? (item[col.accessorKey] as ReactNode)
+                          : null}
                   </TableCell>
                 ))}
               </TableRow>
