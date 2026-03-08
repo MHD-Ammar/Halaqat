@@ -9,16 +9,21 @@ import { LevelUpModal } from "@/components/level-up-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type Achievement } from "@/hooks/use-student-achievements";
+import { useStudentDashboard } from "@/hooks/use-student-portal";
 import { QuestWithCompletion, useCompleteQuest, useStudentQuests } from "@/hooks/use-student-quests";
 import { useToast } from "@/hooks/use-toast";
 
+import { DailyCountdownTimer } from "../_components/DailyCountdownTimer";
 import { QuestCard } from "../_components/QuestCard";
 
 export default function QuestsPage() {
   const t = useTranslations();
   const { toast } = useToast();
   const { data: groupedQuests, isLoading: isQuestsLoading } = useStudentQuests();
+  const { data: dashboardData } = useStudentDashboard("ramadan");
   const completeQuestMutation = useCompleteQuest();
+
+  const streakMultiplier = dashboardData?.streakMultiplier ?? 1.0;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -103,6 +108,14 @@ export default function QuestsPage() {
           </p>
         </div>
 
+        {/* Daily Countdown Timer - Banner */}
+        {dashboardData && (
+          <DailyCountdownTimer 
+            hasSubmittedToday={dashboardData.hasSubmittedToday} 
+            variant="banner" 
+          />
+        )}
+
         {/* Tabs Interface */}
         <Tabs defaultValue="daily" className="w-full" dir="rtl">
           <TabsList className="grid w-full grid-cols-3 h-12 rounded-2xl bg-muted/50 p-1 mb-6">
@@ -131,6 +144,7 @@ export default function QuestsPage() {
               quests={tabData.daily} 
               onComplete={handleCompleteQuest} 
               isSubmitting={isSubmitting || completeQuestMutation.isPending} 
+              streakMultiplier={streakMultiplier}
             />
           </TabsContent>
           
@@ -139,6 +153,7 @@ export default function QuestsPage() {
                quests={tabData.halqah} 
                onComplete={handleCompleteQuest} 
                isSubmitting={isSubmitting || completeQuestMutation.isPending} 
+               streakMultiplier={streakMultiplier}
             />
           </TabsContent>
           
@@ -147,6 +162,7 @@ export default function QuestsPage() {
                quests={tabData.extra} 
                onComplete={handleCompleteQuest} 
                isSubmitting={isSubmitting || completeQuestMutation.isPending} 
+               streakMultiplier={streakMultiplier}
             />
           </TabsContent>
         </Tabs>
@@ -175,11 +191,13 @@ export default function QuestsPage() {
 function QuestList({ 
   quests, 
   onComplete, 
-  isSubmitting 
+  isSubmitting,
+  streakMultiplier
 }: { 
   quests: QuestWithCompletion[], 
   onComplete: (id: string) => Promise<void>,
-  isSubmitting: boolean
+  isSubmitting: boolean,
+  streakMultiplier: number
 }) {
   const t = useTranslations();
   
@@ -230,6 +248,7 @@ function QuestList({
             quest={quest} 
             onComplete={onComplete} 
             isSubmitting={isSubmitting} 
+            streakMultiplier={streakMultiplier}
           />
         </motion.div>
       ))}

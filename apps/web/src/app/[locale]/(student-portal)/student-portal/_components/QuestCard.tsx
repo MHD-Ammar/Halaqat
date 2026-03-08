@@ -6,15 +6,18 @@ import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 
 import { type QuestWithCompletion } from "@/hooks/use-student-quests";
+import { soundManager } from "@/lib/sounds";
 
 interface QuestCardProps {
   quest: QuestWithCompletion;
   onComplete: (questId: string) => Promise<void>;
   isSubmitting: boolean;
+  streakMultiplier?: number;
 }
 
-export function QuestCard({ quest, onComplete, isSubmitting }: QuestCardProps) {
+export function QuestCard({ quest, onComplete, isSubmitting, streakMultiplier = 1.0 }: QuestCardProps) {
   const tQuestCategory = useTranslations("QuestCategory");
+  const t = useTranslations("StudentPortal");
   const [isPending, setIsPending] = useState(false);
   const [justCompleted, setJustCompleted] = useState(false);
 
@@ -32,10 +35,12 @@ export function QuestCard({ quest, onComplete, isSubmitting }: QuestCardProps) {
     setIsPending(true);
     try {
       await onComplete(quest.id);
+      void soundManager.play("questComplete");
       setJustCompleted(true);
       // Remove the "just completed" highlight after animation finishes
       setTimeout(() => setJustCompleted(false), 2000);
     } catch {
+      void soundManager.play("error");
       // Error is handled upstream
     } finally {
       setIsPending(false);
@@ -90,13 +95,21 @@ export function QuestCard({ quest, onComplete, isSubmitting }: QuestCardProps) {
             <motion.div 
               animate={justCompleted ? { scale: [1, 1.3, 1] } : undefined}
               transition={{ delay: 0.1, duration: 0.4 }}
-              className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold shadow-sm ${
+              className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold shadow-sm flex items-center gap-1 ${
                 showAsCompleted
                   ? "bg-gradient-to-r from-emerald-400 to-green-500 text-white"
-                  : "bg-gradient-to-r from-amber-400 to-yellow-500 text-white animate-pulse"
-              }`}
+                  : "bg-gradient-to-r from-amber-400 to-yellow-500 text-white"
+              } ${!showAsCompleted && streakMultiplier > 1.0 ? "animate-pulse" : ""}`}
             >
-              +{quest.xpReward} XP
+              {streakMultiplier > 1.0 ? (
+                <>
+                  <span className="text-[10px]">🔥</span>
+                  <span>+{quest.xpReward} × {streakMultiplier} = </span>
+                  <span className="text-sm font-black">{Math.round(quest.xpReward * streakMultiplier)} {t("xp")}</span>
+                </>
+              ) : (
+                <>+{quest.xpReward} {t("xp")}</>
+              )}
             </motion.div>
           </div>
           

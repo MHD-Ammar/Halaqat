@@ -7,22 +7,34 @@
 
 "use client";
 
-import { Flame, Rocket, Shield, Star, Trophy } from "lucide-react";
+import { Flame, Shield, Star, Trophy } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
+import { LeagueResultModal } from "@/components/league-result-modal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useStudentDashboard, useClaimLoginBonus, useMarkRecitationRewardSeen } from "@/hooks/use-student-portal";
+import {
+  useStudentDashboard,
+  useClaimLoginBonus,
+  useLastWeekLeagueResult,
+  useMarkLastWeekLeagueResultSeen,
+  useMarkRecitationRewardSeen,
+} from "@/hooks/use-student-portal";
 import { useUserProfile } from "@/hooks/use-user-profile";
+import { soundManager } from "@/lib/sounds";
 
 import { CircleLiveFeed } from "./_components/CircleLiveFeed";
 import { DailyBonusModal } from "./_components/DailyBonusModal";
+import { DailyCountdownTimer } from "./_components/DailyCountdownTimer";
 import { DailyQuestCTA } from "./_components/DailyQuestCTA";
 import { RecentRecitations } from "./_components/RecentRecitations";
 import { RecitationRewardModal } from "./_components/RecitationRewardModal";
 import { RewardChests } from "./_components/RewardChests";
 import { StreakCalendar } from "./_components/StreakCalendar";
+import { StreakMultiplierBadge } from "./_components/StreakMultiplierBadge";
+import { StudentAvatarCard } from "./_components/StudentAvatarCard";
+import { XpProgressBar } from "./_components/XpProgressBar";
 
 interface StudentProfile {
   id: string;
@@ -40,14 +52,23 @@ export default function StudentPortalPage() {
   const student = profile as unknown as StudentProfile | undefined;
 
   const { data: dashboardData, isLoading: isDashboardLoading } = useStudentDashboard("ramadan");
+  const { data: lastWeekLeagueResult, isLoading: isLeagueResultLoading } = useLastWeekLeagueResult();
   const claimBonus = useClaimLoginBonus();
+  const markLastWeekLeagueResultSeen = useMarkLastWeekLeagueResultSeen();
   const markRecitationRewardSeen = useMarkRecitationRewardSeen();
 
   const [bonusModalOpen, setBonusModalOpen] = useState(false);
   const [bonusXp, setBonusXp] = useState(0);
+  const [leagueResultModalOpen, setLeagueResultModalOpen] = useState(false);
 
   const [recitationModalOpen, setRecitationModalOpen] = useState(false);
   const [recitationReward, setRecitationReward] = useState<{ id: string; xpAwarded: number; quality: string; surahName: string } | null>(null);
+
+  useEffect(() => {
+    if (lastWeekLeagueResult) {
+      setLeagueResultModalOpen(true);
+    }
+  }, [lastWeekLeagueResult]);
 
   // Handle Dashboard check for unseen recitation rewards
   useEffect(() => {
@@ -74,7 +95,13 @@ export default function StudentPortalPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isLoading = isProfileLoading || isDashboardLoading;
+  useEffect(() => {
+    if (bonusModalOpen) {
+      void soundManager.play("loginBonus");
+    }
+  }, [bonusModalOpen]);
+
+  const isLoading = isProfileLoading || isDashboardLoading || isLeagueResultLoading;
 
   if (isLoading) {
     return (
@@ -105,11 +132,19 @@ export default function StudentPortalPage() {
         <div className="absolute -top-8 -end-8 w-32 h-32 rounded-full bg-white/10" />
         <div className="absolute -bottom-4 -start-4 w-24 h-24 rounded-full bg-white/10" />
 
-        <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-4 text-center md:text-start">
-          <div className="shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-inner">
-            <Rocket className="w-8 h-8 md:w-10 md:h-10 text-white" />
+        <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
+          {/* Avatar Card */}
+          <div className="shrink-0">
+            <StudentAvatarCard
+              name={student?.name || ''}
+              level={dashboardData?.currentLevel || student?.currentLevel || 1}
+              activeTitle={dashboardData?.activeTitle || null}
+              activeAvatarFrame={dashboardData?.activeAvatarFrame || null}
+            />
           </div>
-          <div className="pt-2">
+
+          {/* Welcome Text */}
+          <div className="flex-1 text-center md:text-start">
             <h1 className="text-2xl md:text-3xl font-extrabold">
               {t("welcomeHero")}
             </h1>
@@ -117,6 +152,16 @@ export default function StudentPortalPage() {
           </div>
         </div>
       </div>
+
+      {/* Daily Countdown Timer - Compact */}
+      {dashboardData && (
+        <div className="flex justify-center -mt-2 mb-2 relative z-20">
+          <DailyCountdownTimer 
+            hasSubmittedToday={dashboardData.hasSubmittedToday} 
+            variant="compact" 
+          />
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -139,17 +184,25 @@ export default function StudentPortalPage() {
 
         {/* Level */}
         <Card className="rounded-3xl border-indigo-200/50 hover:border-indigo-400 transition-colors shadow-sm dark:border-indigo-500/20 bg-gradient-to-br from-indigo-50 to-indigo-100/50 dark:from-indigo-950/30 dark:to-indigo-900/10">
-          <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+          <CardContent className="p-4 flex flex-col items-center text-center gap-2 w-full">
             <div className="w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center">
               <Shield className="w-6 h-6 text-indigo-500" />
             </div>
-            <div>
+            <div className="w-full flex flex-col items-center">
               <p className="text-2xl md:text-3xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
                 {dashboardData?.currentLevel ?? student?.currentLevel ?? 1}
               </p>
-              <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
+              <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-2">
                 {t("level")}
               </p>
+              {dashboardData && (
+                <div className="w-16 h-1.5 bg-indigo-200 dark:bg-indigo-900/50 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-indigo-500 rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: `${Math.max(0, Math.min(dashboardData.xpProgress ?? 0, 100))}%` }}
+                  />
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -182,14 +235,38 @@ export default function StudentPortalPage() {
                 {student?.maxStreak ?? 0}
               </p>
               <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
-                {t("bestStreak", { fallback: "أعلى سلسلة" })}
+                {t("bestStreak")}
               </p>
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* XP Progress Bar */}
+      {isDashboardLoading ? (
+        <Skeleton className="h-40 w-full rounded-3xl mb-8" />
+      ) : dashboardData ? (
+        <XpProgressBar
+          totalXp={dashboardData.totalXp}
+          currentLevel={dashboardData.currentLevel}
+          currentLevelXp={dashboardData.currentLevelXp}
+          nextLevelXp={dashboardData.nextLevelXp}
+          xpProgress={dashboardData.xpProgress}
+          xpToNextLevel={dashboardData.xpToNextLevel}
+        />
+      ) : null}
+
       {/* Habit Builder Section: Top widget is the 7-day streak calendar */}
+      {dashboardData && (
+        <StreakMultiplierBadge
+          multiplier={dashboardData.streakMultiplier}
+          multiplierLabel={dashboardData.streakMultiplierLabel}
+          tier={dashboardData.streakMultiplierTier}
+          currentStreak={dashboardData.currentStreak}
+          nextMultiplierDaysNeeded={dashboardData.nextMultiplierDaysNeeded}
+          nextMultiplierLabel={dashboardData.nextMultiplierLabel}
+        />
+      )}
       {dashboardData && (
         <StreakCalendar streakCalendar={dashboardData.streakCalendar} />
       )}
@@ -226,6 +303,17 @@ export default function StudentPortalPage() {
           }}
         />
       )}
+
+      <LeagueResultModal
+        isOpen={leagueResultModalOpen}
+        resultData={lastWeekLeagueResult ?? null}
+        onClose={() => {
+          setLeagueResultModalOpen(false);
+          if (lastWeekLeagueResult) {
+            markLastWeekLeagueResultSeen.mutate();
+          }
+        }}
+      />
     </div>
   );
 }

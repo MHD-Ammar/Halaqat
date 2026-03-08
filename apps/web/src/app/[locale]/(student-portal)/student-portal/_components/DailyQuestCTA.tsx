@@ -3,14 +3,19 @@
 import { motion } from "framer-motion";
 import { Coffee, Rocket } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
+
+import { DailyCountdownTimer } from "./DailyCountdownTimer";
 
 interface DailyQuestCTAProps {
   hasSubmittedToday: boolean;
 }
 
 export function DailyQuestCTA({ hasSubmittedToday }: DailyQuestCTAProps) {
+  const t = useTranslations("StudentPortal");
+  
   return (
     <div className={`relative overflow-hidden rounded-[2rem] border p-8 shadow-sm transition-all ${
       hasSubmittedToday 
@@ -28,8 +33,8 @@ export function DailyQuestCTA({ hasSubmittedToday }: DailyQuestCTAProps) {
               <Coffee className="h-10 w-10" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-green-800 dark:text-green-300">أنجزت مهامك اليوم بنجاح</h2>
-              <p className="text-green-600/80 dark:text-green-400/80 font-medium">استرح يا بطل! لقد أكملت وردك اليومي.</p>
+              <h2 className="text-2xl font-bold text-green-800 dark:text-green-300">{t("questsCompletedToday")}</h2>
+              <p className="text-green-600/80 dark:text-green-400/80 font-medium">{t("questsCompletedSubtitle")}</p>
             </div>
           </>
         ) : (
@@ -38,9 +43,12 @@ export function DailyQuestCTA({ hasSubmittedToday }: DailyQuestCTAProps) {
               <Rocket className="h-10 w-10" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold">لديك مهام جديدة!</h2>
-              <p className="text-muted-foreground font-medium">أكمل وردك اليومي لتحافظ على سلسلة الحضور واكسب المزيد من نقاط الخبرة.</p>
+              <h2 className="text-2xl font-bold">{t("newQuestsAvailable")}</h2>
+              <p className="text-muted-foreground font-medium">{t("newQuestsSubtitle")}</p>
             </div>
+            
+            <DailyCountdownTimer hasSubmittedToday={hasSubmittedToday} variant="cta" />
+
             <motion.div
               animate={{ scale: [1, 1.03, 1] }}
               transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
@@ -49,7 +57,7 @@ export function DailyQuestCTA({ hasSubmittedToday }: DailyQuestCTAProps) {
                 <Button size="lg" className="h-14 w-full rounded-full text-lg shadow-lg hover:scale-105 transition-transform sm:w-auto px-10 relative overflow-hidden group">
                   <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                   <span className="relative z-10 flex items-center gap-2">
-                    🚀 انطلق لإنجاز مهام اليوم!
+                    {t("startQuestsAction")}
                   </span>
                 </Button>
               </Link>
