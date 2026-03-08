@@ -2,14 +2,14 @@
 
 import { Info, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Fragment } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  type LeaderboardResponse, 
-  type LeagueLeaderboardResponse,
-  useCircleLeaderboard, 
-  useLeagueLeaderboard, 
-  useMosqueLeaderboard 
+import {
+  type LeaderboardResponse,
+  useCircleLeaderboard,
+  useLeagueLeaderboard,
+  useMosqueLeaderboard,
 } from "@/hooks/use-student-leaderboard";
 import { useStudentPortal } from "@/hooks/use-student-portal";
 
@@ -25,27 +25,25 @@ export default function StudentLeaderboardPage() {
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6 pb-4">
       <div>
-        <h1 className="pb-2 text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">
-          {t("leaderboard", { fallback: "لوحة الصدارة" })}
+        <h1 className="bg-gradient-to-r from-amber-500 to-orange-600 bg-clip-text pb-2 text-3xl font-black text-transparent">
+          {t("leaderboard")}
         </h1>
-        <p className="font-medium text-muted-foreground">
-          {t("leaderboardDesc", { fallback: "تنافس مع أصدقائك واصعد إلى القمة!" })}
-        </p>
+        <p className="font-medium text-muted-foreground">{t("leaderboardDesc")}</p>
       </div>
 
       <Tabs defaultValue="league" className="w-full">
         <TabsList className="grid h-auto w-full grid-cols-3 rounded-xl bg-muted/50 p-1">
           <TabsTrigger value="circle" className="rounded-lg py-3 text-sm font-bold data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 md:text-base">
-            <span className="hidden mr-2 md:inline">🏫</span> 
-            {t("myCircle", { fallback: "حلقتي" })}
+            <span className="mr-2 hidden md:inline">🏅</span>
+            {t("myCircle")}
           </TabsTrigger>
           <TabsTrigger value="league" className="rounded-lg py-3 text-sm font-bold data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 md:text-base">
-            <span className="hidden mr-2 md:inline">🏆</span> 
-            {t("myLeague", { fallback: "دوري الأبطال" })}
+            <span className="mr-2 hidden md:inline">🏆</span>
+            {t("myLeague")}
           </TabsTrigger>
           <TabsTrigger value="global" className="rounded-lg py-3 text-sm font-bold data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 md:text-base">
-            <span className="hidden mr-2 md:inline">🌍</span> 
-            {t("globalRank", { fallback: "الترتيب العام" })}
+            <span className="mr-2 hidden md:inline">🌍</span>
+            {t("globalRank")}
           </TabsTrigger>
         </TabsList>
 
@@ -70,12 +68,23 @@ function CircleLeaderboardTab({ currentUserId }: { currentUserId?: string }) {
   const t = useTranslations("StudentPortal");
 
   if (isLoading) return <LoadingState />;
-
   if (!data || data.students.length === 0) {
-    return <EmptyState message={t("noCircleAssigned", { fallback: "لم يتم تعيينك لحلقة بعد أو لا يوجد طلاب في حلقتك." })} />;
+    return <EmptyState message={t("noCircleAssigned")} />;
   }
 
-  return <LeaderboardView data={data} currentUserId={currentUserId} />;
+  return <DefaultLeaderboardView data={data} currentUserId={currentUserId} />;
+}
+
+function GlobalLeaderboardTab({ currentUserId }: { currentUserId?: string }) {
+  const { data, isLoading } = useMosqueLeaderboard();
+  const t = useTranslations("StudentPortal");
+
+  if (isLoading) return <LoadingState />;
+  if (!data || data.students.length === 0) {
+    return <EmptyState message={t("noLeaderboardData")} />;
+  }
+
+  return <DefaultLeaderboardView data={data} currentUserId={currentUserId} />;
 }
 
 function LeagueLeaderboardTab({ currentUserId }: { currentUserId?: string }) {
@@ -83,59 +92,94 @@ function LeagueLeaderboardTab({ currentUserId }: { currentUserId?: string }) {
   const t = useTranslations("StudentPortal");
 
   if (isLoading) return <LoadingState />;
-
   if (!data || data.students.length === 0) {
-    return <EmptyState message={t("noStudentsInLeague", { fallback: "لا يوجد طلاب في هذا الدوري بعد." })} />;
+    return <EmptyState message={t("noStudentsInLeague")} />;
   }
 
+  const promotionStartIndex = data.students.findIndex((student) => student.promotionZone);
+  const relegationStartIndex = data.students.findIndex((student) => student.relegationZone);
+  const isCurrentUserInList = data.students.some((student) => student.id === currentUserId);
+
   return (
-    <div className="space-y-8">
-      <LeagueBadge leagueNameAr={data.leagueNameAr} />
-      <LeaderboardView data={data} currentUserId={currentUserId} />
+    <div className="space-y-6">
+      <LeagueBadge
+        leagueNameAr={data.leagueNameAr}
+        leagueIcon={data.leagueIcon}
+        leagueRank={data.leagueRank}
+        weekEndsAt={data.weekEndsAt}
+      />
+
+      <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-bold text-muted-foreground">
+        <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-emerald-700 dark:text-emerald-300">
+          {t("promotionThresholdLabel", { xp: data.promotionThreshold })}
+        </span>
+        <span className="rounded-full bg-rose-500/10 px-3 py-1 text-rose-700 dark:text-rose-300">
+          {t("relegationThresholdLabel", { xp: data.relegationThreshold })}
+        </span>
+      </div>
+
+      <div className="space-y-3">
+        {data.students.map((student, index) => (
+          <Fragment key={student.id}>
+            {index === promotionStartIndex && (
+              <div className="my-1 text-center text-xs font-black tracking-widest text-emerald-700 dark:text-emerald-300">
+                ── {t("promotionZone")} ──
+              </div>
+            )}
+            {index === relegationStartIndex && (
+              <div className="my-1 text-center text-xs font-black tracking-widest text-rose-700 dark:text-rose-300">
+                ── {t("relegationZone")} ──
+              </div>
+            )}
+            <LeaderboardRow
+              student={student}
+              isCurrentUser={student.id === currentUserId}
+              mode="league"
+            />
+          </Fragment>
+        ))}
+
+        {!isCurrentUserInList && data.myRank > 0 && (
+          <>
+            <div className="my-4 flex justify-center">
+              <span className="font-black tracking-[0.5em] text-muted-foreground">...</span>
+            </div>
+            <div className="flex items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-center font-bold text-amber-700 dark:text-amber-400">
+              {t("rankMessage", { rank: data.myRank })}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
-function GlobalLeaderboardTab({ currentUserId }: { currentUserId?: string }) {
-  const { data, isLoading } = useMosqueLeaderboard();
+function DefaultLeaderboardView({ data, currentUserId }: { data: LeaderboardResponse; currentUserId?: string }) {
   const t = useTranslations("StudentPortal");
-  
-  if (isLoading) return <LoadingState />;
-  
-  if (!data || data.students.length === 0) {
-    return <EmptyState message={t("noLeaderboardData", { fallback: "لا توجد بيانات للصدارة في المسجد بعد." })} />;
-  }
-
-  return <LeaderboardView data={data} currentUserId={currentUserId} />;
-}
-
-function LeaderboardView({ data, currentUserId }: { data: LeaderboardResponse | LeagueLeaderboardResponse, currentUserId?: string }) {
   const top3 = data.students.slice(0, 3);
   const rest = data.students.slice(3);
-  const myRank = data.myRank;
-  
-  const isCurrentUserInList = data.students.some((s) => s.id === currentUserId);
+  const isCurrentUserInList = data.students.some((student) => student.id === currentUserId);
 
   return (
     <div className="animate-in fade-in duration-500">
       {top3.length > 0 && <LeaderboardPodium topStudents={top3} currentUserId={currentUserId} />}
-      
+
       <div className="mt-8 space-y-3">
         {rest.map((student) => (
-          <LeaderboardRow 
-            key={student.id} 
-            student={student} 
-            isCurrentUser={student.id === currentUserId} 
+          <LeaderboardRow
+            key={student.id}
+            student={student}
+            isCurrentUser={student.id === currentUserId}
           />
         ))}
 
-        {!isCurrentUserInList && myRank > 0 && (
+        {!isCurrentUserInList && data.myRank > 0 && (
           <>
             <div className="my-4 flex justify-center">
-              <span className="text-muted-foreground font-black tracking-[0.5em]">...</span>
+              <span className="font-black tracking-[0.5em] text-muted-foreground">...</span>
             </div>
             <div className="flex items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-center font-bold text-amber-700 dark:text-amber-400">
-              أنت في المرتبة #{myRank} — استمر بالمحاولة للوصول إلى القمة! 💪
+              {t("rankMessage", { rank: data.myRank })}
             </div>
           </>
         )}
@@ -145,10 +189,12 @@ function LeaderboardView({ data, currentUserId }: { data: LeaderboardResponse | 
 }
 
 function LoadingState() {
+  const t = useTranslations("StudentPortal");
+
   return (
     <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
       <Loader2 className="mb-4 h-8 w-8 animate-spin" />
-      <p className="animate-pulse font-medium">جاري تحميل الأبطال...</p>
+      <p className="animate-pulse font-medium">{t("loadingHeroes")}</p>
     </div>
   );
 }

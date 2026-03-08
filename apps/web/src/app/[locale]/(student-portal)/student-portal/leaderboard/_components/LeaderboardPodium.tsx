@@ -1,4 +1,5 @@
 import { Crown, Medal, Trophy } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { type LeaderboardEntry } from "@/hooks/use-student-leaderboard";
 import { cn } from "@/lib/utils";
@@ -9,6 +10,8 @@ interface LeaderboardPodiumProps {
 }
 
 export function LeaderboardPodium({ topStudents, currentUserId }: LeaderboardPodiumProps) {
+  const t = useTranslations("StudentPortal");
+
   const getRankStyle = (index: number, isCurrentUser: boolean) => {
     let base = "";
     switch (index) {
@@ -66,7 +69,7 @@ export function LeaderboardPodium({ topStudents, currentUserId }: LeaderboardPod
               {student.name}
             </div>
             <div className="mt-1 font-mono text-xs font-bold opacity-90 md:text-sm">
-              {student.totalXp} XP
+              {student.totalXp} {t("xp")}
             </div>
           </div>
         </div>
