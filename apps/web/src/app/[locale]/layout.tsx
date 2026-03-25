@@ -5,9 +5,12 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 
 import "../globals.css";
+
 import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { routing } from "@/i18n/routing";
 import { QueryProvider } from "@/providers/query-provider";
+
 
 /**
  * Font configurations using Next.js font optimization
@@ -106,7 +109,9 @@ export default async function LocaleLayout({
     <html lang={locale} dir={dir} suppressHydrationWarning>
       <body className={`${fontClass} antialiased`} suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
-          <QueryProvider>{children}</QueryProvider>
+          <QueryProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </QueryProvider>
         </NextIntlClientProvider>
         <Toaster />
       </body>
