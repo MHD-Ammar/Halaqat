@@ -18,6 +18,7 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   Patch,
+  Delete,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -33,6 +34,7 @@ import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { StoreService } from "../gamification/store.service";
+import { NotificationService } from "../notifications/notification.service";
 
 @ApiTags("Student Portal")
 @ApiBearerAuth("JWT-auth")
@@ -44,6 +46,7 @@ export class StudentPortalController {
   constructor(
     private readonly studentPortalService: StudentPortalService,
     private readonly storeService: StoreService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   /**
@@ -86,6 +89,28 @@ export class StudentPortalController {
     @Param("questId") questId: string,
   ) {
     return this.studentPortalService.completeQuest(user.studentId, questId);
+  }
+
+  /**
+   * POST /student-portal/quests/:questId/log-progress
+   *
+   * Increment progress for a multi-step quest.
+   */
+  @Post("quests/:questId/log-progress")
+  @ApiOperation({
+    summary: "Log quest progress",
+    description: "Increment progress for a multi-step quest. Awards XP only when target is reached.",
+  })
+  @ApiResponse({ status: 201, description: "Progress logged successfully" })
+  @ApiResponse({ status: 404, description: "Quest not found" })
+  @ApiResponse({ status: 409, description: "Already completed for this period" })
+  @ApiResponse({ status: 400, description: "Invalid request (e.g. single-step quest)" })
+  async logQuestProgress(
+    @CurrentUser() user: { id: string; studentId: string },
+    @Param("questId") questId: string,
+    @Body() body: { amount?: number },
+  ) {
+    return this.studentPortalService.logQuestProgress(user.studentId, questId, body.amount);
   }
 
   /**
@@ -312,6 +337,14 @@ export class StudentPortalController {
     return this.studentPortalService.getLiveFeed(user.studentId);
   }
 
+  @Post("live-feed/:feedItemKey/react")
+  async toggleFeedReaction(
+    @CurrentUser() user: { id: string; studentId: string },
+    @Param("feedItemKey") feedItemKey: string,
+  ) {
+    return this.studentPortalService.toggleFeedReaction(user.studentId, feedItemKey);
+  }
+
   @Patch("recitation-reward/:id/seen")
   @ApiOperation({
     summary: "Mark recitation reward as seen",
@@ -344,5 +377,30 @@ export class StudentPortalController {
     @Param("itemId") itemId: string,
   ) {
     return this.storeService.purchaseItem(user.studentId, itemId);
+  }
+
+  @Get("store/purchases")
+  @ApiOperation({ summary: "Get personal purchase history" })
+  @ApiResponse({ status: 200, description: "Purchase history returned" })
+  async getMyPurchases(@CurrentUser() user: { id: string; studentId: string }) {
+    return this.storeService.getStudentPurchases(user.studentId);
+  }
+
+  @Post("push/subscribe")
+  @ApiOperation({ summary: "Subscribe to push notifications" })
+  async subscribePush(
+    @CurrentUser() user: { id: string; studentId: string },
+    @Body() subscriptionData: any,
+  ) {
+    return this.notificationService.subscribe(user.studentId, subscriptionData);
+  }
+
+  @Delete("push/unsubscribe")
+  @ApiOperation({ summary: "Unsubscribe from push notifications" })
+  async unsubscribePush(
+    @CurrentUser() user: { id: string; studentId: string },
+    @Body() body: { endpoint: string },
+  ) {
+    return this.notificationService.unsubscribe(user.studentId, body.endpoint);
   }
 }

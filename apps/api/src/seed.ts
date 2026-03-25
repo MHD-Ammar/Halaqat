@@ -487,22 +487,32 @@ async function seed() {
     // ========================================
     console.log("🛍️ Seeding store items...");
 
+    // Use static UUIDs for store items so they don't multiply on re-seed
     const storeItems = [
-      { name: "Streak Shield", nameAr: "درع الحماية", type: "STREAK_SHIELD", xpCost: 200, rewardValue: "1", icon: "🛡️", minLevel: 3, maxPerStudent: 3 },
-      { name: "Gold Frame", nameAr: "إطار ذهبي", type: "AVATAR_FRAME", xpCost: 500, rewardValue: "gold", icon: "🖼️", minLevel: 5, maxPerStudent: 1 },
-      { name: "Emerald Frame", nameAr: "إطار زمردي", type: "AVATAR_FRAME", xpCost: 750, rewardValue: "emerald", icon: "💚", minLevel: 7, maxPerStudent: 1 },
-      { name: "Scholar Title", nameAr: "لقب العالم", type: "TITLE", xpCost: 300, rewardValue: "العالم", icon: "⭐", minLevel: 5, maxPerStudent: 1 },
-      { name: "XP Boost", nameAr: "تعزيز النقاط", type: "DOUBLE_XP", xpCost: 400, rewardValue: "100", icon: "⚡", minLevel: 1, maxPerStudent: null },
+      { id: "s1111111-1111-4111-a111-111111111111", name: "Streak Shield", nameAr: "درع الحماية", type: "STREAK_SHIELD", xpCost: 200, rewardValue: "1", icon: "🛡️", minLevel: 3, maxPerStudent: 3 },
+      { id: "s2222222-2222-4222-a222-222222222222", name: "Gold Frame", nameAr: "إطار ذهبي", type: "AVATAR_FRAME", xpCost: 500, rewardValue: "gold", icon: "🖼️", minLevel: 5, maxPerStudent: 1 },
+      { id: "s3333333-3333-4333-a333-333333333333", name: "Emerald Frame", nameAr: "إطار زمردي", type: "AVATAR_FRAME", xpCost: 750, rewardValue: "emerald", icon: "💚", minLevel: 7, maxPerStudent: 1 },
+      { id: "s4444444-4444-4444-a444-444444444444", name: "Scholar Title", nameAr: "لقب العالم", type: "TITLE", xpCost: 300, rewardValue: "العالم", icon: "⭐", minLevel: 5, maxPerStudent: 1 },
+      { id: "s5555555-5555-4555-a555-555555555555", name: "XP Boost", nameAr: "تعزيز النقاط", type: "DOUBLE_XP", xpCost: 400, rewardValue: "100", icon: "⚡", minLevel: 1, maxPerStudent: null },
     ];
 
     for (const item of storeItems) {
+      const itemId = item.id.replace('s', '9');
       await dataSource.query(
         `
-        INSERT INTO "store_item" (name, name_ar, type, xp_cost, reward_value, icon, min_level, max_per_student, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
-        ON CONFLICT DO NOTHING
+        INSERT INTO "store_item" (id, name, name_ar, type, xp_cost, reward_value, icon, min_level, max_per_student, mosque_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name,
+          name_ar = EXCLUDED.name_ar,
+          type = EXCLUDED.type,
+          xp_cost = EXCLUDED.xp_cost,
+          reward_value = EXCLUDED.reward_value,
+          icon = EXCLUDED.icon,
+          min_level = EXCLUDED.min_level,
+          max_per_student = EXCLUDED.max_per_student
       `,
-        [item.name, item.nameAr, item.type, item.xpCost, item.rewardValue, item.icon, item.minLevel, item.maxPerStudent],
+        [itemId, item.name, item.nameAr, item.type, item.xpCost, item.rewardValue, item.icon, item.minLevel, item.maxPerStudent, MOSQUE_ID],
       );
       console.log(`   ✓ Store Item: ${item.nameAr}`);
     }

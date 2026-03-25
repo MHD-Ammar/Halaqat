@@ -21,6 +21,7 @@ import { useStudentDashboard } from "@/hooks/use-student-portal";
 import { useStoreItems, usePurchaseItem, StoreItemWithStatus } from "@/hooks/use-student-store";
 import { useToast } from "@/hooks/use-toast";
 
+import { PurchaseHistory } from "./_components/PurchaseHistory";
 import { StoreItemCard } from "./_components/StoreItemCard";
 
 export default function StudentStorePage() {
@@ -159,6 +160,10 @@ export default function StudentStorePage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <hr className="my-10 border-muted" />
+        
+        <PurchaseHistory />
 
       </motion.div>
     </div>
