@@ -27,4 +27,16 @@ export class StorePurchase extends BaseEntity {
 
   @CreateDateColumn({ name: 'purchased_at' })
   purchasedAt!: Date;
+
+  /** For REAL_WORLD items: 'pending', 'fulfilled', 'cancelled' */
+  @Column({ name: 'fulfillment_status', type: 'varchar', nullable: true })
+  fulfillmentStatus!: string | null;
+
+  /** Admin notes for fulfillment */
+  @Column({ name: 'fulfillment_notes', type: 'text', nullable: true })
+  fulfillmentNotes!: string | null;
+
+  /** When the item was fulfilled/delivered */
+  @Column({ name: 'fulfilled_at', type: 'timestamp', nullable: true })
+  fulfilledAt!: Date | null;
 }

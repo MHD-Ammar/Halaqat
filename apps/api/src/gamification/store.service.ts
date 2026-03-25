@@ -1,8 +1,9 @@
+import { StoreItemType } from '@halaqat/types';
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 
-import { StoreItem, StoreItemType } from './entities/store-item.entity';
+import { StoreItem } from './entities/store-item.entity';
 import { StorePurchase } from './entities/store-purchase.entity';
 import { Student } from '../students/entities/student.entity';
 
@@ -124,7 +125,10 @@ export class StoreService {
 
       // Record purchase
       const purchase = queryRunner.manager.create(StorePurchase, {
-        studentId, itemId, xpSpent: item.xpCost,
+        studentId,
+        itemId,
+        xpSpent: item.xpCost,
+        fulfillmentStatus: item.type === StoreItemType.REAL_WORLD ? 'pending' : null,
       });
       await queryRunner.manager.save(purchase);
 
@@ -142,5 +146,26 @@ export class StoreService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  /** Get purchase history for a student */
+  async getStudentPurchases(studentId: string) {
+    const purchases = await this.purchaseRepo.find({
+      where: { studentId },
+      relations: ['item'],
+      order: { purchasedAt: 'DESC' },
+    });
+
+    return purchases.map(p => ({
+      id: p.id,
+      itemName: p.item.nameAr,
+      itemIcon: p.item.icon,
+      itemType: p.item.type,
+      xpSpent: p.xpSpent,
+      purchasedAt: p.purchasedAt.toISOString(),
+      fulfillmentStatus: p.fulfillmentStatus,
+      fulfillmentNotes: p.fulfillmentNotes,
+      fulfilledAt: p.fulfilledAt?.toISOString() ?? null,
+    }));
   }
 }

@@ -70,3 +70,26 @@ export function usePurchaseItem() {
     },
   });
 }
+
+export interface PurchaseHistoryItem {
+  id: string;
+  itemName: string;
+  itemIcon: string;
+  itemType: StoreItemType;
+  xpSpent: number;
+  purchasedAt: string;
+  fulfillmentStatus: string | null;
+  fulfillmentNotes: string | null;
+  fulfilledAt: string | null;
+}
+
+export function usePurchaseHistory() {
+  return useQuery({
+    queryKey: ["student-store-purchases"],
+    queryFn: async () => {
+      const response = await api.get<PurchaseHistoryItem[]>("/student-portal/store/purchases");
+      return response.data;
+    },
+    staleTime: 60 * 1000,
+  });
+}

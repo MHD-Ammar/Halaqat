@@ -1,14 +1,7 @@
+import { StoreItemType } from '@halaqat/types';
 import { Entity, Column, Index } from 'typeorm';
 
 import { BaseEntity } from '../../common/entities/base.entity';
-
-export enum StoreItemType {
-  STREAK_SHIELD = 'STREAK_SHIELD',
-  AVATAR_FRAME = 'AVATAR_FRAME',
-  TITLE = 'TITLE',
-  DOUBLE_XP = 'DOUBLE_XP',
-  REAL_WORLD = 'REAL_WORLD', // Admin-configured physical prizes
-}
 
 @Entity('store_item')
 export class StoreItem extends BaseEntity {
