@@ -29,6 +29,9 @@ export interface QuestWithCompletion {
   icon: string;
   isCompleted: boolean;
   circleId: string | null;
+  target: number;
+  targetUnit: string | null;
+  currentProgress: number;
 }
 
 export type GroupedQuestsResponse = Record<QuestCategory, QuestWithCompletion[]>;
@@ -81,6 +84,19 @@ export interface SubmitQuestResponse {
   streakShields: number;
 }
 
+export interface LogProgressResponse {
+  currentProgress: number;
+  target: number;
+  justCompleted: boolean;
+  earnedXp?: number;
+  baseXp?: number;
+  multiplier?: number;
+  newTotalXp?: number;
+  levelUp?: boolean;
+  newLevel?: number;
+  unlockedMilestones?: unknown[];
+}
+
 // --- Query Keys ---
 
 export const studentQuestKeys = {
@@ -127,6 +143,33 @@ export function useCompleteQuest() {
     mutationFn: async (questId: string) => {
       const response = await api.post<CompleteQuestResponse>(
         `/student-portal/quests/${questId}/complete`,
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: studentQuestKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["user", "profile"] });
+    },
+  });
+}
+
+/**
+ * Log quest progress mutation.
+ */
+export function useLogQuestProgress() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      questId,
+      amount = 1,
+    }: {
+      questId: string;
+      amount?: number;
+    }) => {
+      const response = await api.post<LogProgressResponse>(
+        `/student-portal/quests/${questId}/log-progress`,
+        { amount },
       );
       return response.data;
     },

@@ -42,6 +42,8 @@ const questSchema = z.object({
   xpReward: z.number().min(0, "XP must be at least 0"),
   icon: z.string().min(1, "Icon is required"),
   isActive: z.boolean(),
+  target: z.number().min(1, "Target must be at least 1"),
+  targetUnit: z.string().optional().nullable(),
 });
 
 type QuestFormValues = z.infer<typeof questSchema>;
@@ -70,6 +72,8 @@ export function QuestsTab() {
       xpReward: 10,
       icon: "⭐",
       isActive: true,
+      target: 1,
+      targetUnit: "",
     },
   });
 
@@ -83,6 +87,8 @@ export function QuestsTab() {
       xpReward: 10,
       icon: "⭐",
       isActive: true,
+      target: 1,
+      targetUnit: "",
     });
     setIsDialogOpen(true);
   };
@@ -97,6 +103,8 @@ export function QuestsTab() {
       xpReward: quest.xpReward,
       icon: quest.icon,
       isActive: quest.isActive,
+      target: quest.target ?? 1,
+      targetUnit: quest.targetUnit ?? "",
     });
     setIsDialogOpen(true);
   };
@@ -135,8 +143,16 @@ export function QuestsTab() {
     },
     {
       header: t("columns.title"),
-      accessorFn: (row: Quest) => row.title,
-      className: "font-medium",
+      cell: (row: Quest) => (
+        <div className="flex flex-col">
+          <span className="font-medium">{row.title}</span>
+          {row.target > 1 && (
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
+              Target: {row.target} {row.targetUnit || ""}
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       header: t("columns.category"),
@@ -313,6 +329,41 @@ export function QuestsTab() {
                     <FormControl>
                       <Input placeholder="⭐" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="target"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Target (Steps)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 1)} 
+                      />
+                    </FormControl>
+                    <FormDescription>For multi-step quests (e.g. 5 pages)</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="targetUnit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Target Unit</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. صفحات, مرات" {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormDescription>Displayed as &quot;current / target [unit]&quot;</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

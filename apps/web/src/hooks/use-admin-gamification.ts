@@ -17,6 +17,8 @@ export interface Quest {
   xpReward: number;
   icon: string;
   isActive: boolean;
+  target: number;
+  targetUnit: string | null;
   createdAt: string;
 }
 
@@ -41,6 +43,30 @@ export interface Achievement {
   rarity: "COMMON" | "RARE" | "EPIC" | "LEGENDARY";
 }
 
+export interface SeasonalEvent {
+  id: string;
+  name: string;
+  nameAr: string;
+  description: string | null;
+  descriptionAr: string | null;
+  startsAt: string;
+  endsAt: string;
+  xpMultiplier: number;
+  icon: string;
+  themeColor: string;
+  bannerUrl: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface EventQuest {
+  id: string;
+  eventId: string;
+  questId: string;
+  bonusXp: number;
+  quest: Quest;
+}
+
 // --- Query Keys ---
 
 export const adminGamificationKeys = {
@@ -48,7 +74,99 @@ export const adminGamificationKeys = {
   quests: () => [...adminGamificationKeys.all, "quests"] as const,
   milestones: () => [...adminGamificationKeys.all, "milestones"] as const,
   achievements: () => [...adminGamificationKeys.all, "achievements"] as const,
+  events: () => [...adminGamificationKeys.all, "events"] as const,
+  eventQuests: (eventId: string) => [...adminGamificationKeys.all, "events", eventId, "quests"] as const,
 };
+
+// ... (existing hooks)
+
+// ============================================================================
+// Seasonal Events Hooks
+// ============================================================================
+
+export function useAdminEvents() {
+  return useQuery({
+    queryKey: adminGamificationKeys.events(),
+    queryFn: async () => {
+      const { data } = await api.get<SeasonalEvent[]>("/gamification/admin/events");
+      return data;
+    },
+  });
+}
+
+export function useCreateEvent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (dto: Partial<SeasonalEvent>) => {
+      const { data } = await api.post<SeasonalEvent>("/gamification/admin/events", dto);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminGamificationKeys.events() });
+    },
+  });
+}
+
+export function useUpdateEvent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, dto }: { id: string; dto: Partial<SeasonalEvent> }) => {
+      const { data } = await api.put<SeasonalEvent>(`/gamification/admin/events/${id}`, dto);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminGamificationKeys.events() });
+    },
+  });
+}
+
+export function useDeleteEvent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/gamification/admin/events/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminGamificationKeys.events() });
+    },
+  });
+}
+
+export function useEventQuests(eventId: string) {
+  return useQuery({
+    queryKey: adminGamificationKeys.eventQuests(eventId),
+    queryFn: async () => {
+      const { data } = await api.get<EventQuest[]>(`/gamification/admin/events/${eventId}/quests`);
+      return data;
+    },
+    enabled: !!eventId,
+  });
+}
+
+export function useAddQuestToEvent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ eventId, questId, bonusXp }: { eventId: string; questId: string; bonusXp?: number }) => {
+      const { data } = await api.post<EventQuest>(`/gamification/admin/events/${eventId}/quests`, { questId, bonusXp });
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: adminGamificationKeys.eventQuests(variables.eventId) });
+    },
+  });
+}
+
+export function useRemoveQuestFromEvent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ eventId, questId }: { eventId: string; questId: string }) => {
+      await api.delete(`/gamification/admin/events/${eventId}/quests/${questId}`);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: adminGamificationKeys.eventQuests(variables.eventId) });
+    },
+  });
+}
 
 // ============================================================================
 // Quests Hooks
@@ -202,6 +320,44 @@ export function useDeleteAchievement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminGamificationKeys.achievements() });
+    },
+  });
+}
+
+// ============================================================================
+// Store Fulfillments Hooks
+// ============================================================================
+
+export interface FulfillmentItem {
+  id: string;
+  studentName: string;
+  studentId: string;
+  itemName: string;
+  itemIcon: string;
+  xpSpent: number;
+  purchasedAt: string;
+  fulfillmentStatus: "pending" | "fulfilled" | "cancelled";
+}
+
+export function usePendingFulfillments() {
+  return useQuery({
+    queryKey: [...adminGamificationKeys.all, "fulfillments"] as const,
+    queryFn: async () => {
+      const { data } = await api.get<FulfillmentItem[]>("/gamification/admin/pending-fulfillments");
+      return data;
+    },
+  });
+}
+
+export function useUpdateFulfillment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status, notes }: { id: string; status: "fulfilled" | "cancelled"; notes?: string }) => {
+      const { data } = await api.patch(`/gamification/admin/fulfillments/${id}`, { status, notes });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...adminGamificationKeys.all, "fulfillments"] });
     },
   });
 }

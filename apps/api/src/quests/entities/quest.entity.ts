@@ -45,6 +45,14 @@ export class Quest extends BaseEntity {
   @Index()
   isActive!: boolean;
 
+  /** Target count for multi-step quests (null or 1 = single-step) */
+  @Column({ type: "int", default: 1 })
+  target!: number;
+
+  /** Unit label for progress display (e.g., "صفحات", "مرات") */
+  @Column({ name: "target_unit", type: "varchar", length: 50, nullable: true })
+  targetUnit!: string | null;
+
   // ── Circle Scoping ────────────────────────────────────────────
   // null = global quest (admin-created), set = circle-specific (teacher-created)
 

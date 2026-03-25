@@ -1,11 +1,11 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Circle, Loader2 } from "lucide-react";
+import { Check, Circle, Loader2, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
-import { type QuestWithCompletion } from "@/hooks/use-student-quests";
+import { type QuestWithCompletion, useLogQuestProgress } from "@/hooks/use-student-quests";
 import { soundManager } from "@/lib/sounds";
 
 interface QuestCardProps {
@@ -20,6 +20,7 @@ export function QuestCard({ quest, onComplete, isSubmitting, streakMultiplier = 
   const t = useTranslations("StudentPortal");
   const [isPending, setIsPending] = useState(false);
   const [justCompleted, setJustCompleted] = useState(false);
+  const { mutateAsync: logProgress, isPending: isLoggingProgress } = useLogQuestProgress();
 
   // If the quest becomes completed organically (e.g. from parent re-render), 
   // clear pending state.
@@ -29,32 +30,60 @@ export function QuestCard({ quest, onComplete, isSubmitting, streakMultiplier = 
     }
   }, [quest.isCompleted]);
 
-  const handleComplete = async () => {
-    if (quest.isCompleted || isSubmitting || isPending) return;
+  const handleLogProgress = async (amount: number = 1) => {
+    if (quest.isCompleted || isSubmitting || isPending || isLoggingProgress) return;
     
+    setIsPending(true);
+    try {
+      const result = await logProgress({ questId: quest.id, amount });
+      if (result.justCompleted) {
+        void soundManager.play("questComplete");
+        setJustCompleted(true);
+        setTimeout(() => setJustCompleted(false), 2000);
+      } else {
+        void soundManager.play("loginBonus"); // Short satisfying sound for progress
+      }
+    } catch {
+      void soundManager.play("error");
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  const handleComplete = async () => {
+    if (quest.isCompleted || isSubmitting || isPending || isLoggingProgress) return;
+    
+    if (quest.target > 1) {
+      handleLogProgress(1);
+      return;
+    }
+
     setIsPending(true);
     try {
       await onComplete(quest.id);
       void soundManager.play("questComplete");
       setJustCompleted(true);
-      // Remove the "just completed" highlight after animation finishes
       setTimeout(() => setJustCompleted(false), 2000);
     } catch {
       void soundManager.play("error");
-      // Error is handled upstream
     } finally {
       setIsPending(false);
     }
   };
 
   const showAsCompleted = quest.isCompleted || justCompleted;
+  const isMultiStep = quest.target > 1;
+  const progressPercent = useMemo(() => {
+    if (showAsCompleted) return 100;
+    return Math.min(Math.round((quest.currentProgress / quest.target) * 100), 100);
+  }, [quest.currentProgress, quest.target, showAsCompleted]);
 
   return (
     <motion.button
       type="button"
       layout="position"
-      whileTap={!showAsCompleted && !isSubmitting && !isPending ? { scale: 0.97 } : undefined}
-      disabled={showAsCompleted || isSubmitting || isPending}
+      whileTap={!showAsCompleted && !isSubmitting && !isPending && !isLoggingProgress ? { scale: 0.97 } : undefined}
+      disabled={showAsCompleted || isSubmitting || (isPending && !isMultiStep)}
       onClick={handleComplete}
       animate={
         justCompleted
@@ -119,61 +148,90 @@ export function QuestCard({ quest, onComplete, isSubmitting, streakMultiplier = 
             </p>
           )}
 
-          {/* Category Badge (optional, small context) */}
-          <div className="mt-1">
+          {/* Progress Bar for Multi-Step Quests */}
+          {isMultiStep && !showAsCompleted && (
+            <div className="mt-2 space-y-1.5">
+              <div className="flex items-center justify-between text-[10px] font-bold">
+                <span className="text-muted-foreground uppercase tracking-wider">
+                  {t("progress")}
+                </span>
+                <span className="text-amber-600 dark:text-amber-400">
+                  {quest.currentProgress} / {quest.target} {quest.targetUnit || ""}
+                </span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progressPercent}%` }}
+                  className="h-full bg-gradient-to-r from-amber-400 to-orange-500 shadow-[0_0_8px_rgba(251,191,36,0.4)]"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Category Badge */}
+          <div className="mt-2 flex items-center gap-2">
             <span className="inline-block rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground dark:bg-muted/40">
               {tQuestCategory(quest.category)}
             </span>
+            {isMultiStep && !showAsCompleted && (
+              <span className="text-[10px] font-bold text-amber-600/80 dark:text-amber-400/80">
+                • {t("multiStepQuest")}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Action / Status Area */}
-        <div className="shrink-0 pl-1 relative flex items-center justify-center h-10 w-10">
-          <AnimatePresence mode="wait">
-            {isPending ? (
-              <motion.div
-                key="loading"
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.5 }}
-                className="text-amber-500"
-              >
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </motion.div>
-            ) : showAsCompleted ? (
-              <motion.div
-                key="completed"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm"
-              >
-                <Check className="h-5 w-5" />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="todo"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0, scale: 0.5 }}
-                className="relative flex h-8 w-8 items-center justify-center rounded-full border border-amber-300 bg-white text-amber-500 dark:border-amber-700 dark:bg-amber-950/40"
-              >
-                {/* Pulsing ring animation for the CTA */}
+        {/* Action Area */}
+        <div className="shrink-0 pl-1 relative flex items-center justify-center gap-2">
+          {isMultiStep && !showAsCompleted && (
+            <button
+              type="button"
+              disabled={isPending || isLoggingProgress}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLogProgress(1);
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-600 hover:bg-amber-200 transition-colors dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+          )}
+
+          <div className="relative flex items-center justify-center h-10 w-10">
+            <AnimatePresence mode="wait">
+              {isPending || isLoggingProgress ? (
                 <motion.div
-                  className="absolute inset-0 rounded-full border border-amber-400/60 dark:border-amber-500/40"
-                  animate={{ 
-                    boxShadow: ["0 0 0 0px rgba(251, 191, 36, 0.4)", "0 0 0 8px rgba(251, 191, 36, 0)"],
-                  }}
-                  transition={{ 
-                    duration: 1.5, 
-                    repeat: Infinity,
-                    ease: "easeOut" 
-                  }}
-                />
-                <Circle className="h-4 w-4 relative z-10" />
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  key="loading"
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.5 }}
+                  className="text-amber-500"
+                >
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </motion.div>
+              ) : showAsCompleted ? (
+                <motion.div
+                  key="completed"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm"
+                >
+                  <Check className="h-5 w-5" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="circle"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-gray-300 dark:text-gray-700"
+                >
+                  <Circle className="h-8 w-8" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </motion.button>
