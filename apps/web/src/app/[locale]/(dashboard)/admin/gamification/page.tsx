@@ -6,8 +6,11 @@ import { useTranslations } from "next-intl";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { AchievementsTab } from "./_components/achievements-tab";
+import { EventsTab } from "./_components/events-tab";
+import { FulfillmentsTab } from "./_components/fulfillments-tab";
 import { MilestonesTab } from "./_components/milestones-tab";
 import { QuestsTab } from "./_components/quests-tab";
+import { StoreTab } from "./_components/store-tab";
 
 export default function GamificationHubPage() {
   const t = useTranslations("GamificationHub");
@@ -31,6 +34,9 @@ export default function GamificationHubPage() {
           <TabsTrigger value="quests">{t("tabs.quests")}</TabsTrigger>
           <TabsTrigger value="milestones">{t("tabs.milestones")}</TabsTrigger>
           <TabsTrigger value="achievements">{t("tabs.achievements")}</TabsTrigger>
+          <TabsTrigger value="events">{t("tabs.events") || "الفعاليات"}</TabsTrigger>
+          <TabsTrigger value="store">{t("tabs.store")}</TabsTrigger>
+          <TabsTrigger value="fulfillments">{t("tabs.fulfillments") || "التسليم"}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="quests" className="space-y-4">
@@ -43,6 +49,18 @@ export default function GamificationHubPage() {
 
         <TabsContent value="achievements" className="space-y-4">
           <AchievementsTab />
+        </TabsContent>
+
+        <TabsContent value="events" className="space-y-4">
+          <EventsTab />
+        </TabsContent>
+
+        <TabsContent value="store" className="space-y-4">
+          <StoreTab />
+        </TabsContent>
+
+        <TabsContent value="fulfillments" className="space-y-4">
+          <FulfillmentsTab />
         </TabsContent>
       </Tabs>
     </div>

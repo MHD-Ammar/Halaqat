@@ -64,7 +64,9 @@
     "tabs": {
       "quests": "Quests",
       "milestones": "Milestones",
-      "achievements": "Achievements"
+      "achievements": "Achievements",
+      "events": "Events",
+      "fulfillments": "Fulfillments"
     },
     "quests": {
       "title": "Quests",
@@ -204,6 +206,54 @@
         "deleted": "Achievement deleted successfully",
         "operationFailed": "Operation failed",
         "deleteFailed": "Delete failed"
+      }
+    },
+    "events": {
+      "title": "Seasonal Events",
+      "createBtn": "Create Event",
+      "createTitle": "Create New Event",
+      "editTitle": "Edit Event",
+      "emptyState": {
+        "title": "No events found",
+        "description": "Create a seasonal event to give students extra incentives."
+      },
+      "form": {
+        "nameEn": "Name (En)",
+        "nameAr": "Name (Ar)",
+        "descriptionAr": "Description (Ar)",
+        "startsAt": "Start Date",
+        "endsAt": "End Date",
+        "multiplier": "XP Multiplier",
+        "icon": "Icon",
+        "themeColor": "Color",
+        "activeStatus": "Active Status",
+        "activeDesc": "Enable the event at the scheduled time.",
+        "cancel": "Cancel",
+        "create": "Create",
+        "save": "Save Changes"
+      },
+      "columns": {
+        "icon": "Icon",
+        "name": "Name",
+        "multiplier": "Multiplier",
+        "period": "Period",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "toast": {
+        "created": "Event created successfully",
+        "updated": "Event updated successfully",
+        "deleted": "Event deleted successfully",
+        "operationFailed": "Operation failed",
+        "deleteFailed": "Delete failed"
+      },
+      "delete": {
+        "title": "Delete Event",
+        "description": "Are you sure you want to delete this event? This cannot be undone."
       }
     }
   },
@@ -568,6 +618,8 @@
     "leagueResultStayedDesc": "Steady progress. Push a little harder this week to reach promotion.",
     "leagueResultStats": "Last week rank: #{rank} • Weekly XP: {xp}",
     "continueJourney": "Continue",
+    "soundMute": "Mute sound",
+    "soundUnmute": "Unmute sound",
     "soundOn": "Sound on",
     "soundOff": "Sound off",
     "today": "Today",
@@ -616,7 +668,11 @@
       "achievementCompleted": "{name} ({title}) unlocked achievement {item}!",
       "achievementCompletedNoTitle": "{name} unlocked achievement {item}!",
       "milestoneCompleted": "{name} ({title}) opened reward {item}!",
-      "milestoneCompletedNoTitle": "{name} opened reward {item}!"
+      "milestoneCompletedNoTitle": "{name} opened reward {item}!",
+      "levelUpCompleted": "🎉 {name} reached level {item}!",
+      "streakMilestoneCompleted": "🔥 {name} reached a {item}-day streak!",
+      "leaguePromotionCompleted": "📈 {name} was promoted to {item}!",
+      "congrats": "Congrats 🎊"
     },
     "unknown": "Unknown",
     "titles": {
@@ -1148,5 +1204,25 @@
     "limitReached": "Limit Reached",
     "purchaseSuccess": "Purchased successfully!",
     "purchaseError": "Failed to purchase item"
+  },
+  "AdminGamification": {
+    "fulfillmentsTitle": "Fulfillment Management",
+    "fulfillmentsDesc": "Review and mark physical prize deliveries.",
+    "searchPlaceholder": "Search for student or reward...",
+    "fulfillmentTable": {
+      "student": "Student",
+      "item": "Reward",
+      "xp": "XP Spent",
+      "date": "Date",
+      "actions": "Actions"
+    },
+    "noPendingFulfillments": "No pending fulfillment requests.",
+    "fulfillAction": "Fulfill",
+    "cancelAction": "Cancel",
+    "confirmFulfillment": "Confirm Fulfillment",
+    "confirmCancellation": "Cancel Order",
+    "fulfillmentNotes": "Additional Notes (Optional)",
+    "cancel": "Go Back",
+    "confirm": "Confirm"
   }
 }

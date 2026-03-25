@@ -22,10 +22,10 @@ import { useStudentDashboard } from "@/hooks/use-student-portal";
 import { useUserProfile } from "@/hooks/use-user-profile";
 import { Link, useRouter } from "@/i18n/routing";
 import { TOKEN_COOKIE_NAME } from "@/lib/api";
-import { soundManager } from "@/lib/sounds";
 
 import { StudentBottomNav } from "./_components/StudentBottomNav";
 import { RewardChests } from "./student-portal/_components/RewardChests";
+import { SoundToggle } from "./student-portal/_components/SoundToggle";
 import { StreakCalendar } from "./student-portal/_components/StreakCalendar";
 
 interface StudentProfile {
@@ -59,11 +59,6 @@ export default function StudentPortalLayout({
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
   const [streakDialogOpen, setStreakDialogOpen] = useState(false);
   const [rewardsDialogOpen, setRewardsDialogOpen] = useState(false);
-  const [soundsEnabled, setSoundsEnabled] = useState(true);
-
-  useEffect(() => {
-    setSoundsEnabled(soundManager.isEnabled());
-  }, []);
 
   useEffect(() => {
     const token = Cookies.get(TOKEN_COOKIE_NAME);
@@ -87,14 +82,6 @@ export default function StudentPortalLayout({
     router.push("/student-login");
     router.refresh();
   }, [queryClient, router]);
-
-  const handleToggleSounds = useCallback(() => {
-    setSoundsEnabled((prev) => {
-      const next = !prev;
-      soundManager.setEnabled(next);
-      return next;
-    });
-  }, []);
 
   if (isChecking || isLoading) {
     return (
@@ -187,17 +174,7 @@ export default function StudentPortalLayout({
               </span>
             </button>
 
-            <button
-              type="button"
-              onClick={handleToggleSounds}
-              className="flex items-center justify-center rounded-full p-2 hover:bg-accent transition-colors"
-              aria-label={soundsEnabled ? t("soundOn") : t("soundOff")}
-              title={soundsEnabled ? t("soundOn") : t("soundOff")}
-            >
-              <span className={soundsEnabled ? "text-base" : "text-base opacity-70"}>
-                {soundsEnabled ? "🔊" : "🔇"}
-              </span>
-            </button>
+            <SoundToggle />
 
             {/* Trophy Room Link (Hidden on mobile, uses bottom nav) */}
             <Link

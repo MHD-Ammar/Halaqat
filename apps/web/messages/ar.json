@@ -64,7 +64,10 @@
     "tabs": {
       "quests": "المهام",
       "milestones": "المحطات والجوائز",
-      "achievements": "الأوسمة"
+      "achievements": "الأوسمة",
+      "store": "المتجر",
+      "events": "الفعاليات",
+      "fulfillments": "التسليم"
     },
     "quests": {
       "title": "المهام",
@@ -202,6 +205,116 @@
         "created": "تم إنشاء الوسام بنجاح",
         "updated": "تم تحديث الوسام بنجاح",
         "deleted": "تم حذف الوسام بنجاح",
+        "operationFailed": "فشلت العملية",
+        "deleteFailed": "فشل الحذف"
+      }
+    },
+    "events": {
+      "title": "الفعاليات الموسمية",
+      "createBtn": "إنشاء فعالية",
+      "createTitle": "إنشاء فعالية جديدة",
+      "editTitle": "تعديل الفعالية",
+      "emptyState": {
+        "title": "لا توجد فعاليات مسجلة",
+        "description": "ابدأ بإنشاء فعالية موسمية جديدة لإعطاء الطلاب حوافز إضافية."
+      },
+      "form": {
+        "nameEn": "الاسم (En)",
+        "nameAr": "الاسم (بالعربي)",
+        "descriptionAr": "الوصف (بالعربي)",
+        "startsAt": "تاريخ البدء",
+        "endsAt": "تاريخ الانتهاء",
+        "multiplier": "مضاعف النقاط",
+        "icon": "الأيقونة",
+        "themeColor": "اللون",
+        "activeStatus": "الحالة",
+        "activeDesc": "تفعيل الفعالية في الوقت المحدد",
+        "cancel": "إلغاء",
+        "create": "إنشاء",
+        "save": "حفظ التغييرات"
+      },
+      "columns": {
+        "icon": "الأيقونة",
+        "name": "الاسم",
+        "multiplier": "المضاعف",
+        "period": "الفترة",
+        "status": "الحالة",
+        "actions": "إجراءات"
+      },
+      "status": {
+        "active": "نشط",
+        "inactive": "غير نشط"
+      },
+      "toast": {
+        "created": "تم إنشاء الفعالية بنجاح",
+        "updated": "تم تحديث الفعالية بنجاح",
+        "deleted": "تم حذف الفعالية بنجاح",
+        "operationFailed": "فشلت العملية",
+        "deleteFailed": "فشل الحذف"
+      },
+      "delete": {
+        "title": "حذف الفعالية",
+        "description": "هل أنت متأكد من حذف هذه الفعالية؟ لا يمكن التراجع عن هذا الإجراء."
+      }
+    },
+    "store": {
+      "title": "متجر الجوائز",
+      "createBtn": "إضافة منتج",
+      "createTitle": "إضافة منتج جديد",
+      "editTitle": "تعديل المنتج",
+      "emptyState": {
+        "title": "المتجر فارغ",
+        "description": "أضف منتجات ليتمكن الطلاب من استبدال نقاطهم بها"
+      },
+      "form": {
+        "nameEn": "الاسم (بالإنجليزي)",
+        "nameAr": "الاسم (بالعربي)",
+        "descEn": "الوصف (بالإنجليزي)",
+        "descAr": "الوصف (بالعربي)",
+        "type": "النوع",
+        "xpCost": "تكلفة XP",
+        "rewardValue": "قيمة الجائزة / التفاصيل",
+        "icon": "الرمز (إيموجي)",
+        "minLevel": "الحد الأدنى للمستوى",
+        "maxPerStudent": "الحد الأقصى لكل طالب",
+        "stock": "المخزون",
+        "status": "الحالة",
+        "activeDesc": "الطلاب يمكنهم رؤية المنتجات النشطة فقط.",
+        "placeholderNameEn": "مثال: Streak Shield",
+        "placeholderNameAr": "مثال: درع السلسلة",
+        "placeholderRewardValue": "مثال: 1 (لعدد الدروع) أو اسم الإطار",
+        "unlimited": "غير محدود",
+        "cancel": "إلغاء",
+        "create": "إنشاء",
+        "save": "حفظ التغييرات"
+      },
+      "columns": {
+        "icon": "الرمز",
+        "name": "الاسم",
+        "type": "النوع",
+        "cost": "التكلفة",
+        "level": "المستوى",
+        "stock": "المخزون",
+        "status": "الحالة",
+        "active": "نشط",
+        "inactive": "غير نشط",
+        "actions": "الإجراءات"
+      },
+      "types": {
+        "STREAK_SHIELD": "درع السلسلة",
+        "AVATAR_FRAME": "إطار الرمز",
+        "TITLE": "لقب",
+        "DOUBLE_XP": "مضاعف XP",
+        "REAL_WORLD": "جائزة مادية"
+      },
+      "delete": {
+        "title": "حذف المنتج",
+        "description": "هل أنت متأكد من حذف هذا المنتج من المتجر؟"
+      },
+      "toast": {
+        "created": "تمت إضافة المنتج بنجاح",
+        "updated": "تم تحديث المنتج بنجاح",
+        "deleted": "تم حذف المنتج بنجاح",
         "operationFailed": "فشلت العملية",
         "deleteFailed": "فشل الحذف"
       }
@@ -568,6 +681,8 @@
     "leagueResultStayedDesc": "ثبات ممتاز. دفعة إضافية هذا الأسبوع قد توصلك للصعود.",
     "leagueResultStats": "ترتيبك الأسبوع الماضي: #{rank} • XP الأسبوع: {xp}",
     "continueJourney": "متابعة",
+    "soundMute": "كتم الصوت",
+    "soundUnmute": "تشغيل الصوت",
     "soundOn": "الصوت مفعّل",
     "soundOff": "الصوت مكتوم",
     "today": "اليوم",
@@ -616,7 +731,11 @@
       "achievementCompleted": "{name} ({title}) حصل على وسام {item}!",
       "achievementCompletedNoTitle": "{name} حصل على وسام {item}!",
       "milestoneCompleted": "{name} ({title}) فتح مكافأة {item}!",
-      "milestoneCompletedNoTitle": "{name} فتح مكافأة {item}!"
+      "milestoneCompletedNoTitle": "{name} فتح مكافأة {item}!",
+      "levelUpCompleted": "🎉 {name} وصل للمستوى {item}!",
+      "streakMilestoneCompleted": "🔥 {name} وصل لسلسلة {item} يوم متتالية!",
+      "leaguePromotionCompleted": "📈 {name} صعد إلى دوري {item}!",
+      "congrats": "مبارك 🎊"
     },
     "unknown": "غير معروف",
     "titles": {
@@ -1148,5 +1267,25 @@
     "limitReached": "تم الحد الأقصى",
     "purchaseSuccess": "تم الشراء بنجاح!",
     "purchaseError": "حدث خطأ أثناء الشراء"
+  },
+  "AdminGamification": {
+    "fulfillmentsTitle": "إدارة تسليم الجوائز",
+    "fulfillmentsDesc": "قم بمراجعة واعتماد تسليم الجوائز المادية للطلاب.",
+    "searchPlaceholder": "بحث عن طالب أو جائزة...",
+    "fulfillmentTable": {
+      "student": "الطالب",
+      "item": "الجائزة",
+      "xp": "النقاط المستخدمة",
+      "date": "التاريخ",
+      "actions": "الإجراءات"
+    },
+    "noPendingFulfillments": "لا توجد طلبات تسليم معلقة حالياً",
+    "fulfillAction": "تم التسليم",
+    "cancelAction": "إلغاء",
+    "confirmFulfillment": "تأكيد التسليم",
+    "confirmCancellation": "إلغاء الطلب",
+    "fulfillmentNotes": "ملاحظات إضافية (اختياري)",
+    "cancel": "تراجع",
+    "confirm": "تأكيد"
   }
 }
