@@ -101,6 +101,17 @@ export interface DashboardData {
   lastShieldUsedAt: string | null;
   activeTitle: string | null;
   activeAvatarFrame: string | null;
+  activeEvent: {
+    id: string;
+    nameAr: string;
+    descriptionAr: string | null;
+    icon: string;
+    themeColor: string;
+    xpMultiplier: number;
+    remainingHours: number;
+    remainingDays: number;
+    endsAt: string;
+  } | null;
 }
 
 export interface ClaimLoginBonusResponse {
@@ -219,10 +230,12 @@ export function useMarkLastWeekLeagueResultSeen() {
 export interface LiveFeedItem {
   id: string;
   emoji: string;
-  type: "QUEST" | "ACHIEVEMENT" | "MILESTONE";
+  type: "QUEST" | "ACHIEVEMENT" | "MILESTONE" | "LEVEL_UP" | "STREAK_MILESTONE" | "LEAGUE_PROMOTION";
   studentName: string;
   studentTitle: string | null;
   itemName: string;
+  reactionCount: number;
+  hasReacted: boolean;
 }
 
 /**
@@ -239,5 +252,50 @@ export function useLiveFeed() {
     },
     staleTime: 60 * 1000, // 1 minute
     refetchInterval: 60 * 1000,
+  });
+}
+
+/**
+ * Toggle reaction on a feed item
+ */
+export function useToggleFeedReaction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (feedItemKey: string) => {
+      const res = await api.post<{ reacted: boolean }>(
+        `/student-portal/live-feed/${feedItemKey}/react`,
+      );
+      return res.data;
+    },
+    onMutate: async (feedItemKey) => {
+      await queryClient.cancelQueries({ queryKey: ["student-portal", "live-feed"] });
+      const previousFeed = queryClient.getQueryData<LiveFeedItem[]>(["student-portal", "live-feed"]);
+
+      if (previousFeed) {
+        queryClient.setQueryData<LiveFeedItem[]>(
+          ["student-portal", "live-feed"],
+          previousFeed.map((item) => {
+            if (item.id === feedItemKey) {
+              return {
+                ...item,
+                hasReacted: !item.hasReacted,
+                reactionCount: item.hasReacted ? item.reactionCount - 1 : item.reactionCount + 1,
+              };
+            }
+            return item;
+          }),
+        );
+      }
+
+      return { previousFeed };
+    },
+    onError: (_err, _feedItemKey, context) => {
+      if (context?.previousFeed) {
+        queryClient.setQueryData(["student-portal", "live-feed"], context.previousFeed);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["student-portal", "live-feed"] });
+    },
   });
 }

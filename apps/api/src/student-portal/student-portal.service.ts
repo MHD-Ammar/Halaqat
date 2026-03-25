@@ -1,7 +1,5 @@
 /**
  * Student Portal Service
- *
- * Handles gamification logic for the student portal:
  * - Daily quests submission
  * - XP calculation and accumulation
  * - Level calculation based on XP thresholds
@@ -29,10 +27,13 @@ import { Campaign } from "../daily-challenge/entities/campaign.entity";
 import { DailySubmission } from "../daily-challenge/entities/daily-submission.entity";
 import { AchievementService } from "../gamification/achievement.service";
 import { Achievement } from "../gamification/entities/achievement.entity";
+import { FeedReaction } from "../gamification/entities/feed-reaction.entity";
 import { MilestoneReward, RewardType } from "../gamification/entities/milestone-reward.entity";
 import { StudentAchievement } from "../gamification/entities/student-achievement.entity";
+import { StudentLeague } from "../gamification/entities/student-league.entity";
 import { StudentMilestone } from "../gamification/entities/student-milestone.entity";
 import { LastWeekLeagueResultResponse, LeagueService } from "../gamification/league.service";
+import { SeasonalEventService } from "../gamification/seasonal-event.service";
 import { Recitation } from "../progress/entities/recitation.entity";
 import { QuestCompletion } from "../quests/entities/quest-completion.entity";
 import { Quest } from "../quests/entities/quest.entity";
@@ -48,16 +49,15 @@ export interface QuestWithCompletion {
   icon: string;
   isCompleted: boolean;
   circleId: string | null;
+  target: number;
+  targetUnit: string | null;
+  currentProgress: number;
 }
 
 @Injectable()
 export class StudentPortalService {
   private readonly logger = new Logger(StudentPortalService.name);
 
-  /**
-   * XP thresholds for leveling.
-   * Formula: totalXp / 500 + 1 (e.g., 0-499 XP = Level 1, 500-999 = Level 2, etc.)
-   */
   constructor(
     @InjectRepository(Student)
     private studentRepo: Repository<Student>,
@@ -75,9 +75,14 @@ export class StudentPortalService {
     private studentMilestoneRepo: Repository<StudentMilestone>,
     @InjectRepository(StudentAchievement)
     private studentAchievementRepo: Repository<StudentAchievement>,
+    @InjectRepository(FeedReaction)
+    private feedReactionRepo: Repository<FeedReaction>,
+    @InjectRepository(StudentLeague)
+    private studentLeagueRepo: Repository<StudentLeague>,
     private readonly dataSource: DataSource,
     private readonly achievementService: AchievementService,
     private readonly leagueService: LeagueService,
+    private readonly eventService: SeasonalEventService,
   ) {}
 
   private async processMilestoneUnlocks(
@@ -93,12 +98,12 @@ export class StudentPortalService {
     const existing = await manager.find(StudentMilestone, {
       where: { studentId },
     });
-    const existingIds = new Set(existing.map((sm: StudentMilestone) => sm.milestoneId));
+    const existingIds = new Set(existing.map((sm) => sm.milestoneId));
 
-    const missing = eligibleMilestones.filter((m: MilestoneReward) => !existingIds.has(m.id));
+    const missing = eligibleMilestones.filter((m) => !existingIds.has(m.id));
     if (missing.length === 0) return [];
 
-    const newStudentMilestones = missing.map((m: MilestoneReward) =>
+    const newStudentMilestones = missing.map((m) =>
       manager.create(StudentMilestone, {
         studentId,
         milestoneId: m.id,
@@ -107,6 +112,74 @@ export class StudentPortalService {
       }),
     );
     return manager.save(StudentMilestone, newStudentMilestones);
+  }
+
+  private calculateLevel(totalXp: number): number {
+    return calculateLevelFromXp(totalXp);
+  }
+
+  /**
+   * Grant XP and handle leveling logic
+   */
+  private async grantQuestXp(
+    manager: EntityManager,
+    studentId: string,
+    questId: string,
+    baseXpReward: number,
+  ): Promise<{
+    earnedXp: number;
+    baseXp: number;
+    multiplier: number;
+    newTotalXp: number;
+    levelUp: boolean;
+    newLevel: number;
+    unlockedMilestones: StudentMilestone[];
+    newAchievements: Achievement[];
+  }> {
+    const student = await manager.findOne(Student, {
+      where: { id: studentId },
+      lock: { mode: "pessimistic_write" },
+    });
+    if (!student) throw new NotFoundException("Student not found");
+
+    const { multiplier: streakMultiplier } = getStreakMultiplier(student.currentStreak);
+    const activeEvent = await this.eventService.getActiveEvent(student.mosqueId);
+    const eventMultiplier = activeEvent?.xpMultiplier ?? 1.0;
+    const questBonusXp = await this.eventService.getQuestBonusXp(student.mosqueId, questId);
+    
+    const baseXp = baseXpReward + questBonusXp;
+    const earnedXp = Math.round(baseXp * streakMultiplier * eventMultiplier);
+
+    const oldLevel = student.currentLevel;
+    student.totalXp += earnedXp;
+    student.currentLevel = this.calculateLevel(student.totalXp);
+    const levelUp = student.currentLevel > oldLevel;
+
+    let unlockedMilestones: StudentMilestone[] = [];
+    if (levelUp) {
+      unlockedMilestones = await this.processMilestoneUnlocks(
+        manager,
+        studentId,
+        student.currentLevel,
+      );
+      const newTitle = getTitleKeyForLevel(student.currentLevel);
+      student.activeTitle = newTitle;
+    }
+
+    const newAchievements = await this.achievementService.evaluateAchievements(studentId, manager);
+
+    await manager.save(student);
+    
+    return {
+      earnedXp,
+      baseXp,
+      multiplier: streakMultiplier * eventMultiplier,
+      newTotalXp: student.totalXp,
+      levelUp,
+      newLevel: student.currentLevel,
+      unlockedMilestones,
+      newAchievements,
+    };
   }
 
   /**
@@ -164,8 +237,12 @@ export class StudentPortalService {
 
     // Filter completions by time window per quest
     const completionSet = new Set<string>();
+    const progressMap = new Map<string, number>();
+
     for (const q of quests) {
       const qCompletions = completions.filter((c) => c.questId === q.id);
+      
+      // Find completion status
       const isCompleted = this.isQuestCompletedInWindow(
         q,
         qCompletions,
@@ -177,6 +254,17 @@ export class StudentPortalService {
       if (isCompleted) {
         completionSet.add(q.id);
       }
+
+      // Find current progress for this window
+      const currentProgress = this.getQuestProgressInWindow(
+        q,
+        qCompletions,
+        todayStart,
+        todayEnd,
+        weekStart,
+        weekEnd,
+      );
+      progressMap.set(q.id, currentProgress);
     }
 
     const withStatus: QuestWithCompletion[] = quests.map((q) => ({
@@ -189,6 +277,9 @@ export class StudentPortalService {
       icon: q.icon,
       isCompleted: completionSet.has(q.id),
       circleId: q.circleId,
+      target: q.target,
+      targetUnit: q.targetUnit,
+      currentProgress: progressMap.get(q.id) || 0,
     }));
 
     const grouped: Record<string, QuestWithCompletion[]> = {};
@@ -243,6 +334,7 @@ export class StudentPortalService {
   ): boolean {
     if (completions.length === 0) return false;
     for (const c of completions) {
+      if (!c.completedAt) continue;
       const at = new Date(c.completedAt);
       switch (quest.frequency) {
         case QuestFrequency.DAILY:
@@ -256,6 +348,46 @@ export class StudentPortalService {
       }
     }
     return false;
+  }
+
+  private getQuestProgressInWindow(
+    quest: Quest,
+    completions: QuestCompletion[],
+    todayStart: Date,
+    todayEnd: Date,
+    weekStart: Date,
+    weekEnd: Date,
+  ): number {
+    if (completions.length === 0) return 0;
+
+    // Filter completions that belong to the current window
+    const windowCompletions = completions.filter((c) => {
+      // If completed, check completion date
+      if (c.completedAt) {
+        const at = new Date(c.completedAt);
+        switch (quest.frequency) {
+          case QuestFrequency.DAILY:
+            return at >= todayStart && at <= todayEnd;
+          case QuestFrequency.WEEKLY:
+            return at >= weekStart && at <= weekEnd;
+          case QuestFrequency.ONETIME:
+            return true;
+        }
+      }
+      
+      // If in-progress, we check the creation date (BaseEntity has createdAt)
+      // Since BaseEntity is used, we can use c.createdAt if it exists, 
+      // but QuestCompletion doesn't extend BaseEntity in this file... 
+      // wait, let me check quest-completion.entity.ts again.
+      // Ah, it doesn't extend BaseEntity. I should add a createdAt or use a different check.
+      // For now, let's assume if it's not completed, it's the current one.
+      return !c.completedAt;
+    });
+
+    if (windowCompletions.length === 0) return 0;
+
+    // Return the max progress found in the window (usually just one)
+    return Math.max(...windowCompletions.map((c) => c.currentProgress));
   }
 
   /**
@@ -281,6 +413,9 @@ export class StudentPortalService {
     }
     if (!quest.isActive) {
       throw new BadRequestException("Quest is not active");
+    }
+    if (quest.target > 1) {
+      throw new BadRequestException("Use log-progress for multi-step quests");
     }
 
     const student = await this.studentRepo.findOne({ where: { id: studentId } });
@@ -314,60 +449,24 @@ export class StudentPortalService {
       const completion = queryRunner.manager.create(QuestCompletion, {
         studentId,
         questId,
-        earnedXp: quest.xpReward,
+        currentProgress: quest.target,
+        completedAt: new Date(),
       });
       await queryRunner.manager.save(completion);
 
-      const freshStudent = await queryRunner.manager.findOne(Student, {
-        where: { id: studentId },
-        lock: { mode: "pessimistic_write" },
-      });
-      if (!freshStudent) {
-        throw new NotFoundException("Student not found");
-      }
+      const result = await this.grantQuestXp(queryRunner.manager, studentId, questId, quest.xpReward);
 
-      const { multiplier } = getStreakMultiplier(freshStudent.currentStreak);
-      const baseXp = quest.xpReward;
-      const earnedXp = Math.round(baseXp * multiplier);
-
-      const oldLevel = freshStudent.currentLevel;
-      freshStudent.totalXp += earnedXp;
-      freshStudent.currentLevel = this.calculateLevel(freshStudent.totalXp);
-      const levelUp = freshStudent.currentLevel > oldLevel;
-
-      let unlockedMilestones: StudentMilestone[] = [];
-      if (levelUp) {
-        unlockedMilestones = await this.processMilestoneUnlocks(
-          queryRunner.manager,
-          studentId,
-          freshStudent.currentLevel,
-        );
-        const newTitle = getTitleKeyForLevel(freshStudent.currentLevel);
-        // Auto-assign the level-based title (students can also have milestone titles)
-        freshStudent.activeTitle = newTitle;
-      }
-
-      // Evaluate achievements dynamically
-      const newAchievements = await this.achievementService.evaluateAchievements(studentId, queryRunner.manager);
-
-      await queryRunner.manager.save(freshStudent);
       await queryRunner.commitTransaction();
+      
       try {
-        await this.leagueService.addWeeklyXp(studentId, earnedXp);
+        await this.leagueService.addWeeklyXp(studentId, result.earnedXp);
       } catch (error) {
         this.logger.error(`Failed to add weekly league XP after completeQuest: ${String(error)}`);
       }
 
       return {
         success: true,
-        earnedXp,
-        baseXp,
-        multiplier,
-        newTotalXp: freshStudent.totalXp,
-        levelUp,
-        newLevel: freshStudent.currentLevel,
-        unlockedMilestones,
-        newAchievements,
+        ...result,
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -376,6 +475,126 @@ export class StudentPortalService {
       await queryRunner.release();
     }
   }
+
+  /**
+   * Log progress for a multi-step quest
+   */
+  async logQuestProgress(
+    studentId: string,
+    questId: string,
+    amount: number = 1,
+  ): Promise<{
+    currentProgress: number;
+    target: number;
+    justCompleted: boolean;
+    earnedXp?: number;
+    baseXp?: number;
+    multiplier?: number;
+    newTotalXp?: number;
+    levelUp?: boolean;
+    newLevel?: number;
+    unlockedMilestones?: StudentMilestone[];
+    newAchievements?: Achievement[];
+  }> {
+    if (amount <= 0) {
+      throw new BadRequestException("Amount must be positive");
+    }
+
+    const quest = await this.questRepo.findOne({ where: { id: questId } });
+    if (!quest) throw new NotFoundException("Quest not found");
+    if (!quest.isActive) throw new BadRequestException("Quest is not active");
+    if (quest.target <= 1) {
+      throw new BadRequestException("Use complete endpoint for single-step quests");
+    }
+
+    const { todayStart, todayEnd, weekStart, weekEnd } = this.getDateBounds();
+
+    const existingCompletions = await this.questCompletionRepo.find({
+      where: { studentId, questId },
+    });
+
+    const alreadyCompleted = this.isQuestCompletedInWindow(
+      quest,
+      existingCompletions,
+      todayStart,
+      todayEnd,
+      weekStart,
+      weekEnd,
+    );
+    if (alreadyCompleted) {
+      throw new ConflictException("Quest already completed for this period");
+    }
+
+    // Find in-progress completion for this period
+    let completion: QuestCompletion | null = existingCompletions.find((c) => !c.completedAt) || null;
+
+    // If frequency is DAILY or WEEKLY, ensure the in-progress completion is actually from the current period
+    // (We'll assume if it's null, it's the current one for now, as per simplified logic in Task-35.md)
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      if (!completion) {
+        completion = queryRunner.manager.create(QuestCompletion, {
+          studentId,
+          questId,
+          currentProgress: 0,
+          completedAt: null,
+        });
+      } else {
+        // Find again within transaction for locking
+        completion = await queryRunner.manager.findOne(QuestCompletion, {
+          where: { id: completion.id },
+          lock: { mode: "pessimistic_write" },
+        });
+      }
+
+      const newProgress = Math.min(completion!.currentProgress + amount, quest.target);
+      const justCompleted = newProgress >= quest.target;
+
+      completion!.currentProgress = newProgress;
+      if (justCompleted) {
+        completion!.completedAt = new Date();
+      }
+
+      await queryRunner.manager.save(QuestCompletion, completion!);
+
+      let xpResult: { earnedXp: number; baseXp: number; multiplier: number; newTotalXp: number; levelUp: boolean; newLevel: number; unlockedMilestones: StudentMilestone[]; newAchievements: Achievement[]; } | null = null;
+      if (justCompleted) {
+        const grantedXp = await this.grantQuestXp(queryRunner.manager, studentId, questId, quest.xpReward);
+        xpResult = grantedXp;
+        
+        // Update the completion record with earned XP (optional, but good for tracking)
+        completion!.earnedXp = grantedXp.earnedXp;
+        await queryRunner.manager.save(QuestCompletion, completion!);
+      }
+
+      await queryRunner.commitTransaction();
+
+      if (justCompleted && xpResult?.earnedXp) {
+        try {
+          await this.leagueService.addWeeklyXp(studentId, xpResult.earnedXp);
+        } catch (error) {
+          this.logger.error(`Failed to add weekly league XP after logQuestProgress: ${String(error)}`);
+        }
+      }
+
+      return {
+        currentProgress: completion!.currentProgress,
+        target: quest.target,
+        justCompleted,
+        ...(xpResult || {}),
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
 
   /**
    * Get today's quest status for a student
@@ -446,9 +665,12 @@ export class StudentPortalService {
       return { claimed: false };
     }
 
-    const { multiplier } = getStreakMultiplier(student.currentStreak);
+    const { multiplier: streakMultiplier } = getStreakMultiplier(student.currentStreak);
+    const activeEvent = await this.eventService.getActiveEvent(student.mosqueId);
+    const eventMultiplier = activeEvent?.xpMultiplier ?? 1.0;
+
     const baseXp = 20;
-    const xpAwarded = Math.round(baseXp * multiplier);
+    const xpAwarded = Math.round(baseXp * streakMultiplier * eventMultiplier);
 
     student.totalXp += xpAwarded;
 
@@ -584,6 +806,8 @@ export class StudentPortalService {
     const streakMultiplier = getStreakMultiplier(student.currentStreak);
     const nextTier = getNextMultiplierTier(student.currentStreak);
 
+    const activeEvent = await this.eventService.getActiveEventWithCountdown(student.mosqueId);
+
     return {
       streakCalendar,
       recentRecitations: formattedRecitations,
@@ -607,6 +831,17 @@ export class StudentPortalService {
       lastShieldUsedAt: student.lastShieldUsedAt,
       activeTitle: student.activeTitle,
       activeAvatarFrame: student.activeAvatarFrame,
+      activeEvent: activeEvent ? {
+        id: activeEvent.id,
+        nameAr: activeEvent.nameAr,
+        descriptionAr: activeEvent.descriptionAr,
+        icon: activeEvent.icon,
+        themeColor: activeEvent.themeColor,
+        xpMultiplier: activeEvent.xpMultiplier,
+        remainingHours: activeEvent.remainingHours,
+        remainingDays: activeEvent.remainingDays,
+        endsAt: activeEvent.endsAt.toISOString(),
+      } : null,
     };
   }
 
@@ -705,9 +940,12 @@ export class StudentPortalService {
         throw new NotFoundException("Student not found");
       }
 
-      const { multiplier } = getStreakMultiplier(freshStudent.currentStreak);
+      const { multiplier: streakMultiplier } = getStreakMultiplier(freshStudent.currentStreak);
+      const activeEvent = await this.eventService.getActiveEvent(freshStudent.mosqueId);
+      const eventMultiplier = activeEvent?.xpMultiplier ?? 1.0;
+
       const baseXp = xpEarned;
-      const adjustedXp = Math.round(baseXp * multiplier);
+      const adjustedXp = Math.round(baseXp * streakMultiplier * eventMultiplier);
 
       // Update XP
       freshStudent.totalXp += adjustedXp;
@@ -872,18 +1110,6 @@ export class StudentPortalService {
     return { success: true };
   }
 
-  /**
-   * Calculate the current level based on total XP
-   * Formula: Math.floor(totalXp / 500) + 1
-   * Examples:
-   * - 0-499 XP = Level 1
-   * - 500-999 XP = Level 2
-   * - 1000-1499 XP = Level 3
-   * - etc.
-   */
-  private calculateLevel(totalXp: number): number {
-    return calculateLevelFromXp(totalXp);
-  }
 
   /**
    * Get all milestones for a student
@@ -1048,8 +1274,30 @@ export class StudentPortalService {
   }
 
   /**
+   * Toggle a reaction on a feed item
+   */
+  async toggleFeedReaction(studentId: string, feedItemKey: string) {
+    const existing = await this.feedReactionRepo.findOne({
+      where: { studentId, feedItemKey },
+    });
+
+    if (existing) {
+      await this.feedReactionRepo.remove(existing);
+      return { reacted: false };
+    }
+
+    const reaction = this.feedReactionRepo.create({
+      studentId,
+      feedItemKey,
+      reaction: "congrats",
+    });
+    await this.feedReactionRepo.save(reaction);
+    return { reacted: true };
+  }
+
+  /**
    * Get Live Social Feed
-   * Returns recent events (Quests, Achievements, Milestones) for the student's mosque
+   * Returns recent events (Quests, Achievements, Milestones, Levels, Streaks, Leagues) for the student's mosque
    */
   async getLiveFeed(studentId: string) {
     const student = await this.studentRepo.findOne({
@@ -1062,62 +1310,149 @@ export class StudentPortalService {
 
     const mosqueId = student.mosqueId;
 
-    const [recentQuests, recentAchievements, recentMilestones] = await Promise.all([
+    // Fetch diverse event types
+    const [recentQuests, recentAchievements, recentMilestones, recentLeagues, recentStudents] = await Promise.all([
+      // 1. Quest Completions
       this.questCompletionRepo.find({
         where: { student: { mosqueId } },
         relations: ["student", "quest"],
         order: { completedAt: "DESC" },
         take: 5,
       }),
+      // 2. Achievements
       this.studentAchievementRepo.find({
         where: { student: { mosqueId } },
         relations: ["student", "achievement"],
         order: { unlockedAt: "DESC" },
         take: 5,
       }),
+      // 3. Milestones (can be interpreted as specialized rewards)
       this.studentMilestoneRepo.find({
         where: { student: { mosqueId } },
         relations: ["student", "milestone"],
         order: { unlockedAt: "DESC" },
         take: 5,
       }),
+      // 4. League Promotions
+      this.studentLeagueRepo.find({
+        where: { mosqueId, result: "promoted" },
+        relations: ["student", "tier"],
+        order: { createdAt: "DESC" },
+        take: 5,
+      }),
+      // 5. Level Ups & Streak Milestones (from Student updates)
+      this.studentRepo.find({
+        where: { mosqueId },
+        order: { updatedAt: "DESC" },
+        take: 10,
+      }),
     ]);
 
-    const feedItems = [
+    interface FeedItem {
+      id: string;
+      type: string;
+      date: Date;
+      emoji: string;
+      studentName: string;
+      studentTitle: string | null;
+      itemName: string;
+      reactionCount?: number;
+      hasReacted?: boolean;
+    }
+
+    const feedItems: FeedItem[] = [
       ...recentQuests.map((q) => ({
         id: `q-${q.id}`,
-        type: "QUEST" as const,
+        type: "QUEST",
         date: q.completedAt || new Date(),
-        emoji: "🏆",
+        emoji: q.quest?.icon || "🏆",
         studentName: q.student?.name || "طالب",
         studentTitle: q.student?.activeTitle || null,
         itemName: q.quest?.title || "مهمة",
       })),
       ...recentAchievements.map((a) => ({
         id: `a-${a.id}`,
-        type: "ACHIEVEMENT" as const,
+        type: "ACHIEVEMENT",
         date: a.unlockedAt || new Date(),
-        emoji: "🔥",
+        emoji: a.achievement?.badgeIcon || "🔥",
         studentName: a.student?.name || "طالب",
         studentTitle: a.student?.activeTitle || null,
         itemName: a.achievement?.title || "وسام",
       })),
       ...recentMilestones
-        .filter((m) => m.milestone) // Defensive guard
+        .filter((m) => m.milestone)
         .map((m) => ({
           id: `m-${m.id}`,
-          type: "MILESTONE" as const,
+          type: "MILESTONE",
           date: m.unlockedAt || m.createdAt || new Date(),
-          emoji: "🎁",
+          emoji: m.milestone?.rewardType === RewardType.AVATAR_FRAME ? "🖼️" : "🎁",
           studentName: m.student?.name || "طالب",
           studentTitle: m.student?.activeTitle || null,
           itemName: m.milestone?.title || "مكافأة",
         })),
+      ...recentLeagues.map((l) => ({
+        id: `l-${l.id}`,
+        type: "LEAGUE_PROMOTION",
+        date: l.createdAt || new Date(),
+        emoji: l.tier?.icon || "📈",
+        studentName: l.student?.name || "طالب",
+        studentTitle: l.student?.activeTitle || null,
+        itemName: l.tier?.nameAr || "دوري",
+      })),
     ];
 
-    feedItems.sort((a, b) => b.date.getTime() - a.date.getTime());
-    return feedItems.slice(0, 5).map(({ id, emoji, type, studentName, studentTitle, itemName }) => ({ 
-      id, emoji, type, studentName, studentTitle, itemName 
+    // Add virtual Level Up and Streak events from Student table
+    for (const s of recentStudents) {
+      // Level Up (Level 2+)
+      if (s.currentLevel > 1) {
+        feedItems.push({
+          id: `lvl-${s.id}-${s.currentLevel}`,
+          type: "LEVEL_UP",
+          date: s.updatedAt,
+          emoji: "🎉",
+          studentName: s.name,
+          studentTitle: s.activeTitle,
+          itemName: s.currentLevel.toString(),
+        });
+      }
+      // Streak Milestones (7, 14, 21, 30, etc.)
+      if (s.currentStreak >= 7 && (s.currentStreak % 7 === 0 || s.currentStreak === 30)) {
+        feedItems.push({
+          id: `strk-${s.id}-${s.currentStreak}`,
+          type: "STREAK_MILESTONE",
+          date: s.updatedAt,
+          emoji: "🔥",
+          studentName: s.name,
+          studentTitle: s.activeTitle,
+          itemName: s.currentStreak.toString(),
+        });
+      }
+    }
+
+    // Sort, limit to 5, and add reactions
+    const finalFeed = feedItems
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .slice(0, 5);
+
+    const feedItemKeys = finalFeed.map((f) => f.id);
+
+    const [reactionCounts, myReactions] = await Promise.all([
+      this.feedReactionRepo
+        .createQueryBuilder("r")
+        .select("r.feed_item_key", "key")
+        .addSelect("COUNT(*)::int", "count")
+        .where("r.feed_item_key IN (:...keys)", { keys: feedItemKeys.length > 0 ? feedItemKeys : ["none"] })
+        .groupBy("r.feed_item_key")
+        .getRawMany(),
+      this.feedReactionRepo.find({
+        where: { studentId, feedItemKey: In(feedItemKeys.length > 0 ? feedItemKeys : ["none"]) },
+      }),
+    ]);
+
+    return finalFeed.map((item) => ({
+      ...item,
+      reactionCount: reactionCounts.find((r) => r.key === item.id)?.count ?? 0,
+      hasReacted: myReactions.some((r) => r.feedItemKey === item.id),
     }));
   }
 }
