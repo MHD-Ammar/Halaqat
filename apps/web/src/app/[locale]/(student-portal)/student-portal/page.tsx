@@ -28,6 +28,8 @@ import { CircleLiveFeed } from "./_components/CircleLiveFeed";
 import { DailyBonusModal } from "./_components/DailyBonusModal";
 import { DailyCountdownTimer } from "./_components/DailyCountdownTimer";
 import { DailyQuestCTA } from "./_components/DailyQuestCTA";
+import { EventBanner } from "./_components/EventBanner";
+import { PushPermissionPrompt } from "./_components/PushPermissionPrompt";
 import { RecentRecitations } from "./_components/RecentRecitations";
 import { RecitationRewardModal } from "./_components/RecitationRewardModal";
 import { RewardChests } from "./_components/RewardChests";
@@ -123,6 +125,9 @@ export default function StudentPortalPage() {
 
   return (
     <div className="space-y-8 pb-4">
+      {/* Push Notification Prompt */}
+      <PushPermissionPrompt />
+
       {/* Social Ticker */}
       <CircleLiveFeed />
 
@@ -155,11 +160,18 @@ export default function StudentPortalPage() {
 
       {/* Daily Countdown Timer - Compact */}
       {dashboardData && (
-        <div className="flex justify-center -mt-2 mb-2 relative z-20">
+        <div className="flex flex-col items-center gap-4 -mt-2 mb-2 relative z-20">
           <DailyCountdownTimer 
             hasSubmittedToday={dashboardData.hasSubmittedToday} 
             variant="compact" 
           />
+          
+          {/* Seasonal Event Banner */}
+          {dashboardData.activeEvent && (
+            <div className="w-full max-w-4xl mx-auto mt-4 px-4">
+              <EventBanner event={dashboardData.activeEvent} />
+            </div>
+          )}
         </div>
       )}
 
