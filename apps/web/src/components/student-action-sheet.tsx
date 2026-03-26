@@ -373,8 +373,9 @@ export function StudentActionSheet({
           setSelectedRule(null);
         }
       },
-      onError: (error: any) => {
-        const errorMessage = error.response?.data?.message || error.message;
+      onError: (error: unknown) => {
+        const err = error as { response?: { data?: { message?: string } }; message?: string };
+        const errorMessage = err.response?.data?.message || err.message;
         let displayMessage = errorMessage || t("saveFailed");
 
         // improved error mapping for budget limit

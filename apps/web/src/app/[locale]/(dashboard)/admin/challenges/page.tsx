@@ -7,11 +7,14 @@ import { useTranslations } from "next-intl";
 import { useState, useMemo } from "react";
 
 import { SubmissionDetailViewer } from "@/components/challenges/submission-detail-viewer";
+import { Button } from "@/components/ui/button";
 import {
   useAdminChallengesList,
   downloadChallengesExcel,
 } from "@/hooks/use-admin-challenges";
 import { useSubmissionDetail } from "@/hooks/use-weekly-submissions";
+
+import { OverrideForm } from "./_components/override-form";
 
 export default function AdminChallengesPage() {
   const t = useTranslations("AdminChallenges");
@@ -26,6 +29,7 @@ export default function AdminChallengesPage() {
   );
   const [page, setPage] = useState(1);
   const [isExporting, setIsExporting] = useState(false);
+  const [showOverride, setShowOverride] = useState(false);
 
   // ─── Submission detail modal ─────────────────────────────────────────────
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
@@ -218,7 +222,10 @@ export default function AdminChallengesPage() {
       {selectedSubmissionId && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          onClick={() => setSelectedSubmissionId(null)}
+          onClick={() => {
+            setSelectedSubmissionId(null);
+            setShowOverride(false);
+          }}
         >
           <div
             className="bg-card rounded-2xl border shadow-xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6"
@@ -229,7 +236,10 @@ export default function AdminChallengesPage() {
                 {t("submissionDetails")}
               </h2>
               <button
-                onClick={() => setSelectedSubmissionId(null)}
+                onClick={() => {
+                  setSelectedSubmissionId(null);
+                  setShowOverride(false);
+                }}
                 className="text-muted-foreground hover:text-foreground transition-colors text-sm"
               >
                 {t("close")}
@@ -246,13 +256,32 @@ export default function AdminChallengesPage() {
                   <span>{submissionDetail.studentName}</span>
                   <span>{submissionDetail.date}</span>
                 </div>
-                <div className="text-sm font-semibold text-amber-600">
-                  ⭐ {submissionDetail.totalXp} XP
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-semibold text-amber-600">
+                    ⭐ {submissionDetail.totalXp} XP
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setShowOverride(v => !v)}>
+                    {showOverride ? "View Original" : "Override"}
+                  </Button>
                 </div>
-                <SubmissionDetailViewer
-                  config={RAMADAN_FORM}
-                  data={submissionDetail.details}
-                />
+                
+                {!showOverride ? (
+                  <SubmissionDetailViewer
+                    config={RAMADAN_FORM}
+                    data={submissionDetail.details}
+                  />
+                ) : (
+                  <OverrideForm 
+                    submissionId={selectedSubmissionId}
+                    initialXp={submissionDetail.totalXp}
+                    initialData={submissionDetail.details}
+                    onSuccess={() => {
+                      setShowOverride(false);
+                      setSelectedSubmissionId(null);
+                    }}
+                    onCancel={() => setShowOverride(false)}
+                  />
+                )}
               </div>
             ) : null}
           </div>

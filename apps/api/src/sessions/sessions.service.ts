@@ -151,15 +151,23 @@ export class SessionsService {
 
       // Award initial points for the default PRESENT status
       const mosqueId = session.mosqueId;
+      const bulkAwards: Array<{ studentId: string; ruleKey: string; reason?: string; multiplier?: number }> = [];
+
       for (const record of attendanceRecords) {
         if (record.status === AttendanceStatus.PRESENT) {
-          await this.pointsService.calculateAndAwardPoints(
-            record.studentId,
-            "ATTENDANCE_ON_TIME",
-            mosqueId,
-            session.id,
-          );
+          bulkAwards.push({
+            studentId: record.studentId,
+            ruleKey: "ATTENDANCE_ON_TIME",
+          });
         }
+      }
+
+      if (bulkAwards.length > 0) {
+        await this.pointsService.calculateAndAwardPointsBulk(
+          mosqueId,
+          session.id,
+          bulkAwards
+        );
       }
 
       // Reload session with all relations to include new records
@@ -210,45 +218,54 @@ export class SessionsService {
     const attendanceMap = new Map(session.attendances.map((a) => [a.studentId, a]));
 
     // Process updates
+    const bulkAwards: Array<{ studentId: string; ruleKey: string; reason?: string; multiplier?: number }> = [];
+
     for (const update of bulkDto.updates) {
       const currentRecord = attendanceMap.get(update.studentId);
 
       // Only perform logic if status is actively changing
       if (currentRecord && currentRecord.status !== update.status) {
         const studentId = update.studentId;
-        const mosqueId = session.mosqueId;
-
 
         // 1. Revert points for the OLD status
         const oldRuleKey = STATUS_TO_RULE_KEY[currentRecord.status];
         if (oldRuleKey) {
-          await this.pointsService.calculateAndAwardPoints(
+          bulkAwards.push({
             studentId,
-            oldRuleKey,
-            mosqueId,
-            sessionId,
-            `Correction: Changed from ${currentRecord.status} to ${update.status}`,
-            -1, // Revert points
-          );
+            ruleKey: oldRuleKey,
+            reason: `Correction: Changed from ${currentRecord.status} to ${update.status}`,
+            multiplier: -1,
+          });
         }
 
         // 2. Award points for the NEW status
         const newRuleKey = STATUS_TO_RULE_KEY[update.status];
         if (newRuleKey) {
-          await this.pointsService.calculateAndAwardPoints(
+          bulkAwards.push({
             studentId,
-            newRuleKey,
-            mosqueId,
-            sessionId,
-          );
+            ruleKey: newRuleKey,
+          });
         }
-      }
 
-      // Update the record in DB
-      await this.attendanceRepository.update(
-        { sessionId, studentId: update.studentId },
-        { status: update.status },
+        currentRecord.status = update.status;
+      }
+    }
+
+    if (bulkAwards.length > 0) {
+      await this.pointsService.calculateAndAwardPointsBulk(
+        session.mosqueId,
+        sessionId,
+        bulkAwards
       );
+    }
+
+    // Update the records in DB
+    const recordsToUpdate = bulkDto.updates
+      .map(update => attendanceMap.get(update.studentId))
+      .filter((record): record is Attendance => record !== undefined);
+
+    if (recordsToUpdate.length > 0) {
+      await this.attendanceRepository.save(recordsToUpdate);
     }
 
     // Return updated session
@@ -260,20 +277,34 @@ export class SessionsService {
    */
   async getSessionHistory(
     circleId: string,
+    page: number = 1,
     limit: number = 30,
     teacherId?: string,
-  ): Promise<Session[]> {
+  ): Promise<{ data: Session[]; meta: { total: number; page: number; lastPage: number; limit: number } }> {
     if (teacherId) {
       const isOwner = await this.circlesService.validateCircleOwnership(circleId, teacherId);
       if (!isOwner) throw new ForbiddenException("You do not have access to this circle");
     }
 
-    return this.sessionRepository.find({
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await this.sessionRepository.findAndCount({
       where: { circleId },
       relations: ["attendances", "attendances.student"],
       order: { date: "DESC" },
+      skip,
       take: limit,
     });
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        lastPage: Math.ceil(total / limit),
+        limit,
+      },
+    };
   }
 
   /**

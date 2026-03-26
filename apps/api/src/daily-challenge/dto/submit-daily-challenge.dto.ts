@@ -11,14 +11,21 @@ export class SubmitDailyChallengeDto {
   studentId!: string;
 
   @ApiProperty({
-    description: "Campaign Key (e.g. 'ramadan')",
+    description: "Campaign Key (e.g. 'ramadan') - fallback if campaignId not provided",
     example: "ramadan",
-    default: "ramadan",
+    required: false,
   })
   @IsString()
-  @IsNotEmpty()
-  @IsOptional() // Optional for backward compatibility/defaults
-  campaignKey: string = "ramadan";
+  @IsOptional()
+  campaignKey?: string;
+
+  @ApiProperty({
+    description: "Campaign UUID - preferred over campaignKey when available",
+    required: false,
+  })
+  @IsUUID()
+  @IsOptional()
+  campaignId?: string;
 
   @ApiProperty({
     description: "Client Local Date (YYYY-MM-DD)",

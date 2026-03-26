@@ -10,6 +10,7 @@
  */
 
 import { Gender, UserRole, SessionStatus, ExamStatus } from "@halaqat/types";
+import "dotenv/config";
 import { NestFactory } from "@nestjs/core";
 import * as bcrypt from "bcrypt";
 import { DataSource } from "typeorm";
@@ -364,6 +365,156 @@ async function seed() {
             );
             console.log(`   ✓ Exam for ${student.name} - Juz ${juzNumber} (${passed ? 'Passed' : 'Failed'})`);
         }
+    }
+    console.log("");
+
+    // ========================================
+    // 7. Gamification: Quests, Milestones, Achievements
+    // ========================================
+    console.log("🎮 Seeding gamification (Quests, Milestones, Achievements)...");
+
+    const quests = [
+      { id: "q1111111-1111-4111-a111-111111111111", title: "صلاة الفجر في المسجد", category: "PRAYER", frequency: "DAILY", xpReward: 20, icon: "🕌" },
+      { id: "q2222222-2222-4222-a222-222222222222", title: "ورد القرآن اليومي", category: "QURAN", frequency: "DAILY", xpReward: 15, icon: "📖" },
+      { id: "q3333333-3333-4333-a333-333333333333", title: "أذكار الصباح والمساء", category: "ADHKAR", frequency: "DAILY", xpReward: 10, icon: "📿" },
+      { id: "q4444444-4444-4444-a444-444444444444", title: "حفظ سورة الكهف", category: "QURAN", frequency: "WEEKLY", xpReward: 100, icon: "🌟" },
+    ];
+
+    for (const quest of quests) {
+      // NOTE: Using a real UUID for Postgres to avoid error if 'q11...' is rejected.
+      // Replacing 'q' with '9' to make it a valid UUID format:
+      const questId = quest.id.replace('q', '9');
+      await dataSource.query(
+        `
+        INSERT INTO "quest" (id, title, category, frequency, xp_reward, icon, is_active, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, true, NOW(), NOW())
+        ON CONFLICT (id) DO UPDATE SET
+          title = EXCLUDED.title,
+          category = EXCLUDED.category,
+          frequency = EXCLUDED.frequency,
+          xp_reward = EXCLUDED.xp_reward,
+          icon = EXCLUDED.icon
+      `,
+        [questId, quest.title, quest.category, quest.frequency, quest.xpReward, quest.icon],
+      );
+      console.log(`   ✓ Quest: ${quest.title}`);
+    }
+
+    const milestones = [
+      { id: "m1111111-1111-4111-a111-111111111111", targetLevel: 2, title: "صندوق المبتدئين", rewardType: "BONUS_XP", rewardValue: "100" },
+      { id: "m2222222-2222-4222-a222-222222222222", targetLevel: 5, title: "صندوق المثابر", rewardType: "BONUS_XP", rewardValue: "300" },
+      { id: "m3333333-3333-4333-a333-333333333333", targetLevel: 10, title: "الصندوق الفضي", rewardType: "BONUS_XP", rewardValue: "500" },
+    ];
+
+    for (const m of milestones) {
+      const milestoneId = m.id.replace('m', '9');
+      await dataSource.query(
+        `
+        INSERT INTO "milestone_rewards" (id, target_level, title, reward_type, reward_value, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        ON CONFLICT (id) DO UPDATE SET
+          target_level = EXCLUDED.target_level,
+          title = EXCLUDED.title,
+          reward_type = EXCLUDED.reward_type,
+          reward_value = EXCLUDED.reward_value
+      `,
+        [milestoneId, m.targetLevel, m.title, m.rewardType, m.rewardValue],
+      );
+      console.log(`   ✓ Milestone: ${m.title}`);
+    }
+
+    const achievements = [
+      { id: "a1111111-1111-4111-a111-111111111111", title: "فارس الفجر", badgeIcon: "🏅", criteriaType: "STREAK_DAYS", criteriaTarget: 7, criteriaCategory: null, description: "واظب على أداء المهام 7 أيام متتالية" },
+      { id: "a2222222-2222-4222-a222-222222222222", title: "القارئ الماهر", badgeIcon: "📚", criteriaType: "TOTAL_QUESTS_CATEGORY", criteriaTarget: 50, criteriaCategory: "QURAN", description: "أكمل 50 مهمة في القرآن الكريم" },
+      { id: "a3333333-3333-4333-a333-333333333333", title: "شعلة النشاط", badgeIcon: "🔥", criteriaType: "TOTAL_XP", criteriaTarget: 1000, criteriaCategory: null, description: "اجمع 1000 نقطة خبرة" },
+    ];
+
+    for (const a of achievements) {
+      const achievementId = a.id.replace('a', '9');
+      await dataSource.query(
+        `
+        INSERT INTO "achievement" (id, title, description, badge_icon, criteria_type, criteria_target, criteria_category, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+        ON CONFLICT (id) DO UPDATE SET
+          title = EXCLUDED.title,
+          description = EXCLUDED.description,
+          badge_icon = EXCLUDED.badge_icon,
+          criteria_type = EXCLUDED.criteria_type,
+          criteria_target = EXCLUDED.criteria_target,
+          criteria_category = EXCLUDED.criteria_category
+      `,
+        [achievementId, a.title, a.description, a.badgeIcon, a.criteriaType, a.criteriaTarget, a.criteriaCategory],
+      );
+      console.log(`   ✓ Achievement: ${a.title}`);
+    }
+    console.log("");
+
+    // ========================================
+    // 8. League Tiers
+    // ========================================
+    console.log("🏆 Seeding league tiers...");
+
+    const leagueTiers = [
+      { rank: 1, name: "Bronze", nameAr: "البرونزي", icon: "🥉", color: "amber", promotionSlots: 10, relegationSlots: 0, xpBonus: 0 },
+      { rank: 2, name: "Silver", nameAr: "الفضي", icon: "🥈", color: "slate", promotionSlots: 8, relegationSlots: 5, xpBonus: 50 },
+      { rank: 3, name: "Gold", nameAr: "الذهبي", icon: "🥇", color: "yellow", promotionSlots: 5, relegationSlots: 5, xpBonus: 100 },
+      { rank: 4, name: "Diamond", nameAr: "الماسي", icon: "💎", color: "cyan", promotionSlots: 3, relegationSlots: 5, xpBonus: 250 },
+      { rank: 5, name: "Champions", nameAr: "الأبطال", icon: "👑", color: "violet", promotionSlots: 0, relegationSlots: 5, xpBonus: 500 },
+    ];
+
+    for (const tier of leagueTiers) {
+      await dataSource.query(
+        `
+        INSERT INTO "league_tier" (rank, name, name_ar, icon, color, promotion_slots, relegation_slots, xp_bonus)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        ON CONFLICT (rank) DO UPDATE SET
+          name = EXCLUDED.name,
+          name_ar = EXCLUDED.name_ar,
+          icon = EXCLUDED.icon,
+          color = EXCLUDED.color,
+          promotion_slots = EXCLUDED.promotion_slots,
+          relegation_slots = EXCLUDED.relegation_slots,
+          xp_bonus = EXCLUDED.xp_bonus
+      `,
+        [tier.rank, tier.name, tier.nameAr, tier.icon, tier.color, tier.promotionSlots, tier.relegationSlots, tier.xpBonus],
+      );
+      console.log(`   ✓ Tier: ${tier.nameAr}`);
+    }
+    console.log("");
+
+    // ========================================
+    // 9. Store Items
+    // ========================================
+    console.log("🛍️ Seeding store items...");
+
+    // Use static UUIDs for store items so they don't multiply on re-seed
+    const storeItems = [
+      { id: "s1111111-1111-4111-a111-111111111111", name: "Streak Shield", nameAr: "درع الحماية", type: "STREAK_SHIELD", xpCost: 200, rewardValue: "1", icon: "🛡️", minLevel: 3, maxPerStudent: 3 },
+      { id: "s2222222-2222-4222-a222-222222222222", name: "Gold Frame", nameAr: "إطار ذهبي", type: "AVATAR_FRAME", xpCost: 500, rewardValue: "gold", icon: "🖼️", minLevel: 5, maxPerStudent: 1 },
+      { id: "s3333333-3333-4333-a333-333333333333", name: "Emerald Frame", nameAr: "إطار زمردي", type: "AVATAR_FRAME", xpCost: 750, rewardValue: "emerald", icon: "💚", minLevel: 7, maxPerStudent: 1 },
+      { id: "s4444444-4444-4444-a444-444444444444", name: "Scholar Title", nameAr: "لقب العالم", type: "TITLE", xpCost: 300, rewardValue: "العالم", icon: "⭐", minLevel: 5, maxPerStudent: 1 },
+      { id: "s5555555-5555-4555-a555-555555555555", name: "XP Boost", nameAr: "تعزيز النقاط", type: "DOUBLE_XP", xpCost: 400, rewardValue: "100", icon: "⚡", minLevel: 1, maxPerStudent: null },
+    ];
+
+    for (const item of storeItems) {
+      const itemId = item.id.replace('s', '9');
+      await dataSource.query(
+        `
+        INSERT INTO "store_item" (id, name, name_ar, type, xp_cost, reward_value, icon, min_level, max_per_student, mosque_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name,
+          name_ar = EXCLUDED.name_ar,
+          type = EXCLUDED.type,
+          xp_cost = EXCLUDED.xp_cost,
+          reward_value = EXCLUDED.reward_value,
+          icon = EXCLUDED.icon,
+          min_level = EXCLUDED.min_level,
+          max_per_student = EXCLUDED.max_per_student
+      `,
+        [itemId, item.name, item.nameAr, item.type, item.xpCost, item.rewardValue, item.icon, item.minLevel, item.maxPerStudent, MOSQUE_ID],
+      );
+      console.log(`   ✓ Store Item: ${item.nameAr}`);
     }
     console.log("");
 

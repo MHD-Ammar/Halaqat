@@ -17,12 +17,14 @@ import { useEffect, useState } from "react";
 import Confetti from "react-confetti";
 
 import { Button } from "@/components/ui/button";
+import { soundManager } from "@/lib/sounds";
 
 interface LevelUpModalProps {
   isOpen: boolean;
   newLevel: number;
   earnedXp: number;
   newTotalXp: number;
+  unlockedMilestones?: unknown[]; // the milestones unlocked from this level up
   onClose: () => void;
 }
 
@@ -31,6 +33,7 @@ export function LevelUpModal({
   newLevel,
   earnedXp,
   newTotalXp,
+  unlockedMilestones = [],
   onClose,
 }: LevelUpModalProps) {
   const t = useTranslations();
@@ -55,6 +58,12 @@ export function LevelUpModal({
     }
     return undefined;
   }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      void soundManager.play("levelUp");
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -103,6 +112,11 @@ export function LevelUpModal({
           <p className="text-lg text-amber-100">
             🛡️ {t("Gamification.youReachedLevel")} {newLevel} 🛡️
           </p>
+          {unlockedMilestones.length > 0 && (
+            <p className="mt-4 animate-bounce text-xl font-black text-green-300 drop-shadow-md">
+              🎁 لقد فتحت صندوقاً جديداً! 
+            </p>
+          )}
         </div>
 
         {/* Stats */}

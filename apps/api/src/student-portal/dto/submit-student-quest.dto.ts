@@ -15,12 +15,12 @@ export class SubmitStudentQuestDto {
   submissionData!: Record<string, unknown>;
 
   /**
-   * Campaign key (defaults to 'ramadan')
-   * e.g., 'ramadan', 'summer_2025', etc.
+   * Campaign UUID - links DailySubmission to the correct campaign.
+   * If not provided, uses the currently active campaign.
    */
   @IsString()
   @IsOptional()
-  campaignKey?: string;
+  campaignId?: string;
 
   /**
    * Local date string (YYYY-MM-DD) for handling timezones

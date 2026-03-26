@@ -1,11 +1,12 @@
 "use client";
 
 import { Gift, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import Confetti from "react-confetti";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface DailyBonusModalProps {
   xpAwarded: number;
@@ -14,12 +15,15 @@ interface DailyBonusModalProps {
 }
 
 export function DailyBonusModal({ xpAwarded, isOpen, onClose }: DailyBonusModalProps) {
+  const t = useTranslations("StudentPortal");
   const [mounted, setMounted] = useState(false);
   const [windowDimension, setWindowDimension] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     setMounted(true);
-    setWindowDimension({ width: window.innerWidth, height: window.innerHeight });
+    if (typeof window !== "undefined") {
+      setWindowDimension({ width: window.innerWidth, height: window.innerHeight });
+    }
   }, []);
 
   if (!mounted) return null;
@@ -49,12 +53,12 @@ export function DailyBonusModal({ xpAwarded, isOpen, onClose }: DailyBonusModalP
               <Gift className="h-12 w-12 text-yellow-900" />
             </div>
             
-            <h2 className="text-3xl font-black mb-2 tracking-tight">مكافأة الدخول اليومي!</h2>
-            <p className="text-yellow-900/80 mb-6 font-medium">عدت مجدداً.. استمر يا بطل!</p>
+            <DialogTitle className="text-3xl font-black mb-2 tracking-tight text-center">{t("dailyRewardTitle")}</DialogTitle>
+            <p className="text-yellow-900/80 mb-6 font-medium">{t("backAgainHero")}</p>
             
             <div className="bg-yellow-950/10 rounded-2xl p-4 w-full mb-6 max-w-[200px]">
               <div className="text-4xl font-extrabold text-yellow-900">+{xpAwarded}</div>
-              <div className="text-sm font-semibold uppercase tracking-widest text-yellow-800/80">نقطة خبرة</div>
+              <div className="text-sm font-semibold uppercase tracking-widest text-yellow-800/80">{t("xpPoint")}</div>
             </div>
             
             <Button 
@@ -62,7 +66,7 @@ export function DailyBonusModal({ xpAwarded, isOpen, onClose }: DailyBonusModalP
               className="w-full rounded-full bg-yellow-950 text-yellow-100 hover:bg-yellow-900 hover:scale-105 transition-all shadow-xl h-14 text-lg font-bold"
               onClick={onClose}
             >
-              جمع المكافأة
+              {t("collectReward")}
             </Button>
           </div>
         </div>

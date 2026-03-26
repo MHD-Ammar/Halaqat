@@ -206,21 +206,27 @@ export class PointsService {
    * @param dto - The bulk update data
    */
   async bulkUpdateRules(mosqueId: string, dto: BulkUpdatePointRulesDto): Promise<PointRule[]> {
-    const updatedRules: PointRule[] = [];
+    const keys = dto.rules.map(r => r.key);
+    if (keys.length === 0) return [];
 
-    for (const ruleUpdate of dto.rules) {
-      const rule = await this.pointRuleRepository.findOne({
-        where: { key: ruleUpdate.key, mosqueId },
-      });
+    const rules = await this.pointRuleRepository
+      .createQueryBuilder("rule")
+      .where("rule.mosqueId = :mosqueId", { mosqueId })
+      .andWhere("rule.key IN (:...keys)", { keys })
+      .getMany();
 
-      if (rule) {
-        rule.points = ruleUpdate.points;
-        await this.pointRuleRepository.save(rule);
-        updatedRules.push(rule);
+    const updateMap = new Map(dto.rules.map(r => [r.key, r.points]));
+    const rulesToSave: PointRule[] = [];
+
+    for (const rule of rules) {
+      const updatedPoints = updateMap.get(rule.key);
+      if (updatedPoints !== undefined) {
+        rule.points = updatedPoints;
+        rulesToSave.push(rule);
       }
     }
 
-    return updatedRules;
+    return this.pointRuleRepository.save(rulesToSave);
   }
 
   // ==================== POINT CALCULATION ====================
@@ -277,6 +283,73 @@ export class PointsService {
     );
 
     return transaction;
+  }
+
+  /**
+   * Bulk calculate and award points for multiple students/rules
+   */
+  async calculateAndAwardPointsBulk(
+    mosqueId: string,
+    sessionId: string,
+    awards: { studentId: string; ruleKey: string; reason?: string; multiplier?: number }[]
+  ): Promise<PointTransaction[]> {
+    if (awards.length === 0) return [];
+
+    const ruleKeys = [...new Set(awards.map((a) => a.ruleKey))];
+    const rules = await this.pointRuleRepository
+      .createQueryBuilder("rule")
+      .where("rule.mosqueId = :mosqueId", { mosqueId })
+      .andWhere("rule.key IN (:...ruleKeys)", { ruleKeys })
+      .getMany();
+
+    const ruleMap = new Map(rules.map((r) => [r.key, r]));
+    const transactionsToSave: PointTransaction[] = [];
+    const studentPointsMap = new Map<string, number>();
+
+    for (const award of awards) {
+      const rule = ruleMap.get(award.ruleKey);
+      if (!rule || !rule.isActive || rule.points === 0) continue;
+
+      const multiplier = award.multiplier || 1;
+      const points = multiplier * rule.points;
+
+      if (points === 0) continue;
+
+      let sourceType: PointSourceType;
+      if (award.ruleKey.startsWith("ATTENDANCE")) {
+        sourceType = PointSourceType.ATTENDANCE;
+      } else if (award.ruleKey.startsWith("EXAM")) {
+        sourceType = PointSourceType.EXAM;
+      } else {
+        sourceType = PointSourceType.RECITATION;
+      }
+
+      transactionsToSave.push(
+        this.transactionRepository.create({
+          studentId: award.studentId,
+          amount: points,
+          reason: award.reason || rule.description,
+          sourceType,
+          sessionId,
+        }),
+      );
+
+      const currentTotal = studentPointsMap.get(award.studentId) || 0;
+      studentPointsMap.set(award.studentId, currentTotal + points);
+    }
+
+    if (transactionsToSave.length > 0) {
+      await this.transactionRepository.save(transactionsToSave);
+
+      // Bulk increment student points
+      const updatePromises = Array.from(studentPointsMap.entries()).map(
+        ([studentId, points]) =>
+          this.studentRepository.increment({ id: studentId }, "totalPoints", points),
+      );
+      await Promise.all(updatePromises);
+    }
+
+    return transactionsToSave;
   }
 
   /**

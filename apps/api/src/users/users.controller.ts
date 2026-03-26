@@ -62,13 +62,20 @@ export class UsersController {
     enum: UserRole,
     description: "Filter by role",
   })
+  @ApiQuery({ name: "page", required: false, type: Number })
+  @ApiQuery({ name: "limit", required: false, type: Number })
   @ApiResponse({ status: 200, description: "List of users" })
   @ApiResponse({ status: 403, description: "Forbidden - requires ADMIN role" })
   findAll(
     @Query("role") role?: UserRole,
+    @Query("page") page?: string,
+    @Query("limit") limit?: string,
     @CurrentUser() user?: { mosqueId?: string },
   ) {
-    return this.usersService.findAll(role, user?.mosqueId);
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 20;
+
+    return this.usersService.findAll(pageNum, limitNum, role, user?.mosqueId);
   }
 
   /**

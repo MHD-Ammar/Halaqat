@@ -38,6 +38,7 @@
     "processing": "جاري المعالجة...",
     "undo": "تراجع",
     "max": "الحد الأقصى",
+    "min": "الحد الأدنى",
     "submitting": "جاري الإرسال...",
     "continue": "متابعة"
   },
@@ -53,7 +54,271 @@
     "settings": "الإعدادات",
     "myStudents": "طلابي",
     "challenges": "التحديات",
-    "campaigns": "الحملات"
+    "campaigns": "الحملات",
+    "gamification": "مركز التحفيز",
+    "circleQuests": "مهام الحلقة"
+  },
+  "GamificationHub": {
+    "title": "مركز التحفيز",
+    "subtitle": "إدارة المهام والمحطات والأوسمة",
+    "tabs": {
+      "quests": "المهام",
+      "milestones": "المحطات والجوائز",
+      "achievements": "الأوسمة",
+      "store": "المتجر",
+      "events": "الفعاليات",
+      "fulfillments": "التسليم"
+    },
+    "quests": {
+      "title": "المهام",
+      "createBtn": "إنشاء مهمة",
+      "createTitle": "إنشاء مهمة جديدة",
+      "editTitle": "تعديل المهمة",
+      "emptyState": {
+        "title": "لا توجد مهام",
+        "description": "أنشئ مهمة للبدء"
+      },
+      "form": {
+        "title": "العنوان",
+        "titlePlaceholder": "مثال: قراءة صفحة من القرآن",
+        "description": "الوصف (اختياري)",
+        "descPlaceholder": "وصف مفصل...",
+        "category": "الفئة",
+        "selectCategory": "اختر فئة",
+        "frequency": "التكرار",
+        "selectFrequency": "اختر التكرار",
+        "xpReward": "المكافأة (XP)",
+        "icon": "الرمز (إيموجي)",
+        "activeStatus": "الحالة",
+        "activeDesc": "الطلاب يمكنهم رؤية المهام النشطة فقط.",
+        "cancel": "إلغاء",
+        "create": "إنشاء",
+        "save": "حفظ التغييرات"
+      },
+      "columns": {
+        "icon": "الرمز",
+        "title": "العنوان",
+        "category": "الفئة",
+        "frequency": "التكرار",
+        "xp": "XP",
+        "status": "الحالة",
+        "active": "نشط",
+        "inactive": "غير نشط",
+        "actions": "الإجراءات"
+      },
+      "delete": {
+        "title": "حذف المهمة",
+        "description": "هل أنت متأكد من حذف هذه المهمة؟ لا يمكن التراجع عن هذا الإجراء."
+      },
+      "toast": {
+        "created": "تم إنشاء المهمة بنجاح",
+        "updated": "تم تحديث المهمة بنجاح",
+        "deleted": "تم حذف المهمة بنجاح",
+        "operationFailed": "فشلت العملية",
+        "deleteFailed": "فشل الحذف"
+      }
+    },
+    "milestones": {
+      "title": "المحطات والجوائز",
+      "createBtn": "إنشاء محطة",
+      "createTitle": "إنشاء محطة جديدة",
+      "editTitle": "تعديل المحطة",
+      "emptyState": {
+        "title": "لا توجد محطات",
+        "description": "أنشئ محطة للبدء"
+      },
+      "levelBadge": "مستوى {level}",
+      "form": {
+        "targetLevel": "المستوى المستهدف",
+        "title": "العنوان",
+        "titlePlaceholder": "مثال: رائد برونزي",
+        "rewardType": "نوع الجائزة",
+        "selectType": "اختر النوع",
+        "rewardValue": "قيمة الجائزة / رابط",
+        "valuePlaceholder": "مثال: 500 أو image_url.png",
+        "cancel": "إلغاء",
+        "create": "إنشاء",
+        "save": "حفظ التغييرات"
+      },
+      "columns": {
+        "level": "المستوى",
+        "title": "العنوان",
+        "rewardType": "نوع الجائزة",
+        "value": "القيمة / التفاصيل",
+        "actions": "الإجراءات"
+      },
+      "delete": {
+        "title": "حذف المحطة",
+        "description": "هل أنت متأكد من حذف هذه المحطة؟ لا يمكن التراجع عن هذا الإجراء."
+      },
+      "toast": {
+        "created": "تم إنشاء المحطة بنجاح",
+        "updated": "تم تحديث المحطة بنجاح",
+        "deleted": "تم حذف المحطة بنجاح",
+        "operationFailed": "فشلت العملية",
+        "deleteFailed": "فشل الحذف"
+      }
+    },
+    "achievements": {
+      "title": "الأوسمة",
+      "createBtn": "إنشاء وسام",
+      "createTitle": "إنشاء وسام جديد",
+      "editTitle": "تعديل الوسام",
+      "emptyState": {
+        "title": "لا توجد أوسمة",
+        "description": "أنشئ وساماً لتحفيز الطلاب"
+      },
+      "form": {
+        "title": "العنوان",
+        "titlePlaceholder": "مثال: بطل الـ 7 أيام",
+        "description": "الوصف",
+        "descPlaceholder": "تمنح عند تسجيل الدخول 7 أيام متتالية",
+        "icon": "الرمز (إيموجي/رابط)",
+        "criteriaType": "نوع المعيار",
+        "selectType": "اختر النوع",
+        "goalTarget": "الهدف",
+        "goalTargetDesc": "مثال: 7 لـ 'سلسلة 7 أيام'",
+        "questCategoryFocus": "فئة المهمة",
+        "selectCategory": "اختر الفئة",
+        "rarity": "الندرة",
+        "selectRarity": "اختر الندرة",
+        "rarity_common": "عادي (Common)",
+        "rarity_rare": "نادر (Rare)",
+        "rarity_epic": "أسطوري (Epic)",
+        "rarity_legendary": "خرافي (Legendary)",
+        "cancel": "إلغاء",
+        "create": "إنشاء",
+        "save": "حفظ التغييرات"
+      },
+      "columns": {
+        "icon": "الرمز",
+        "title": "العنوان",
+        "criteria": "المعيار",
+        "target": "الهدف",
+        "actions": "الإجراءات"
+      },
+      "delete": {
+        "title": "حذف الوسام",
+        "description": "هل أنت متأكد من حذف هذا الوسام؟ قد يؤثر ذلك على الطلاب الذين حصلوا عليه بالفعل."
+      },
+      "toast": {
+        "created": "تم إنشاء الوسام بنجاح",
+        "updated": "تم تحديث الوسام بنجاح",
+        "deleted": "تم حذف الوسام بنجاح",
+        "operationFailed": "فشلت العملية",
+        "deleteFailed": "فشل الحذف"
+      }
+    },
+    "events": {
+      "title": "الفعاليات الموسمية",
+      "createBtn": "إنشاء فعالية",
+      "createTitle": "إنشاء فعالية جديدة",
+      "editTitle": "تعديل الفعالية",
+      "emptyState": {
+        "title": "لا توجد فعاليات مسجلة",
+        "description": "ابدأ بإنشاء فعالية موسمية جديدة لإعطاء الطلاب حوافز إضافية."
+      },
+      "form": {
+        "nameEn": "الاسم (En)",
+        "nameAr": "الاسم (بالعربي)",
+        "descriptionAr": "الوصف (بالعربي)",
+        "startsAt": "تاريخ البدء",
+        "endsAt": "تاريخ الانتهاء",
+        "multiplier": "مضاعف النقاط",
+        "icon": "الأيقونة",
+        "themeColor": "اللون",
+        "activeStatus": "الحالة",
+        "activeDesc": "تفعيل الفعالية في الوقت المحدد",
+        "cancel": "إلغاء",
+        "create": "إنشاء",
+        "save": "حفظ التغييرات"
+      },
+      "columns": {
+        "icon": "الأيقونة",
+        "name": "الاسم",
+        "multiplier": "المضاعف",
+        "period": "الفترة",
+        "status": "الحالة",
+        "actions": "إجراءات"
+      },
+      "status": {
+        "active": "نشط",
+        "inactive": "غير نشط"
+      },
+      "toast": {
+        "created": "تم إنشاء الفعالية بنجاح",
+        "updated": "تم تحديث الفعالية بنجاح",
+        "deleted": "تم حذف الفعالية بنجاح",
+        "operationFailed": "فشلت العملية",
+        "deleteFailed": "فشل الحذف"
+      },
+      "delete": {
+        "title": "حذف الفعالية",
+        "description": "هل أنت متأكد من حذف هذه الفعالية؟ لا يمكن التراجع عن هذا الإجراء."
+      }
+    },
+    "store": {
+      "title": "متجر الجوائز",
+      "createBtn": "إضافة منتج",
+      "createTitle": "إضافة منتج جديد",
+      "editTitle": "تعديل المنتج",
+      "emptyState": {
+        "title": "المتجر فارغ",
+        "description": "أضف منتجات ليتمكن الطلاب من استبدال نقاطهم بها"
+      },
+      "form": {
+        "nameEn": "الاسم (بالإنجليزي)",
+        "nameAr": "الاسم (بالعربي)",
+        "descEn": "الوصف (بالإنجليزي)",
+        "descAr": "الوصف (بالعربي)",
+        "type": "النوع",
+        "xpCost": "تكلفة XP",
+        "rewardValue": "قيمة الجائزة / التفاصيل",
+        "icon": "الرمز (إيموجي)",
+        "minLevel": "الحد الأدنى للمستوى",
+        "maxPerStudent": "الحد الأقصى لكل طالب",
+        "stock": "المخزون",
+        "status": "الحالة",
+        "activeDesc": "الطلاب يمكنهم رؤية المنتجات النشطة فقط.",
+        "placeholderNameEn": "مثال: Streak Shield",
+        "placeholderNameAr": "مثال: درع السلسلة",
+        "placeholderRewardValue": "مثال: 1 (لعدد الدروع) أو اسم الإطار",
+        "unlimited": "غير محدود",
+        "cancel": "إلغاء",
+        "create": "إنشاء",
+        "save": "حفظ التغييرات"
+      },
+      "columns": {
+        "icon": "الرمز",
+        "name": "الاسم",
+        "type": "النوع",
+        "cost": "التكلفة",
+        "level": "المستوى",
+        "stock": "المخزون",
+        "status": "الحالة",
+        "active": "نشط",
+        "inactive": "غير نشط",
+        "actions": "الإجراءات"
+      },
+      "types": {
+        "STREAK_SHIELD": "درع السلسلة",
+        "AVATAR_FRAME": "إطار الرمز",
+        "TITLE": "لقب",
+        "DOUBLE_XP": "مضاعف XP",
+        "REAL_WORLD": "جائزة مادية"
+      },
+      "delete": {
+        "title": "حذف المنتج",
+        "description": "هل أنت متأكد من حذف هذا المنتج من المتجر؟"
+      },
+      "toast": {
+        "created": "تمت إضافة المنتج بنجاح",
+        "updated": "تم تحديث المنتج بنجاح",
+        "deleted": "تم حذف المنتج بنجاح",
+        "operationFailed": "فشلت العملية",
+        "deleteFailed": "فشل الحذف"
+      }
+    }
   },
   "Auth": {
     "welcomeBack": "مرحباً بعودتك",
@@ -346,6 +611,17 @@
   "StudentPortal": {
     "title": "بوابتي",
     "subtitle": "عرض تقدمك ومعلوماتك",
+    "leaderboard": "لوحة الصدارة",
+    "leaderboardDesc": "تنافس مع أصدقائك واصعد إلى القمة!",
+    "myCircle": "حلقتي",
+    "myLeague": "دوري الأبطال",
+    "globalRank": "الترتيب العام",
+    "rank": "المرتبة",
+    "yourRank": "مرتبتك",
+    "noCircleAssigned": "لم يتم تعيينك لحلقة بعد أو لا يوجد طلاب في حلقتك.",
+    "noStudentsInLeague": "لا يوجد طلاب في هذا الدوري بعد.",
+    "noLeaderboardData": "لا توجد بيانات للصدارة في المسجد بعد.",
+    "loadingHeroes": "جاري جمع أبطال المسجد...",
     "progress": "التقدم",
     "myQr": "رمز QR",
     "pagesMemorized": "الصفحات المحفوظة",
@@ -361,11 +637,118 @@
     "streakDays": "{count} أيام",
     "totalXp": "إجمالي XP",
     "level": "المستوى",
+    "levelLabel": "المستوى",
     "levelBadge": "مستوى {level}",
     "logout": "تسجيل الخروج",
     "xpProgress": "تقدم XP",
     "keepItUp": "استمر في العمل الرائع!",
-    "startTodayQuests": "إنطلق إلى مهام اليوم 🚀"
+    "startTodayQuests": "إنطلق إلى مهام اليوم 🚀",
+    "trophyRoom": "غرفة الجوائز",
+    "rewardChests": "صناديق الجوائز",
+    "opened": "تم الفتح",
+    "chest": "صندوق الجوائز",
+    "opening": "جاري الفتح...",
+    "openChest": "افتح الصندوق 🎁",
+    "unlockedAtLevel": "يفتح في المستوى {level}",
+    "congratulations": "مبروك!",
+    "claimedRewardMessage": "لقد نجحت في فتح {title}!",
+    "reward": "المكافأة",
+    "maxLevelReached": "المستوى الأعلى!",
+    "closeToNextLevel": "أنت قريب جداً!",
+    "levelProgress": "تقدم المستوى",
+    "xpRemaining": "باقي {xp} نقطة للمستوى {nextLevel}!",
+    "shieldUsed": "🛡️ تم استخدام درع اليوم لحماية سلسلتك!",
+    "shieldInfo": "تحصل على درع جديد لحماية سلسلتك عند بلوغ ٧، ١٤، ٢١ أيام.",
+    "multiplierThresholdInfo": "حافظ على سلسلة ٣ أيام لتفعيل المضاعف!",
+    "nextMultiplierInfo": "باقي {days} أيام للمضاعف التالي!",
+    "maxMultiplierReached": "وصلت للحد الأقصى للمضاعف! 🚀",
+    "attendanceLast7Days": "سجل الحضور في آخر 7 أيام",
+    "attendanceLast30Days": "خريطة نشاط آخر ٣٠ يوم",
+    "heatmapActiveDays": "🔥 {count} أيام نشاط في آخر ٣٠ يوم",
+    "heatmapLongestStreak": "أطول سلسلة: {count} أيام",
+    "heatmapStatusDone": "✅ تمت المهام",
+    "heatmapStatusMissed": "❌ لم تُنجز المهام",
+    "promotionZone": "منطقة الصعود",
+    "relegationZone": "منطقة الهبوط",
+    "promotionThresholdLabel": "حد الصعود: {xp} XP",
+    "relegationThresholdLabel": "حد الهبوط: {xp} XP",
+    "weekEndsInDays": "ينتهي الأسبوع خلال {days} أيام",
+    "leagueResultPromotedTitle": "🎉 مبروك! صعدت إلى دوري {tier}!",
+    "leagueResultRelegatedTitle": "😔 هبطت إلى دوري {tier}",
+    "leagueResultStayedTitle": "💪 حافظت على مكانك في دوري {tier}",
+    "leagueResultPromotedDesc": "أداء رائع هذا الأسبوع. واصل بنفس الحماس وحافظ على مكانك الجديد.",
+    "leagueResultRelegatedDesc": "لا بأس. أسبوع جديد يعني فرصة جديدة للعودة أقوى.",
+    "leagueResultStayedDesc": "ثبات ممتاز. دفعة إضافية هذا الأسبوع قد توصلك للصعود.",
+    "leagueResultStats": "ترتيبك الأسبوع الماضي: #{rank} • XP الأسبوع: {xp}",
+    "continueJourney": "متابعة",
+    "soundMute": "كتم الصوت",
+    "soundUnmute": "تشغيل الصوت",
+    "soundOn": "الصوت مفعّل",
+    "soundOff": "الصوت مكتوم",
+    "today": "اليوم",
+    "awesome": "رائع",
+    "surprise": "مفاجأة سارة! 🌟",
+    "recitationEvaluation": "أستاذك قيّم تسميعك لـ {surah} بـ",
+    "yourRecitation": "تسميعك",
+    "extraXp": "نقطة خبرة إضافية",
+    "claimPoints": "رائع! استلم النقاط",
+    "noRecentRecitations": "لا توجد تسميعات حديثة حتى الآن",
+    "recitationHistory": "سجل التسميع",
+    "latestEvaluations": "أحدث تقييماتك في الحلقة من المعلم",
+    "needsReview": "بحاجة لمراجعة",
+    "surahName": "سورة {surah}",
+    "mistakesCount": "أخطاء: {count}",
+    "noMistakes": "بلا أخطاء",
+    "newLesson": "درس جديد",
+    "review": "مراجعة",
+    "questsCompletedToday": "أنجزت مهامك اليوم بنجاح",
+    "questsCompletedSubtitle": "استرح يا بطل! لقد أكملت وردك اليومي.",
+    "newQuestsAvailable": "لديك مهام جديدة!",
+    "newQuestsSubtitle": "أكمل وردك اليومي لتحافظ على سلسلة الحضور واكسب المزيد من نقاط الخبرة.",
+    "startQuestsAction": "🚀 انطلق لإنجاز مهام اليوم!",
+    "circleNews": "أخبار الحلقة",
+    "liveFeedWelcome": "ابدأ بإنجاز مهامك لتتصدر القائمة!",
+    "dailyRewardTitle": "مكافأة الدخول اليومي!",
+    "backAgainHero": "عدت مجدداً.. استمر يا بطل!",
+    "xpPoint": "نقطة خبرة",
+    "collectReward": "جمع المكافأة",
+    "xp": "XP",
+    "achievementsCompleted": "{unlocked} / {total} إنجاز مكتمل",
+    "trophyRoomDesc": "استعرض الأوسمة والإنجازات التي حققتها خلال رحلتك.",
+    "unlockedAt": "تم الفتح: {date}",
+    "noAchievementsYet": "لم يتم إضافة إنجازات بعد.",
+    "rarity_common": "عادي",
+    "rarity_rare": "نادر",
+    "rarity_epic": "أسطوري",
+    "rarity_legendary": "خرافي",
+    "progress_xp": "{current} / {target} XP",
+    "progress_days": "{current} / {target} يوم",
+    "progress_quests": "{current} / {target} مهمة",
+    "rankMessage": "أنت في المرتبة #{rank} — استمر بالمحاولة للوصول إلى القمة! 💪",
+    "liveFeed": {
+      "questCompleted": "{name} ({title}) أكمل مهمة {item}!",
+      "questCompletedNoTitle": "{name} أكمل مهمة {item}!",
+      "achievementCompleted": "{name} ({title}) حصل على وسام {item}!",
+      "achievementCompletedNoTitle": "{name} حصل على وسام {item}!",
+      "milestoneCompleted": "{name} ({title}) فتح مكافأة {item}!",
+      "milestoneCompletedNoTitle": "{name} فتح مكافأة {item}!",
+      "levelUpCompleted": "🎉 {name} وصل للمستوى {item}!",
+      "streakMilestoneCompleted": "🔥 {name} وصل لسلسلة {item} يوم متتالية!",
+      "leaguePromotionCompleted": "📈 {name} صعد إلى دوري {item}!",
+      "congrats": "مبارك 🎊"
+    },
+    "unknown": "غير معروف",
+    "titles": {
+      "beginner": "مبتدئ",
+      "learner": "متعلم",
+      "diligent": "مجتهد",
+      "outstanding": "متفوق",
+      "rising_hafiz": "حافظ ناشئ",
+      "distinguished_hafiz": "حافظ متميز",
+      "circle_star": "نجم الحلقة",
+      "quran_champion": "بطل القرآن",
+      "legend": "أسطورة الحفظ"
+    }
   },
   "Exams": {
     "title": "الاختبارات",
@@ -710,8 +1093,16 @@
     "streak": "سلسلة يومية",
     "maxStreak": "أفضل سلسلة"
   },
+  "QuestCategory": {
+    "PRAYER": "الصلوات",
+    "QURAN": "القرآن",
+    "ADHKAR": "الأذكار",
+    "BEHAVIOR": "السلوك",
+    "GENERAL": "عام"
+  },
   "Quests": {
     "dailyQuests": "المهام اليومية",
+    "habitTracker": "متتبع العادات",
     "submitTodaysQuests": "أكمل مهامك اليومية لكسب نقاط الخبرة وزيادة سلسلتك اليومية!",
     "todaysChallenge": "تحدي اليوم",
     "completeQuestsTips": "أجب على جميع الأسئلة لإكمال مهامك اليومية",
@@ -722,7 +1113,14 @@
     "comeBackTomorrow": "عد غداً لإرسال مهام جديدة",
     "fillAllFields": "يرجى ملء جميع الحقول المطلوبة",
     "submitQuests": "إرسال المهام",
-    "noQuestsAvailable": "لا توجد مهام متاحة حالياً"
+    "noQuestsAvailable": "لا توجد مهام متاحة حالياً",
+    "dailyTab": "مهام اليوم",
+    "halqahTab": "مهام الحلقة",
+    "extraTab": "مهام إضافية",
+    "allDoneHero": "أنجزت كل المهام هنا يا بطل! 🏆",
+    "allDoneSubtext": "استرح يا بطل واستعد لمهام جديدة!",
+    "completed": "أنجزت ✅",
+    "completeNow": "أكمل الآن"
   },
   "AdminCampaigns": {
     "title": "إدارة الحملات",
@@ -756,9 +1154,138 @@
     "xpNo": "نقاط الإجابة بلا",
     "multiplier": "النقاط لكل وحدة",
     "maxLimit": "الحد الأقصى",
+    "select": "اختيار من متعدد",
+    "questionDescription": "الوصف (اختياري)",
+    "gridRows": "عناوين الصفوف",
+    "gridColumns": "الأعمدة (التسمية، القيمة، XP)",
+    "addRow": "إضافة صف",
+    "addColumn": "إضافة عمود",
+    "addOption": "إضافة خيار",
+    "rowLabel": "الصف {n}",
+    "columnLabel": "التسمية",
+    "columnValue": "القيمة",
+    "optionLabel": "تسمية الخيار",
+    "optionValue": "قيمة الخيار",
+    "customGrid": "شبكة مخصصة (صفوف وأعمدة)",
     "gridTemplate": "نموذج الجدول",
     "standardPrayers": "جدول الصلوات الخمس",
-    "saveCampaign": "حفظ الحملة"
+    "saveCampaign": "حفظ الحملة",
+    "formDescription": "قم ببناء نموذج التحدي اليومي لحملتك. كل وحدة تمثل سؤالاً.",
+    "activeDescription": "اجعل هذه الحملة نشطة عالمياً.",
+    "newQuestion": "سؤال جديد",
+    "submissionXp": "نقاط المشاركة",
+    "submissionXpDescription": "نقاط إضافية تمنح بمجرد إرسال التحدي",
+    "min": "الحد الأدنى",
+    "step": "الخطوة",
+    "defaultValue": "القيمة الافتراضية"
+  },
+  "Prayers": {
+    "fajr": "الفجر",
+    "dhuhr": "الظهر",
+    "asr": "العصر",
+    "maghrib": "المغرب",
+    "isha": "العشاء",
+    "mosque": "في المسجد",
+    "home": "في البيت",
+    "late": "قضاء/فائتة"
+  },
+  "CircleQuests": {
+    "title": "مهام الحلقة",
+    "createBtn": "إنشاء مهمة",
+    "createTitle": "إنشاء مهمة جديدة",
+    "editTitle": "تعديل المهمة",
+    "emptyState": {
+      "title": "لا توجد مهام للحلقة بعد",
+      "description": "أنشئ مهمة مخصصة لطلابك"
+    },
+    "form": {
+      "title": "العنوان",
+      "titlePlaceholder": "مثال: حفظ صفحة واحدة",
+      "description": "الوصف (اختياري)",
+      "descPlaceholder": "وصف مفصل...",
+      "category": "الفئة",
+      "selectCategory": "اختر فئة",
+      "frequency": "التكرار",
+      "selectFrequency": "اختر التكرار",
+      "xpReward": "المكافأة (XP)",
+      "icon": "الرمز (إيموجي)",
+      "cancel": "إلغاء",
+      "create": "إنشاء",
+      "save": "حفظ التغييرات"
+    },
+    "columns": {
+      "icon": "الرمز",
+      "title": "العنوان",
+      "category": "الفئة",
+      "frequency": "التكرار",
+      "xp": "XP",
+      "actions": "الإجراءات"
+    },
+    "delete": {
+      "title": "حذف المهمة",
+      "description": "هل أنت متأكد من حذف هذه المهمة؟ لا يمكن التراجع عن هذا الإجراء."
+    },
+    "toast": {
+      "created": "تم إنشاء المهمة بنجاح",
+      "updated": "تم تحديث المهمة بنجاح",
+      "deleted": "تم حذف المهمة بنجاح",
+      "operationFailed": "فشلت العملية",
+      "deleteFailed": "فشل الحذف"
+    }
+  },
+  "DailyCountdown": {
+    "normal": "باقي {time}",
+    "warning": "أسرع! باقي {time}!",
+    "critical": "باقي {time} فقط! لا تفقد سلسلتك!",
+    "compact": "باقي {time} لإنجاز مهام اليوم",
+    "completed": "أنجزت مهامك! ✅",
+    "refreshing": "يتم تحديث المهام...",
+    "timeHms": "{h} ساعة و {m} دقيقة و {s} ثانية",
+    "timeHm": "{h} ساعة و {m} دقيقة",
+    "timeMs": "{m} دقيقة و {s} ثانية",
+    "timeM": "{m} دقيقة"
+  },
+  "Store": {
+    "title": "متجر المكافآت",
+    "xpBalance": "{xp} XP",
+    "categories": {
+      "all": "الكل",
+      "STREAK_SHIELD": "الدروع 🛡️",
+      "AVATAR_FRAME": "الإطارات 🖼️",
+      "TITLE": "الألقاب ⭐",
+      "REAL_WORLD": "جوائز حقيقية 🎁",
+      "DOUBLE_XP": "مضاعفات ⚡"
+    },
+    "insufficientBalance": "رصيد غير كافٍ",
+    "requiresLevel": "يتطلب المستوى {level}",
+    "buyNow": "اشتري الآن",
+    "confirmPurchase": "تأكيد الشراء",
+    "confirmPurchaseDesc": "هل تود شراء {item} مقابل {xp} نقطة خبرة؟",
+    "confirm": "تأكيد",
+    "cancel": "إلغاء",
+    "outOfStock": "نفدت الكمية",
+    "limitReached": "تم الحد الأقصى",
+    "purchaseSuccess": "تم الشراء بنجاح!",
+    "purchaseError": "حدث خطأ أثناء الشراء"
+  },
+  "AdminGamification": {
+    "fulfillmentsTitle": "إدارة تسليم الجوائز",
+    "fulfillmentsDesc": "قم بمراجعة واعتماد تسليم الجوائز المادية للطلاب.",
+    "searchPlaceholder": "بحث عن طالب أو جائزة...",
+    "fulfillmentTable": {
+      "student": "الطالب",
+      "item": "الجائزة",
+      "xp": "النقاط المستخدمة",
+      "date": "التاريخ",
+      "actions": "الإجراءات"
+    },
+    "noPendingFulfillments": "لا توجد طلبات تسليم معلقة حالياً",
+    "fulfillAction": "تم التسليم",
+    "cancelAction": "إلغاء",
+    "confirmFulfillment": "تأكيد التسليم",
+    "confirmCancellation": "إلغاء الطلب",
+    "fulfillmentNotes": "ملاحظات إضافية (اختياري)",
+    "cancel": "تراجع",
+    "confirm": "تأكيد"
   }
 }
-

@@ -13,7 +13,8 @@ import {
   ClipboardCheck,
   UserCog,
   Settings,
-  Trophy,
+  Megaphone,
+  Gamepad2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -68,6 +69,13 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ["TEACHER"],
   },
   {
+    titleKey: "circleQuests",
+    href: "/my-circle/quests",
+    icon: Gamepad2,
+    description: "Custom quests for your circle",
+    roles: ["TEACHER"],
+  },
+  {
     titleKey: "myStudents",
     href: "/my-students",
     icon: Users,
@@ -96,10 +104,17 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ["ADMIN"],
   },
   {
-    titleKey: "challenges",
-    href: "/admin/challenges",
-    icon: Trophy,
-    description: "Daily challenges dashboard",
+    titleKey: "gamification",
+    href: "/admin/gamification",
+    icon: Gamepad2,
+    description: "Manage quests, milestones, and achievements",
+    roles: ["ADMIN"],
+  },
+  {
+    titleKey: "campaigns",
+    href: "/admin/campaigns",
+    icon: Megaphone,
+    description: "Manage campaigns and dynamic forms",
     roles: ["ADMIN"],
   },
 ];

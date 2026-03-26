@@ -30,15 +30,44 @@ export interface UpdateUserDto {
   role?: string;
 }
 
+export interface PaginatedUsers {
+  data: User[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 /**
  * Hook to list all users (Admin only)
  */
-export function useUsers(options: { enabled?: boolean } = {}) {
+export function useUsers(options: { page?: number; limit?: number; role?: string; enabled?: boolean } = {}) {
   return useQuery({
-    queryKey: ["users"],
+    queryKey: ["users", options],
     queryFn: async () => {
-      const response = await api.get<User[]>("/users");
-      return response.data;
+      const searchParams = new URLSearchParams();
+      if (options.page) searchParams.set("page", String(options.page));
+      if (options.limit) searchParams.set("limit", String(options.limit));
+      if (options.role) searchParams.set("role", options.role);
+
+      const response = await api.get<{ 
+        data: User[]; 
+        meta: { 
+          total: number; 
+          page: number; 
+          lastPage: number; 
+          limit: number; 
+        } 
+      }>(`/users?${searchParams}`);
+      const raw = response.data;
+
+      return {
+        data: raw.data,
+        total: raw.meta.total,
+        page: raw.meta.page,
+        limit: raw.meta.limit,
+        totalPages: raw.meta.lastPage,
+      } as PaginatedUsers;
     },
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
     ...options,

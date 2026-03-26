@@ -14,12 +14,13 @@ import {
   Unique,
 } from "typeorm";
 
+import { Campaign } from "./campaign.entity";
 import { BaseEntity } from "../../common/entities/base.entity";
 import { Mosque } from "../../mosques/entities/mosque.entity";
 import { Student } from "../../students/entities/student.entity";
 
 @Entity("daily_submission")
-@Unique(["studentId", "submissionDate", "campaignKey"])
+@Unique(["studentId", "submissionDate", "campaignId"])
 export class DailySubmission extends BaseEntity {
   /**
    * Date of the submission (YYYY-MM-DD)
@@ -30,11 +31,15 @@ export class DailySubmission extends BaseEntity {
   submissionDate!: string;
 
   /**
-   * Campaign Key to distinguish events (e.g. 'ramadan', 'summer_2025')
+   * The campaign this submission belongs to
    */
-  @Column({ name: "campaign_key", type: "varchar", length: 50 })
+  @ManyToOne(() => Campaign, (campaign) => campaign.submissions, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "campaign_id" })
+  campaign!: Campaign;
+
+  @Column({ name: "campaign_id", type: "uuid" })
   @Index()
-  campaignKey!: string;
+  campaignId!: string;
 
   /**
    * Raw form data stored as JSON

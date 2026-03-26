@@ -1,9 +1,16 @@
+import type { FormQuestion } from "@halaqat/types";
 import { Loader2, Send } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormQuestion } from "@/config/challenges/ramadan";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { BooleanQuestion } from "./boolean-question";
 import { NumberStepper } from "./number-stepper";
@@ -11,7 +18,7 @@ import { PrayerGrid } from "./prayer-grid";
 
 interface DynamicFormRendererProps {
   questions: FormQuestion[];
-  onSubmit: (data: Record<string, any>) => void;
+  onSubmit: (data: Record<string, unknown>) => void;
   isSubmitting?: boolean;
 }
 
@@ -20,19 +27,21 @@ export function DynamicFormRenderer({
   onSubmit,
   isSubmitting = false,
 }: DynamicFormRendererProps) {
-  const [formData, setFormData] = useState<Record<string, any>>(() => {
-    const initialData: Record<string, any> = {};
+  const [formData, setFormData] = useState<Record<string, unknown>>(() => {
+    const initialData: Record<string, unknown> = {};
     questions.forEach((q) => {
       if (q.type === "NUMBER") {
         initialData[q.id] = q.defaultValue ?? q.min ?? 0;
       }
-      // We can also initialize other types if needed, but NUMBER is the main concern here
+      if (q.type === "SELECT" && q.options?.[0]) {
+        initialData[q.id] = null; // User must select
+      }
     });
     return initialData;
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleChange = (id: string, value: any) => {
+  const handleChange = (id: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [id]: value }));
     // Clear error when field is modified
     if (errors[id]) {
@@ -54,22 +63,27 @@ export function DynamicFormRenderer({
     questions.forEach((q) => {
       const val = formData[q.id];
       if (val === undefined || val === null) {
-        // Optional: you can define required fields in config.
-        // For now, let's assume all valid inputs are required except maybe note fields (none here yet)
-        // Actually, number 0 is valid. Boolean false is valid.
-        // Empty object/string is invalid?
         newErrors[q.id] = "هذا السؤال مطلوب";
         isValid = false;
       }
 
       // Specific validation for GRID
       if (q.type === "GRID" && q.rows) {
-        const gridVal = val || {};
-        const missingRows = q.rows.filter((row) => !gridVal[row]);
+        const gridVal = (val || {}) as Record<string, string>;
+        const missingRows = q.rows.filter((row) => {
+          const rowLabel = row;
+          return !gridVal[rowLabel];
+        });
         if (missingRows.length > 0) {
           newErrors[q.id] = `يرجى تعبئة جميع الصفوف (${missingRows.length} متبقي)`;
           isValid = false;
         }
+      }
+
+      // Validation for SELECT
+      if (q.type === "SELECT" && (val === undefined || val === null || val === "")) {
+        newErrors[q.id] = "هذا السؤال مطلوب";
+        isValid = false;
       }
     });
 
@@ -115,14 +129,14 @@ export function DynamicFormRenderer({
               <PrayerGrid
                 rows={q.rows || []}
                 columns={q.columns || []}
-                value={formData[q.id]}
+                value={(formData[q.id] || {}) as Record<string, string>}
                 onChange={(val) => handleChange(q.id, val)}
               />
             )}
 
             {q.type === "NUMBER" && (
               <NumberStepper
-                value={formData[q.id] ?? q.defaultValue ?? q.min ?? 0}
+                value={(formData[q.id] as number) ?? q.defaultValue ?? q.min ?? 0}
                 max={q.max}
                 min={q.min}
                 step={q.step}
@@ -132,9 +146,27 @@ export function DynamicFormRenderer({
 
             {q.type === "BOOLEAN" && (
               <BooleanQuestion
-                value={formData[q.id]}
+                value={formData[q.id] as boolean | null}
                 onChange={(val) => handleChange(q.id, val)}
               />
+            )}
+
+            {q.type === "SELECT" && q.options && q.options.length > 0 && (
+              <Select
+                value={(formData[q.id] as string) ?? ""}
+                onValueChange={(val) => handleChange(q.id, val)}
+              >
+                <SelectTrigger className="h-14 text-lg">
+                  <SelectValue placeholder="اختر..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {q.options.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="h-12 text-lg">
+                      {opt.label} {opt.xp > 0 ? `(+${opt.xp} XP)` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
 
             {errors[q.id] && (

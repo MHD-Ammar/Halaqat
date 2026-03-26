@@ -99,6 +99,11 @@ export class SessionsController {
   })
   @ApiQuery({ name: "circleId", description: "Circle UUID", required: true })
   @ApiQuery({
+    name: "page",
+    description: "Page number",
+    required: false,
+  })
+  @ApiQuery({
     name: "limit",
     description: "Number of sessions to return",
     required: false,
@@ -106,12 +111,14 @@ export class SessionsController {
   @ApiResponse({ status: 200, description: "List of past sessions" })
   getHistory(
     @Query("circleId", ParseUUIDPipe) circleId: string,
+    @Query("page") page?: string,
     @Query("limit") limit?: string,
     @CurrentUser() user?: { id: string; role: UserRole },
   ) {
     const teacherId = user?.role === UserRole.TEACHER ? user.id : undefined;
     return this.sessionsService.getSessionHistory(
       circleId,
+      page ? parseInt(page, 10) : 1,
       limit ? parseInt(limit, 10) : 30,
       teacherId,
     );

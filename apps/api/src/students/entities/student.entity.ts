@@ -148,6 +148,22 @@ export class Student extends BaseEntity {
   @Column({ name: "max_streak", type: "int", default: 0 })
   maxStreak!: number;
 
+  /** Number of streak shields the student currently owns (max 3) */
+  @Column({ name: 'streak_shields', type: 'int', default: 1 })
+  streakShields!: number;
+
+  /** Date when the last streak shield was auto-consumed */
+  @Column({ name: 'last_shield_used_at', type: 'timestamp', nullable: true })
+  lastShieldUsedAt!: Date | null;
+
+  /** The student's currently active title (earned from milestones) */
+  @Column({ name: 'active_title', type: 'varchar', nullable: true })
+  activeTitle!: string | null;
+
+  /** The student's currently active avatar frame URL (earned from milestones) */
+  @Column({ name: 'active_avatar_frame', type: 'varchar', nullable: true })
+  activeAvatarFrame!: string | null;
+
   // ── Multi-tenancy ──────────────────────────────────────────────
 
   /**

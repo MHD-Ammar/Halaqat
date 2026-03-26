@@ -16,6 +16,9 @@ export { RecitationQuality, isRecitationQuality } from "./RecitationQuality";
 export { PointSourceType, isPointSourceType } from "./PointSourceType";
 export { ExamStatus, isExamStatus } from "./ExamStatus";
 export { ExamQuestionType, isExamQuestionType } from "./ExamQuestionType";
+export { QuestFrequency } from "./QuestFrequency";
+export { QuestCategory } from "./QuestCategory";
+export { StoreItemType, isStoreItemType } from "./StoreItemType";
 
 // Challenge Config
 export {

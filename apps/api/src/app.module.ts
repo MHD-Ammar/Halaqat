@@ -7,6 +7,7 @@
 
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { ScheduleModule } from "@nestjs/schedule";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { AnalyticsModule } from "./analytics/analytics.module";
@@ -18,7 +19,9 @@ import { envValidationSchema, typeOrmConfig } from "./config";
 import { CurriculumModule } from "./curriculum/curriculum.module";
 import { DailyChallengeModule } from "./daily-challenge/daily-challenge.module";
 import { ExamsModule } from "./exams/exams.module";
+import { GamificationModule } from "./gamification/gamification.module";
 import { MosquesModule } from "./mosques/mosques.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 import { PointsModule } from "./points/points.module";
 import { ProgressModule } from "./progress/progress.module";
 import { SessionsModule } from "./sessions/sessions.module";
@@ -42,6 +45,7 @@ import { UsersModule } from "./users/users.module";
 
     // TypeORM Database Module
     TypeOrmModule.forRootAsync(typeOrmConfig),
+    ScheduleModule.forRoot(),
 
     // Feature Modules
     UsersModule,
@@ -57,6 +61,8 @@ import { UsersModule } from "./users/users.module";
     ExamsModule,
     MosquesModule,
     DailyChallengeModule,
+    GamificationModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

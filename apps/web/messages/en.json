@@ -38,6 +38,7 @@
     "processing": "Processing...",
     "undo": "Undo",
     "max": "Max",
+    "min": "Min",
     "submitting": "Submitting...",
     "continue": "Continue"
   },
@@ -53,7 +54,208 @@
     "usersManagement": "Users",
     "settings": "Settings",
     "challenges": "Challenges",
-    "campaigns": "Campaigns"
+    "campaigns": "Campaigns",
+    "gamification": "Gamification Hub",
+    "circleQuests": "Circle Quests"
+  },
+  "GamificationHub": {
+    "title": "Gamification Hub",
+    "subtitle": "Manage quests, milestones, and achievements",
+    "tabs": {
+      "quests": "Quests",
+      "milestones": "Milestones",
+      "achievements": "Achievements",
+      "events": "Events",
+      "fulfillments": "Fulfillments"
+    },
+    "quests": {
+      "title": "Quests",
+      "createBtn": "Create Quest",
+      "createTitle": "Create Quest",
+      "editTitle": "Edit Quest",
+      "emptyState": {
+        "title": "No quests found",
+        "description": "Create a quest to get started"
+      },
+      "form": {
+        "title": "Title",
+        "titlePlaceholder": "e.g. Read 1 Page of Quran",
+        "description": "Description (Optional)",
+        "descPlaceholder": "Detailed description...",
+        "category": "Category",
+        "selectCategory": "Select a category",
+        "frequency": "Frequency",
+        "selectFrequency": "Select frequency",
+        "xpReward": "XP Reward",
+        "icon": "Icon (Emoji)",
+        "activeStatus": "Active Status",
+        "activeDesc": "Students can only see active quests.",
+        "cancel": "Cancel",
+        "create": "Create",
+        "save": "Save Changes"
+      },
+      "columns": {
+        "icon": "Icon",
+        "title": "Title",
+        "category": "Category",
+        "frequency": "Frequency",
+        "xp": "XP",
+        "status": "Status",
+        "active": "Active",
+        "inactive": "Inactive",
+        "actions": "Actions"
+      },
+      "delete": {
+        "title": "Delete Quest",
+        "description": "Are you sure you want to delete this quest? This cannot be undone."
+      },
+      "toast": {
+        "created": "Quest created successfully",
+        "updated": "Quest updated successfully",
+        "deleted": "Quest deleted successfully",
+        "operationFailed": "Operation failed",
+        "deleteFailed": "Delete failed"
+      }
+    },
+    "milestones": {
+      "title": "Milestones",
+      "createBtn": "Create Milestone",
+      "createTitle": "Create Milestone",
+      "editTitle": "Edit Milestone",
+      "emptyState": {
+        "title": "No milestones found",
+        "description": "Create a milestone reward to get started"
+      },
+      "levelBadge": "Level {level}",
+      "form": {
+        "targetLevel": "Target Level",
+        "title": "Title",
+        "titlePlaceholder": "e.g. Bronze Pioneer",
+        "rewardType": "Reward Type",
+        "selectType": "Select type",
+        "rewardValue": "Reward Value / Link",
+        "valuePlaceholder": "e.g. 500 or image_url.png",
+        "cancel": "Cancel",
+        "create": "Create",
+        "save": "Save Changes"
+      },
+      "columns": {
+        "level": "Lvl",
+        "title": "Title",
+        "rewardType": "Reward Type",
+        "value": "Value / Details",
+        "actions": "Actions"
+      },
+      "delete": {
+        "title": "Delete Milestone",
+        "description": "Are you sure you want to delete this milestone? This cannot be undone."
+      },
+      "toast": {
+        "created": "Milestone created successfully",
+        "updated": "Milestone updated successfully",
+        "deleted": "Milestone deleted successfully",
+        "operationFailed": "Operation failed",
+        "deleteFailed": "Delete failed"
+      }
+    },
+    "achievements": {
+      "title": "Achievements",
+      "createBtn": "Create Achievement",
+      "createTitle": "Create Achievement",
+      "editTitle": "Edit Achievement",
+      "emptyState": {
+        "title": "No achievements found",
+        "description": "Create an achievement to gamify the platform"
+      },
+      "form": {
+        "title": "Title",
+        "titlePlaceholder": "e.g. 7-Day Streak Master",
+        "description": "Description",
+        "descPlaceholder": "Awarded for logging in 7 days in a row",
+        "icon": "Icon (Emoji/URL)",
+        "criteriaType": "Criteria Type",
+        "selectType": "Select type",
+        "goalTarget": "Goal Target",
+        "goalTargetDesc": "E.g. 7 for '7 days streak'",
+        "questCategoryFocus": "Quest Category Focus",
+        "selectCategory": "Select Category",
+        "rarity": "Rarity",
+        "selectRarity": "Select Rarity",
+        "rarity_common": "Common",
+        "rarity_rare": "Rare",
+        "rarity_epic": "Epic",
+        "rarity_legendary": "Legendary",
+        "cancel": "Cancel",
+        "create": "Create",
+        "save": "Save Changes"
+      },
+      "columns": {
+        "icon": "Icon",
+        "title": "Title",
+        "criteria": "Criteria",
+        "target": "Target",
+        "actions": "Actions"
+      },
+      "delete": {
+        "title": "Delete Achievement",
+        "description": "Are you sure you want to delete this achievement? This could affect students who have already unlocked it."
+      },
+      "toast": {
+        "created": "Achievement created successfully",
+        "updated": "Achievement updated successfully",
+        "deleted": "Achievement deleted successfully",
+        "operationFailed": "Operation failed",
+        "deleteFailed": "Delete failed"
+      }
+    },
+    "events": {
+      "title": "Seasonal Events",
+      "createBtn": "Create Event",
+      "createTitle": "Create New Event",
+      "editTitle": "Edit Event",
+      "emptyState": {
+        "title": "No events found",
+        "description": "Create a seasonal event to give students extra incentives."
+      },
+      "form": {
+        "nameEn": "Name (En)",
+        "nameAr": "Name (Ar)",
+        "descriptionAr": "Description (Ar)",
+        "startsAt": "Start Date",
+        "endsAt": "End Date",
+        "multiplier": "XP Multiplier",
+        "icon": "Icon",
+        "themeColor": "Color",
+        "activeStatus": "Active Status",
+        "activeDesc": "Enable the event at the scheduled time.",
+        "cancel": "Cancel",
+        "create": "Create",
+        "save": "Save Changes"
+      },
+      "columns": {
+        "icon": "Icon",
+        "name": "Name",
+        "multiplier": "Multiplier",
+        "period": "Period",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "toast": {
+        "created": "Event created successfully",
+        "updated": "Event updated successfully",
+        "deleted": "Event deleted successfully",
+        "operationFailed": "Operation failed",
+        "deleteFailed": "Delete failed"
+      },
+      "delete": {
+        "title": "Delete Event",
+        "description": "Are you sure you want to delete this event? This cannot be undone."
+      }
+    }
   },
   "Auth": {
     "welcomeBack": "Welcome back",
@@ -346,6 +548,17 @@
   "StudentPortal": {
     "title": "My Portal",
     "subtitle": "View your progress and information",
+    "leaderboard": "Leaderboard",
+    "leaderboardDesc": "Compete with your friends and climb to the top!",
+    "myCircle": "My Circle",
+    "myLeague": "Champions League",
+    "globalRank": "Global Rank",
+    "rank": "Rank",
+    "yourRank": "Your Rank",
+    "noCircleAssigned": "You are not assigned to a circle yet, or your circle has no students.",
+    "noStudentsInLeague": "There are no students in this league yet.",
+    "noLeaderboardData": "No leaderboard data available for the mosque yet.",
+    "loadingHeroes": "Gathering the heroes of the mosque...",
     "progress": "Progress",
     "myQr": "My QR",
     "pagesMemorized": "Pages Memorized",
@@ -355,17 +568,124 @@
     "scanQrDescription": "Show this QR code for quick attendance",
     "noData": "No data available yet",
     "welcomeHero": "Welcome to your adventure, hero! 🚀",
-    "welcomeSubtitle": "Keep going and reach new levels!",
+    "welcomeSubtitle": "Keep your streak going and earn rewards",
     "streak": "Streak",
     "bestStreak": "Best Streak",
     "streakDays": "{count} Days",
     "totalXp": "Total XP",
     "level": "Level",
+    "levelLabel": "Level",
     "levelBadge": "Level {level}",
     "logout": "Logout",
     "xpProgress": "XP Progress",
     "keepItUp": "Keep up the great work!",
-    "startTodayQuests": "Start Today's Quests 🚀"
+    "startTodayQuests": "Start Today's Quests 🚀",
+    "trophyRoom": "Trophy Room",
+    "rewardChests": "Reward Chests",
+    "opened": "Opened",
+    "chest": "Reward Chest",
+    "opening": "Opening...",
+    "openChest": "Open Chest 🎁",
+    "unlockedAtLevel": "Unlocked at level {level}",
+    "congratulations": "Congratulations!",
+    "claimedRewardMessage": "You successfully unlocked {title}!",
+    "reward": "Reward",
+    "maxLevelReached": "Max Level Reached!",
+    "closeToNextLevel": "You are very close!",
+    "levelProgress": "Level Progress",
+    "xpRemaining": "{xp} XP remaining for level {nextLevel}!",
+    "shieldUsed": "🛡️ Today's shield was used to protect your streak!",
+    "shieldInfo": "Get a new shield to protect your streak at 7, 14, 21 days.",
+    "multiplierThresholdInfo": "Keep a 3-day streak to activate the multiplier!",
+    "nextMultiplierInfo": "{days} days left for the next multiplier!",
+    "maxMultiplierReached": "You reached the max multiplier! 🚀",
+    "attendanceLast7Days": "Attendance record in the last 7 days",
+    "attendanceLast30Days": "30-day activity heatmap",
+    "heatmapActiveDays": "🔥 {count} active days in the last 30 days",
+    "heatmapLongestStreak": "Longest streak: {count} days",
+    "heatmapStatusDone": "✅ Tasks completed",
+    "heatmapStatusMissed": "❌ Tasks not completed",
+    "promotionZone": "Promotion Zone",
+    "relegationZone": "Relegation Zone",
+    "promotionThresholdLabel": "Promotion threshold: {xp} XP",
+    "relegationThresholdLabel": "Relegation threshold: {xp} XP",
+    "weekEndsInDays": "Week ends in {days} days",
+    "leagueResultPromotedTitle": "🎉 Congratulations! You were promoted to {tier}!",
+    "leagueResultRelegatedTitle": "😔 You moved down to {tier}",
+    "leagueResultStayedTitle": "💪 You held your place in {tier}",
+    "leagueResultPromotedDesc": "Amazing finish this week. Keep the momentum and defend your new league.",
+    "leagueResultRelegatedDesc": "No worries. Reset week means a fresh chance to bounce back stronger.",
+    "leagueResultStayedDesc": "Steady progress. Push a little harder this week to reach promotion.",
+    "leagueResultStats": "Last week rank: #{rank} • Weekly XP: {xp}",
+    "continueJourney": "Continue",
+    "soundMute": "Mute sound",
+    "soundUnmute": "Unmute sound",
+    "soundOn": "Sound on",
+    "soundOff": "Sound off",
+    "today": "Today",
+    "awesome": "Awesome",
+    "surprise": "Pleasant Surprise! 🌟",
+    "recitationEvaluation": "Your teacher graded your recitation of {surah} as",
+    "yourRecitation": "your recitation",
+    "extraXp": "Extra XP point",
+    "claimPoints": "Awesome! Claim points",
+    "noRecentRecitations": "No recent recitations yet",
+    "recitationHistory": "Recitation History",
+    "latestEvaluations": "Your latest evaluations from the teacher",
+    "needsReview": "Needs Review",
+    "surahName": "Surah {surah}",
+    "mistakesCount": "Mistakes: {count}",
+    "noMistakes": "No mistakes",
+    "newLesson": "New Lesson",
+    "review": "Review",
+    "questsCompletedToday": "You completed your quests today successfully",
+    "questsCompletedSubtitle": "Rest now, hero! You completed your daily portion.",
+    "newQuestsAvailable": "You have new quests!",
+    "newQuestsSubtitle": "Complete your daily portion to keep your streak and earn more XP.",
+    "startQuestsAction": "🚀 Go complete today's quests!",
+    "circleNews": "Circle News",
+    "liveFeedWelcome": "Start your quests to reach the top!",
+    "dailyRewardTitle": "Daily Login Bonus!",
+    "backAgainHero": "Welcome back! Keep it up, hero!",
+    "xpPoint": "XP Points",
+    "collectReward": "Collect Reward",
+    "xp": "XP",
+    "achievementsCompleted": "{unlocked} / {total} Achievements Completed",
+    "trophyRoomDesc": "Browse the medals and achievements you've earned on your journey.",
+    "unlockedAt": "Unlocked: {date}",
+    "noAchievementsYet": "No achievements added yet.",
+    "rarity_common": "Common",
+    "rarity_rare": "Rare",
+    "rarity_epic": "Epic",
+    "rarity_legendary": "Legendary",
+    "progress_xp": "{current} / {target} XP",
+    "progress_days": "{current} / {target} Days",
+    "progress_quests": "{current} / {target} Quests",
+    "rankMessage": "You are ranked #{rank} — keep pushing to reach the top! 💪",
+    "liveFeed": {
+      "questCompleted": "{name} ({title}) completed quest {item}!",
+      "questCompletedNoTitle": "{name} completed quest {item}!",
+      "achievementCompleted": "{name} ({title}) unlocked achievement {item}!",
+      "achievementCompletedNoTitle": "{name} unlocked achievement {item}!",
+      "milestoneCompleted": "{name} ({title}) opened reward {item}!",
+      "milestoneCompletedNoTitle": "{name} opened reward {item}!",
+      "levelUpCompleted": "🎉 {name} reached level {item}!",
+      "streakMilestoneCompleted": "🔥 {name} reached a {item}-day streak!",
+      "leaguePromotionCompleted": "📈 {name} was promoted to {item}!",
+      "congrats": "Congrats 🎊"
+    },
+    "unknown": "Unknown",
+    "titles": {
+      "beginner": "Beginner",
+      "learner": "Learner",
+      "diligent": "Diligent",
+      "outstanding": "Outstanding",
+      "rising_hafiz": "Rising Hafiz",
+      "distinguished_hafiz": "Distinguished Hafiz",
+      "circle_star": "Circle Star",
+      "quran_champion": "Quran Champion",
+      "legend": "Legend"
+    }
   },
   "Exams": {
     "title": "Exams",
@@ -710,8 +1030,16 @@
     "streak": "Streak",
     "maxStreak": "Max Streak"
   },
+  "QuestCategory": {
+    "PRAYER": "Prayers",
+    "QURAN": "Quran",
+    "ADHKAR": "Adhkar",
+    "BEHAVIOR": "Behavior",
+    "GENERAL": "General"
+  },
   "Quests": {
     "dailyQuests": "Daily Quests",
+    "habitTracker": "Habit Tracker",
     "submitTodaysQuests": "Complete your daily quests to earn XP and boost your streak!",
     "todaysChallenge": "Today's Challenge",
     "completeQuestsTips": "Answer all questions to complete your daily quests",
@@ -722,7 +1050,14 @@
     "comeBackTomorrow": "Come back tomorrow to submit new quests",
     "fillAllFields": "Please fill in all required fields",
     "submitQuests": "Submit Quests",
-    "noQuestsAvailable": "No quests available right now"
+    "noQuestsAvailable": "No quests available right now",
+    "dailyTab": "Daily",
+    "halqahTab": "Halqah",
+    "extraTab": "Extra",
+    "allDoneHero": "You've completed everything here, champ! 🏆",
+    "allDoneSubtext": "Rest up and get ready for new quests!",
+    "completed": "Done ✅",
+    "completeNow": "Complete Now"
   },
   "AdminCampaigns": {
     "title": "Campaign Management",
@@ -758,7 +1093,136 @@
     "maxLimit": "Max Limit",
     "gridTemplate": "Grid Template",
     "standardPrayers": "Standard 5 Prayers Grid",
-    "saveCampaign": "Save Campaign"
+    "select": "Multiple Choice (Select)",
+    "questionDescription": "Description (optional)",
+    "gridRows": "Row Labels",
+    "gridColumns": "Columns (Label, Value, XP)",
+    "addRow": "Add Row",
+    "addColumn": "Add Column",
+    "addOption": "Add Option",
+    "rowLabel": "Row {n}",
+    "columnLabel": "Label",
+    "columnValue": "Value",
+    "optionLabel": "Option Label",
+    "optionValue": "Option Value",
+    "customGrid": "Custom Grid (rows & columns)",
+    "saveCampaign": "Save Campaign",
+    "formDescription": "Build your campaign's daily challenge format. Each block represents a question.",
+    "activeDescription": "Make this campaign active globally.",
+    "newQuestion": "New Question",
+    "submissionXp": "XP for submission",
+    "submissionXpDescription": "Bonus XP awarded just for submitting",
+    "min": "Min",
+    "step": "Step",
+    "defaultValue": "Default Value"
+  },
+  "Prayers": {
+    "fajr": "Fajr",
+    "dhuhr": "Dhuhr",
+    "asr": "Asr",
+    "maghrib": "Maghrib",
+    "isha": "Isha",
+    "mosque": "Mosque",
+    "home": "Home",
+    "late": "Late/Missed"
+  },
+  "CircleQuests": {
+    "title": "Circle Quests",
+    "createBtn": "Create Quest",
+    "createTitle": "Create Quest",
+    "editTitle": "Edit Quest",
+    "emptyState": {
+      "title": "No circle quests yet",
+      "description": "Create a custom quest for your students"
+    },
+    "form": {
+      "title": "Title",
+      "titlePlaceholder": "e.g. Memorize 1 Page",
+      "description": "Description (Optional)",
+      "descPlaceholder": "Detailed description...",
+      "category": "Category",
+      "selectCategory": "Select a category",
+      "frequency": "Frequency",
+      "selectFrequency": "Select frequency",
+      "xpReward": "XP Reward",
+      "icon": "Icon (Emoji)",
+      "cancel": "Cancel",
+      "create": "Create",
+      "save": "Save Changes"
+    },
+    "columns": {
+      "icon": "Icon",
+      "title": "Title",
+      "category": "Category",
+      "frequency": "Frequency",
+      "xp": "XP",
+      "actions": "Actions"
+    },
+    "delete": {
+      "title": "Delete Quest",
+      "description": "Are you sure you want to delete this quest? This cannot be undone."
+    },
+    "toast": {
+      "created": "Quest created successfully",
+      "updated": "Quest updated successfully",
+      "deleted": "Quest deleted successfully",
+      "operationFailed": "Operation failed",
+      "deleteFailed": "Delete failed"
+    }
+  },
+  "DailyCountdown": {
+    "normal": "{time} remaining",
+    "warning": "Hurry! {time} left!",
+    "critical": "Only {time} left! Keep your streak!",
+    "compact": "{time} left to complete today's quests",
+    "completed": "Quests completed! ✅",
+    "refreshing": "Refreshing quests...",
+    "timeHms": "{h}h {m}m {s}s",
+    "timeHm": "{h}h {m}m",
+    "timeMs": "{m}m {s}s",
+    "timeM": "{m}m"
+  },
+  "Store": {
+    "title": "Reward Store",
+    "xpBalance": "{xp} XP",
+    "categories": {
+      "all": "All",
+      "STREAK_SHIELD": "Shields 🛡️",
+      "AVATAR_FRAME": "Frames 🖼️",
+      "TITLE": "Titles ⭐",
+      "REAL_WORLD": "Real Prizes 🎁",
+      "DOUBLE_XP": "Boosts ⚡"
+    },
+    "insufficientBalance": "Insufficient balance",
+    "requiresLevel": "Requires Level {level}",
+    "buyNow": "Buy Now",
+    "confirmPurchase": "Confirm Purchase",
+    "confirmPurchaseDesc": "Are you sure you want to buy {item} for {xp} XP?",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "outOfStock": "Out of Stock",
+    "limitReached": "Limit Reached",
+    "purchaseSuccess": "Purchased successfully!",
+    "purchaseError": "Failed to purchase item"
+  },
+  "AdminGamification": {
+    "fulfillmentsTitle": "Fulfillment Management",
+    "fulfillmentsDesc": "Review and mark physical prize deliveries.",
+    "searchPlaceholder": "Search for student or reward...",
+    "fulfillmentTable": {
+      "student": "Student",
+      "item": "Reward",
+      "xp": "XP Spent",
+      "date": "Date",
+      "actions": "Actions"
+    },
+    "noPendingFulfillments": "No pending fulfillment requests.",
+    "fulfillAction": "Fulfill",
+    "cancelAction": "Cancel",
+    "confirmFulfillment": "Confirm Fulfillment",
+    "confirmCancellation": "Cancel Order",
+    "fulfillmentNotes": "Additional Notes (Optional)",
+    "cancel": "Go Back",
+    "confirm": "Confirm"
   }
 }
-
