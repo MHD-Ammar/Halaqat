@@ -24,8 +24,8 @@ export function PrayerGrid({
       {/* Mobile View: Stacked Cards */}
       <div className="md:hidden space-y-4">
         {rows.map((row) => {
-          const rowLabel = typeof row === "string" ? row : (row as any).label || (row as any).value || (row as any).id;
-          const rowKey = typeof row === "string" ? row : (row as any).id || rowLabel;
+          const rowLabel = row;
+          const rowKey = row;
           
           return (
             <div
@@ -73,8 +73,8 @@ export function PrayerGrid({
           </thead>
           <tbody className="divide-y">
             {rows.map((row) => {
-              const rowLabel = typeof row === "string" ? row : (row as any).label || (row as any).value || (row as any).id;
-              const rowKey = typeof row === "string" ? row : (row as any).id || rowLabel;
+              const rowLabel = row;
+              const rowKey = row;
 
               return (
                 <tr key={rowKey} className="hover:bg-muted/20 transition-colors">

@@ -71,7 +71,7 @@ export function DynamicFormRenderer({
       if (q.type === "GRID" && q.rows) {
         const gridVal = (val || {}) as Record<string, string>;
         const missingRows = q.rows.filter((row) => {
-          const rowLabel = typeof row === "string" ? row : (row as any).label || (row as any).value || (row as any).id;
+          const rowLabel = row;
           return !gridVal[rowLabel];
         });
         if (missingRows.length > 0) {

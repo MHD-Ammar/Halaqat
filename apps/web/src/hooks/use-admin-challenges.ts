@@ -63,7 +63,7 @@ export function useAdminChallengesList(
 export function useOverrideSubmission() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: { xpEarned?: number; submissionData?: any } }) => {
+    mutationFn: async ({ id, data }: { id: string; data: { xpEarned?: number; submissionData?: unknown } }) => {
       const res = await api.patch(`/daily-challenge/submissions/${id}`, data);
       return res.data;
     },

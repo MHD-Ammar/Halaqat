@@ -24,7 +24,7 @@ interface LevelUpModalProps {
   newLevel: number;
   earnedXp: number;
   newTotalXp: number;
-  unlockedMilestones?: any[]; // the milestones unlocked from this level up
+  unlockedMilestones?: unknown[]; // the milestones unlocked from this level up
   onClose: () => void;
 }
 

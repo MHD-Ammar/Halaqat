@@ -23,7 +23,7 @@ export interface SubmissionDetail {
   studentName: string;
   date: string;
   totalXp: number;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
 }
 
 // --- Keys Extension ---

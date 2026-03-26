@@ -77,7 +77,7 @@ export function ResetPasswordDialog({
       });
 
       onOpenChange(false);
-    } catch (error: any) {
+    } catch {
       toast({
         variant: "destructive",
         title: tCommon("error"),

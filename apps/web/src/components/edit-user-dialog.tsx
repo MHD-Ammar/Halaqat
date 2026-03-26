@@ -113,8 +113,9 @@ export function EditUserDialog({
       });
 
       onOpenChange(false);
-    } catch (error: any) {
-      const message = error.response?.data?.message || tCommon("error");
+    } catch (error: unknown) {
+      const errorWithResponse = error as { response?: { data?: { message?: string } } };
+      const message = errorWithResponse.response?.data?.message || tCommon("error");
       toast({
         variant: "destructive",
         title: tCommon("error"),
