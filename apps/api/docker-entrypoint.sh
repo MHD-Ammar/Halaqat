@@ -26,6 +26,12 @@ echo "Database is up!"
 echo "Running migrations..."
 pnpm --filter @halaqat/api migration:run:prod
 
+# Run seeding (idempotent)
+if [ "$SKIP_SEEDING" != "true" ]; then
+  echo "Running seeding..."
+  pnpm --filter @halaqat/api seed:prod
+fi
+
 # Start the application
 echo "Starting application..."
 exec "$@"
