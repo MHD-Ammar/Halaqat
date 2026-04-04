@@ -18,6 +18,7 @@
     "migration:revert": "pnpm typeorm migration:revert",
     "migration:run:prod": "typeorm migration:run -d dist/database.datasource.js",
     "seed": "ts-node --project tsconfig.json -r tsconfig-paths/register src/seed.ts",
+    "seed:prod": "node dist/seed.js",
     "db:reset": "ts-node --project tsconfig.json -r tsconfig-paths/register src/db-reset.ts"
   },
   "dependencies": {

@@ -11,7 +11,10 @@ RUN pnpm install --frozen-lockfile
 
 # Injected at build time
 ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_VAPID_KEY
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_VAPID_KEY=${NEXT_PUBLIC_VAPID_KEY}
+ENV STANDALONE_OUTPUT="true"
 
 RUN pnpm turbo run build --filter=@halaqat/web
 

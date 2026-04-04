@@ -1,5 +1,11 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalPassThroughEnv": [
+    "NODE_ENV",
+    "STANDALONE_OUTPUT",
+    "NEXT_PUBLIC_API_URL",
+    "NEXT_PUBLIC_VAPID_KEY"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

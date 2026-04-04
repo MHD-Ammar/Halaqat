@@ -46,6 +46,8 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION}
       FRONTEND_URL: ${FRONTEND_URL}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
       # NEXT_PUBLIC_API_URL is NOT needed here as it's for the frontend build
     depends_on:
       - postgres
@@ -59,6 +61,7 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_VAPID_KEY: ${NEXT_PUBLIC_VAPID_KEY}
     container_name: halaqat_web
     restart: always
     ports:
