@@ -24,12 +24,12 @@ echo "Database is up!"
 
 # Run migrations
 echo "Running migrations..."
-pnpm --filter @halaqat/api migration:run:prod
+npx typeorm migration:run -d dist/database.datasource.js
 
 # Run seeding (idempotent)
 if [ "$SKIP_SEEDING" != "true" ]; then
   echo "Running seeding..."
-  pnpm --filter @halaqat/api seed:prod
+  node dist/seed.js
 fi
 
 # Start the application
