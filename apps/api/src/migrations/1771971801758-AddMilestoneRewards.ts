@@ -37,15 +37,6 @@ export class AddMilestoneRewards1771971801758 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "quest_completion" ADD CONSTRAINT "FK_d07b954994a14a411d4e53693d2" FOREIGN KEY ("quest_id") REFERENCES "quest"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "student_milestones" ADD CONSTRAINT "FK_366145e027eca56e0ea7a100d71" FOREIGN KEY ("studentId") REFERENCES "student"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "student_milestones" ADD CONSTRAINT "FK_ca794865c142a40c758f296050e" FOREIGN KEY ("milestoneId") REFERENCES "milestone_rewards"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        
-        // Seed standard milestones
-        await queryRunner.query(`
-            INSERT INTO "milestone_rewards" ("target_level", "title", "reward_type", "reward_value") 
-            VALUES 
-                (5, 'صندوق المبتدئين', 'BONUS_XP', '500'),
-                (10, 'صندوق التميز', 'BONUS_XP', '1000'),
-                (20, 'صندوق المحترفين', 'BONUS_XP', '2000')
-        `);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
