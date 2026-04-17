@@ -519,6 +519,41 @@ async function seed() {
     console.log("");
 
     // ========================================
+    // 10. Campaigns & Daily Submissions
+    // ========================================
+    console.log("📅 Seeding campaigns and daily submissions...");
+
+    const campaignId = "c1111111-1111-4111-a111-111111111111";
+    await dataSource.query(
+      `
+      INSERT INTO "campaign" (id, title, start_date, end_date, is_active, form_config, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, true, '[]', NOW(), NOW())
+      ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title
+    `,
+      [campaignId, "Ramadan 2024", "2024-03-11", "2024-04-10"],
+    );
+
+    for (const student of students.slice(0, 5)) {
+      // Create 3 days of history for each of the first 5 students
+      for (let i = 0; i < 3; i++) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+
+        await dataSource.query(
+          `
+          INSERT INTO "daily_submission" (id, submission_date, campaign_id, student_id, mosque_id, submission_data, xp_earned, streak, created_at, updated_at)
+          VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+          ON CONFLICT (student_id, submission_date, campaign_id) DO NOTHING
+        `,
+          [dateStr, campaignId, student.id, MOSQUE_ID, JSON.stringify({ prayers: { fajr: 'mosque' } }), 20, i + 1],
+        );
+      }
+      console.log(`   ✓ Submissions for ${student.name}`);
+    }
+    console.log("");
+
+    // ========================================
     // Summary
     // ========================================
     console.log("═══════════════════════════════════════════");
