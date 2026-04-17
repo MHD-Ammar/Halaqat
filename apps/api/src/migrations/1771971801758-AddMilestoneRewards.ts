@@ -32,7 +32,6 @@ export class AddMilestoneRewards1771971801758 implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "IDX_93de2049e58dac6ed3c2bc94b8" ON "recitation" ("deleted_at") `);
         await queryRunner.query(`CREATE INDEX "IDX_710bee300ac7dca01b5ee91e78" ON "point_transaction" ("deleted_at") `);
         await queryRunner.query(`CREATE INDEX "IDX_4b22cba34a06751dc6e7da974c" ON "exam_question" ("deleted_at") `);
-        await queryRunner.query(`CREATE INDEX "IDX_ffca4074cf14f4fe957118676c" ON "campaign" ("deleted_at") `);
         await queryRunner.query(`CREATE INDEX "IDX_752a2c3b559f8722f742c2345a" ON "daily_submission" ("deleted_at") `);
         await queryRunner.query(`ALTER TABLE "quest_completion" ADD CONSTRAINT "FK_b22d3c3c03456e1e18e8a15d39e" FOREIGN KEY ("student_id") REFERENCES "student"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "quest_completion" ADD CONSTRAINT "FK_d07b954994a14a411d4e53693d2" FOREIGN KEY ("quest_id") REFERENCES "quest"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
@@ -55,7 +54,6 @@ export class AddMilestoneRewards1771971801758 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "quest_completion" DROP CONSTRAINT "FK_d07b954994a14a411d4e53693d2"`);
         await queryRunner.query(`ALTER TABLE "quest_completion" DROP CONSTRAINT "FK_b22d3c3c03456e1e18e8a15d39e"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_752a2c3b559f8722f742c2345a"`);
-        await queryRunner.query(`DROP INDEX "public"."IDX_ffca4074cf14f4fe957118676c"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_4b22cba34a06751dc6e7da974c"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_710bee300ac7dca01b5ee91e78"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_93de2049e58dac6ed3c2bc94b8"`);
