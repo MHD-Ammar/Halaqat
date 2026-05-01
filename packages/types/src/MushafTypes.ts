@@ -5,6 +5,8 @@
  * Used by both the frontend QuraniService and any backend processing.
  */
 
+import type { MistakeType } from "./MistakeType";
+
 /**
  * Word location string format: "surah:ayah:wordPosition"
  * Example: "2:255:3" = Surah Al-Baqarah, Ayah 255, 3rd word
@@ -114,7 +116,7 @@ export interface RecitationMistakeDto {
   /** Word position within the ayah */
   wordPosition: number;
   /** Type of mistake */
-  mistakeType: 'MEMORIZATION' | 'TAJWEED';
+  mistakeType: MistakeType;
   /** Optional teacher notes */
   notes?: string;
 }
