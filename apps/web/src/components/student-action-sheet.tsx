@@ -17,12 +17,14 @@ import {
   ChevronRight,
   ArrowLeft,
   BookOpen,
+  BookOpenText,
   Gift,
   AlertTriangle,
 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { useState, useMemo } from "react";
 
+import { MushafAssessor } from "@/components/mushaf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -136,7 +138,7 @@ export function StudentActionSheet({
   // Wizard state
   const [step, setStep] = useState<WizardStep>("INPUT");
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"recitation" | "rewards">("recitation");
+  const [activeTab, setActiveTab] = useState<"recitation" | "mushaf" | "rewards">("recitation");
 
   // Step 1: Range input state
   const [startPage, setStartPage] = useState<number | "">("");
@@ -404,8 +406,8 @@ export function StudentActionSheet({
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent side="bottom" className="flex flex-col" dir={dir}>
-        <SheetHeader>
+      <SheetContent side="bottom" className="flex flex-col h-[90dvh] p-0 gap-0 overflow-hidden" dir={dir}>
+        <SheetHeader className="flex-none px-6 pt-5 pb-3">
           <SheetTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
             {student.name}
@@ -415,6 +417,8 @@ export function StudentActionSheet({
               ? step === "INPUT"
                 ? t("enterPageRange")
                 : t("reviewPages", { count: pageDetails.length })
+              : activeTab === "mushaf"
+              ? "تحديد أخطاء التلاوة كلمةً بكلمة"
               : t("rewardsTab.description")}
           </SheetDescription>
         </SheetHeader>
@@ -423,13 +427,17 @@ export function StudentActionSheet({
         <Tabs
           dir={dir}
           value={activeTab}
-          onValueChange={(v) => setActiveTab(v as "recitation" | "rewards")}
-          className="flex-1 flex flex-col overflow-hidden"
+          onValueChange={(v) => setActiveTab(v as "recitation" | "mushaf" | "rewards")}
+          className="flex-1 min-h-0 flex flex-col overflow-hidden"
         >
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="recitation" className="gap-2">
               <BookOpen className="h-4 w-4" />
               {t("recitationTab")}
+            </TabsTrigger>
+            <TabsTrigger value="mushaf" className="gap-2">
+              <BookOpenText className="h-4 w-4" />
+              المصحف
             </TabsTrigger>
             <TabsTrigger value="rewards" className="gap-2">
               <Gift className="h-4 w-4" />
@@ -437,8 +445,19 @@ export function StudentActionSheet({
             </TabsTrigger>
           </TabsList>
 
+          {/* Mushaf Assessor Tab Content */}
+          <TabsContent value="mushaf" className="flex-1 min-h-0 flex flex-col overflow-hidden mt-0 data-[state=inactive]:hidden">
+            <MushafAssessor
+              student={student}
+              sessionId={sessionId}
+              onSaved={(_count: number) => {
+                // Handle post-save actions if any
+              }}
+            />
+          </TabsContent>
+
           {/* Recitation Tab Content */}
-          <TabsContent value="recitation" className="flex-1 flex flex-col overflow-hidden mt-0">
+          <TabsContent value="recitation" className="flex-1 min-h-0 flex flex-col overflow-hidden mt-0 data-[state=inactive]:hidden">
             {/* Step 1: Range Input */}
             {step === "INPUT" && (
               <div className="flex-1 space-y-6 p-4 overflow-auto">
@@ -626,7 +645,7 @@ export function StudentActionSheet({
           </TabsContent>
 
           {/* Rewards Tab Content */}
-          <TabsContent value="rewards" className="flex-1 flex flex-col overflow-hidden mt-0">
+          <TabsContent value="rewards" className="flex-1 min-h-0 flex flex-col overflow-hidden mt-0 data-[state=inactive]:hidden">
             {/* Budget Indicator */}
             {budget && (
               <div className="px-4 py-2 bg-muted/30 border-b flex items-center justify-between text-sm">

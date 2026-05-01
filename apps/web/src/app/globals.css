@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+
+/* Uthmani Quran Font — KFGQPC Uthmanic Script HAFS */
+@font-face {
+  font-family: 'Uthmanic';
+  src: url('https://cdn.jsdelivr.net/gh/nicholasgasior/quran-fonts@main/fonts/uthmanic/UthmanicHafs_v22.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /**
  * Halaqat - Global Styles
  * 
