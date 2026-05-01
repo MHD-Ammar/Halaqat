@@ -83,6 +83,7 @@ import {
 } from "./MushafPageRenderer";
 import { QualityOverridePicker } from "./QualityOverridePicker";
 import { RadialMistakePicker } from "./RadialMistakePicker";
+import { usePageSwipe } from "./use-page-swipe";
 import { useRadialPicker } from "./use-radial-picker";
 
 // ── Local types ────────────────────────────────────────────────────────
@@ -422,6 +423,17 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
     [student.id, updateStudentState],
   );
 
+  /**
+   * Horizontal swipe on the mushaf body navigates between pages. The
+   * gesture is suppressed while the radial picker is active and ignored
+   * for touches that started on a word — those belong to the picker.
+   */
+  const swipeHandlers = usePageSwipe({
+    isBlocked: radial.state !== null,
+    onSwipePrev: () => goToPage(currentPage - 1),
+    onSwipeNext: () => goToPage(currentPage + 1),
+  });
+
   // ── Save flow ────────────────────────────────────────────────────────
 
   /** Total number of pending mistakes across all pages. */
@@ -591,7 +603,11 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
       />
 
       {/* Mushaf body */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+      <div
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y"
+        onTouchStart={swipeHandlers.onTouchStart}
+        onTouchEnd={swipeHandlers.onTouchEnd}
+      >
         {isLoading ? (
           <div className="flex h-full min-h-[200px] items-center justify-center gap-2 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin" />

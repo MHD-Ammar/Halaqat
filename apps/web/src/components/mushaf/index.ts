@@ -7,6 +7,7 @@ export { LiveScoreHeader } from "./LiveScoreHeader";
 export { QualityOverridePicker } from "./QualityOverridePicker";
 export { RadialMistakePicker } from "./RadialMistakePicker";
 export { useRadialPicker } from "./use-radial-picker";
+export { usePageSwipe } from "./use-page-swipe";
 export {
   MISTAKE_STYLES,
   MISTAKE_TYPES_IN_ORDER,
