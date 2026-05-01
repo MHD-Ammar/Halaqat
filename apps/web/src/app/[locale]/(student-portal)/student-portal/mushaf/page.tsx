@@ -7,11 +7,15 @@
  * Includes: Auto-resume, Swipe gestures, State saving, and Mistake highlights.
  */
 
+import { MistakeType } from "@halaqat/types";
 import { AlertCircle, ChevronLeft, ChevronRight, Search, Loader2 } from "lucide-react";
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 
-import { MushafPageRenderer, MushafPageHeader } from "@/components/mushaf";
-import { MistakeLegend } from "@/components/mushaf/MistakeLegend";
+import {
+  MushafPageRenderer,
+  MushafPageHeader,
+  MistakeLegend,
+} from "@/components/mushaf";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -63,10 +67,10 @@ export default function MushafViewerPage() {
 
   // 7. Convert mistakes to highlight map
   const highlightMap = useMemo(() => {
-    const map = new Map<string, "MEMORIZATION" | "TAJWEED">();
+    const map = new Map<string, MistakeType>();
     if (mistakes) {
       for (const m of mistakes) {
-        map.set(m.wordLocation, m.mistakeType as "MEMORIZATION" | "TAJWEED");
+        map.set(m.wordLocation, m.mistakeType);
       }
     }
     return map;

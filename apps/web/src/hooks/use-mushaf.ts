@@ -9,7 +9,11 @@
  * 3. Reading/writing recitation mistakes from our backend
  */
 
-import type { MushafPage, RecitationMistakeDto } from "@halaqat/types";
+import type {
+  MistakeType,
+  MushafPage,
+  RecitationMistakeDto,
+} from "@halaqat/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
@@ -128,14 +132,14 @@ export function useUpdateStudentMushafState() {
 
 interface RecitationMistake {
   id: string;
-  recitationId: string;
+  recitationId: string | null;
   studentId: string;
   wordLocation: string;
   pageNumber: number;
   surahNumber: number;
   ayahNumber: number;
   wordPosition: number;
-  mistakeType: "MEMORIZATION" | "TAJWEED";
+  mistakeType: MistakeType;
   notes: string | null;
   createdAt: string;
 }

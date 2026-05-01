@@ -36,7 +36,7 @@ export type {
 } from "./ChallengeConfig";
 
 // Mushaf
-export { MistakeType } from "./MistakeType";
+export { MistakeType, isMistakeType } from "./MistakeType";
 export type {
   WordLocation,
   MushafWord,
@@ -46,3 +46,14 @@ export type {
   StudentMushafStateDto,
   RecitationMistakeDto,
 } from "./MushafTypes";
+export {
+  DEFAULT_SCORING_CONFIG,
+  calculatePageScore,
+  averagePageScores,
+  tallyMistakes,
+} from "./MushafScoring";
+export type {
+  ScoringConfig,
+  PageScoreResult,
+  MistakeCounts,
+} from "./MushafScoring";
