@@ -2,10 +2,11 @@ import { MigrationInterface, QueryRunner, Table, TableIndex, TableForeignKey } f
 
 export class CreateRecitationMistake1776200000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Ensure the MistakeType enum exists
+    // Ensure the MistakeType enum exists.
+    // Values mirror packages/types/src/MistakeType.ts — keep in sync.
     await queryRunner.query(`
       DO $$ BEGIN
-        CREATE TYPE "mistake_type_enum" AS ENUM ('MEMORIZATION', 'TAJWEED');
+        CREATE TYPE "mistake_type_enum" AS ENUM ('MEMORIZATION', 'TAJWEED', 'TASHKEEL');
       EXCEPTION
         WHEN duplicate_object THEN null;
       END $$;
