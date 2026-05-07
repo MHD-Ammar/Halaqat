@@ -34,3 +34,26 @@ export type {
   QuestionScoringConfig,
   CampaignConfig,
 } from "./ChallengeConfig";
+
+// Mushaf
+export { MistakeType, isMistakeType } from "./MistakeType";
+export type {
+  WordLocation,
+  MushafWord,
+  MushafSurahMeta,
+  MushafAyah,
+  MushafPage,
+  StudentMushafStateDto,
+  RecitationMistakeDto,
+} from "./MushafTypes";
+export {
+  DEFAULT_SCORING_CONFIG,
+  calculatePageScore,
+  averagePageScores,
+  tallyMistakes,
+} from "./MushafScoring";
+export type {
+  ScoringConfig,
+  PageScoreResult,
+  MistakeCounts,
+} from "./MushafScoring";

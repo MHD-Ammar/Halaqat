@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ClipboardList, Home, Medal, Trophy } from "lucide-react";
+import { BookOpenText, ClipboardList, Home, Medal, Trophy } from "lucide-react";
 
 import { Link, usePathname } from "@/i18n/routing";
 
@@ -15,6 +15,12 @@ export function StudentBottomNav() {
       icon: Home,
       // For exact root match
       isActive: pathname === "/student-portal" || pathname === "/student-portal/",
+    },
+    {
+      label: "المصحف",
+      href: "/student-portal/mushaf",
+      icon: BookOpenText,
+      isActive: pathname.startsWith("/student-portal/mushaf"),
     },
     {
       label: "المهام",

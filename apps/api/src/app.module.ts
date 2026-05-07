@@ -21,6 +21,7 @@ import { DailyChallengeModule } from "./daily-challenge/daily-challenge.module";
 import { ExamsModule } from "./exams/exams.module";
 import { GamificationModule } from "./gamification/gamification.module";
 import { MosquesModule } from "./mosques/mosques.module";
+import { MushafModule } from "./mushaf/mushaf.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { PointsModule } from "./points/points.module";
 import { ProgressModule } from "./progress/progress.module";
@@ -63,6 +64,7 @@ import { UsersModule } from "./users/users.module";
     DailyChallengeModule,
     GamificationModule,
     NotificationsModule,
+    MushafModule,
   ],
   controllers: [AppController],
   providers: [AppService],

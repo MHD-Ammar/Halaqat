@@ -11,6 +11,8 @@ import * as dotenv from "dotenv";
 import { DataSource, DataSourceOptions } from "typeorm";
 import { SnakeNamingStrategy } from "typeorm-naming-strategies";
 
+import { RecitationMistake, StudentMushafState } from "./mushaf";
+
 // Load environment variables from root .env if running locally
 // In production/Docker, these will be provided by the environment
 dotenv.config({ path: "../../.env" });
@@ -26,7 +28,11 @@ const options: DataSourceOptions = {
   // Entities and Migrations
   // Using __dirname ensures it works relative to this file's location
   // whether it is in src/ (dev) or dist/ (prod)
-  entities: [join(__dirname, "**/*.entity{.ts,.js}")],
+  entities: [
+    RecitationMistake,
+    StudentMushafState,
+    join(__dirname, "**/*.entity{.ts,.js}"),
+  ],
   migrations: [join(__dirname, "migrations/*{.ts,.js}")],
 
   // Naming strategy
