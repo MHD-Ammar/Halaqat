@@ -38,8 +38,8 @@ jobs:
       - name: Check Build
         run: pnpm build
         env:
-           # Ensure standalone mode is ON in CI
-           STANDALONE: true
+           # Ensure standalone mode is ON in CI (must match next.config.ts check)
+           STANDALONE_OUTPUT: "true"
 
   deploy:
     name: 🚀 Deploy to VPS
