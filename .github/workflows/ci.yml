@@ -54,6 +54,8 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
+          # Docker builds take several minutes — set a generous timeout
+          command_timeout: 30m
           script_stop: true
           script: |
             # 1. Navigate to project directory
@@ -63,6 +65,8 @@ jobs:
             git pull origin main
             
             # 3. Rebuild and restart containers
+            # --no-deps on postgres: avoids unnecessary recreation of the DB container
+            # which causes the api entrypoint to wait for it to be ready again
             docker compose -f docker-compose.prod.yml up -d --build --force-recreate
             
             # 4. Cleanup unused images
