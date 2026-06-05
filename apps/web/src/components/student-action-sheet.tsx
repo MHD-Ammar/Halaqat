@@ -56,6 +56,7 @@ import {
   type AwardByRuleDto,
 } from "@/hooks/use-teacher-rewards";
 import { useToast } from "@/hooks/use-toast";
+import { ApiError } from "@/lib/api-client";
 
 interface StudentActionSheetProps {
   student: {
@@ -376,8 +377,10 @@ export function StudentActionSheet({
         }
       },
       onError: (error: unknown) => {
-        const err = error as { response?: { data?: { message?: string } }; message?: string };
-        const errorMessage = err.response?.data?.message || err.message;
+        const errorMessage =
+          error instanceof ApiError
+            ? error.messageAr
+            : (error as { message?: string }).message;
         let displayMessage = errorMessage || t("saveFailed");
 
         // improved error mapping for budget limit

@@ -3,12 +3,21 @@
 /**
  * useStudents Hook
  *
- * Fetches and manages students data with mutations for CRUD operations.
+ * Students CRUD + credential generation for the admin panel.
+ * Standard mutations go through the factory; the paginated list query is
+ * hand-written because it has a custom backend response shape.
+ *
+ * All exported names are unchanged from the original.
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
+
+import { createResourceHooks } from "./factories/create-resource-hooks";
+
+// ── Types ──────────────────────────────────────────────────────────────────
 
 export interface Student {
   id: string;
@@ -20,10 +29,7 @@ export interface Student {
   guardianPhone?: string;
   guardianName?: string;
   circleId: string;
-  circle?: {
-    id: string;
-    name: string;
-  };
+  circle?: { id: string; name: string };
   totalPoints?: number;
   totalXp?: number;
   currentLevel?: number;
@@ -44,6 +50,17 @@ export interface CreateStudentDto {
   guardianName?: string;
 }
 
+export interface UpdateStudentDto {
+  name?: string;
+  phone?: string;
+  dob?: string;
+  address?: string;
+  notes?: string;
+  guardianName?: string;
+  guardianPhone?: string;
+  circleId?: string;
+}
+
 export interface StudentQueryParams {
   page?: number;
   limit?: number;
@@ -59,138 +76,9 @@ export interface PaginatedStudents {
   totalPages: number;
 }
 
-/** Raw shape returned by the backend */
 interface BackendPaginatedResponse {
   data: Student[];
-  meta: {
-    total: number;
-    page: number;
-    lastPage: number;
-    limit: number;
-  };
-}
-
-/**
- * Fetch all students (Admin, paginated)
- */
-export function useStudents(params?: StudentQueryParams) {
-  return useQuery({
-    queryKey: ["students", params],
-    queryFn: async () => {
-      const searchParams = new URLSearchParams();
-      if (params?.page) searchParams.set("page", String(params.page));
-      if (params?.limit) searchParams.set("limit", String(params.limit));
-      if (params?.circleId) searchParams.set("circleId", params.circleId);
-      if (params?.search) searchParams.set("search", params.search);
-      
-      const response = await api.get<BackendPaginatedResponse>(`/students?${searchParams}`);
-      const raw = response.data;
-
-      // Normalize backend meta shape into flat PaginatedStudents
-      return {
-        data: raw.data,
-        total: raw.meta.total,
-        page: raw.meta.page,
-        limit: raw.meta.limit,
-        totalPages: raw.meta.lastPage,
-      } as PaginatedStudents;
-    },
-    refetchOnMount: "always",
-  });
-}
-
-/**
- * Fetch students by circle
- */
-export function useStudentsByCircle(circleId: string | undefined) {
-  return useQuery({
-    queryKey: ["students", "by-circle", circleId],
-    queryFn: async () => {
-      const response = await api.get<Student[]>(`/students/by-circle/${circleId}`);
-      return response.data;
-    },
-    enabled: !!circleId,
-    refetchOnMount: "always",
-  });
-}
-
-/**
- * Create a new student
- */
-export function useCreateStudent() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: CreateStudentDto) => {
-      const response = await api.post<Student>("/students", data);
-      return response.data;
-    },
-    onSuccess: (_data, variables) => {
-      // Invalidate all student queries
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      // Also invalidate circle-specific student query
-      queryClient.invalidateQueries({ queryKey: ["students", "by-circle", variables.circleId] });
-      // Invalidate circles to update student counts
-      queryClient.invalidateQueries({ queryKey: ["circles"] });
-      // Invalidate today's session to show new student
-      queryClient.invalidateQueries({ queryKey: ["today-session"] });
-    },
-  });
-}
-
-/**
- * DTO for updating a student
- */
-export interface UpdateStudentDto {
-  name?: string;
-  phone?: string;
-  dob?: string;
-  address?: string;
-  notes?: string;
-  guardianName?: string;
-  guardianPhone?: string;
-  circleId?: string;
-}
-
-/**
- * Update a student
- * Calls PATCH /students/:id
- */
-export function useUpdateStudent() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, ...data }: UpdateStudentDto & { id: string }) => {
-      const response = await api.patch<Student>(`/students/${id}`, data);
-      return response.data;
-    },
-    onSuccess: (_data, variables) => {
-      // Invalidate all student queries
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      // Also invalidate circle-specific if circleId provided
-      if (variables.circleId) {
-        queryClient.invalidateQueries({
-          queryKey: ["students", "by-circle", variables.circleId],
-        });
-      }
-    },
-  });
-}
-
-/**
- * Delete a student
- */
-export function useDeleteStudent() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      await api.delete(`/students/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-    },
-  });
+  meta: { total: number; page: number; lastPage: number; limit: number };
 }
 
 export interface StudentCredentials {
@@ -198,19 +86,107 @@ export interface StudentCredentials {
   password: string;
 }
 
-/**
- * Generate credentials for a student
- */
-export function useGenerateCredentials() {
-  const queryClient = useQueryClient();
+// ── Factory (used for delete only — other mutations need custom invalidations)
 
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const response = await api.post<StudentCredentials>(`/students/${id}/generate-credentials`);
-      return response.data;
+const _studentHooks = createResourceHooks<
+  Student,
+  CreateStudentDto,
+  UpdateStudentDto,
+  StudentQueryParams
+>({
+  baseUrl: "/students",
+  keys: queryKeys.students,
+  invalidateOn: {
+    remove: [queryKeys.students.all],
+  },
+});
+
+// ── Paginated admin list (custom response shape) ───────────────────────────
+
+export function useStudents(params?: StudentQueryParams) {
+  return useQuery<PaginatedStudents>({
+    queryKey: queryKeys.students.list(params),
+    queryFn: async () => {
+      const searchParams = new URLSearchParams();
+      if (params?.page) searchParams.set("page", String(params.page));
+      if (params?.limit) searchParams.set("limit", String(params.limit));
+      if (params?.circleId) searchParams.set("circleId", params.circleId);
+      if (params?.search) searchParams.set("search", params.search);
+
+      const raw = await apiClient.get<BackendPaginatedResponse>(
+        `/students?${searchParams}`,
+      );
+      return {
+        data: raw.data,
+        total: raw.meta.total,
+        page: raw.meta.page,
+        limit: raw.meta.limit,
+        totalPages: raw.meta.lastPage,
+      };
     },
+    refetchOnMount: "always",
+  });
+}
+
+// ── By-circle list ─────────────────────────────────────────────────────────
+
+export function useStudentsByCircle(circleId: string | undefined) {
+  return useQuery<Student[]>({
+    queryKey: queryKeys.students.byCircle(circleId ?? ""),
+    queryFn: () => apiClient.get<Student[]>(`/students/by-circle/${circleId}`),
+    enabled: !!circleId,
+    refetchOnMount: "always",
+  });
+}
+
+// ── Create ─────────────────────────────────────────────────────────────────
+
+export function useCreateStudent() {
+  const qc = useQueryClient();
+  return useMutation<Student, Error, CreateStudentDto>({
+    mutationFn: (data) => apiClient.post<Student>("/students", data),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: queryKeys.students.all });
+      qc.invalidateQueries({
+        queryKey: queryKeys.students.byCircle(variables.circleId),
+      });
+      qc.invalidateQueries({ queryKey: queryKeys.circles.all });
+      qc.invalidateQueries({ queryKey: queryKeys.sessions.all });
+    },
+  });
+}
+
+// ── Update ─────────────────────────────────────────────────────────────────
+
+export function useUpdateStudent() {
+  const qc = useQueryClient();
+  return useMutation<Student, Error, UpdateStudentDto & { id: string }>({
+    mutationFn: ({ id, ...data }) =>
+      apiClient.patch<Student>(`/students/${id}`, data),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: queryKeys.students.all });
+      if (variables.circleId) {
+        qc.invalidateQueries({
+          queryKey: queryKeys.students.byCircle(variables.circleId),
+        });
+      }
+    },
+  });
+}
+
+// ── Delete ─────────────────────────────────────────────────────────────────
+
+export const useDeleteStudent = _studentHooks.useRemove;
+
+// ── Generate credentials ───────────────────────────────────────────────────
+
+export function useGenerateCredentials() {
+  const qc = useQueryClient();
+  return useMutation<StudentCredentials, Error, string>({
+    mutationFn: (id) =>
+      apiClient.post<StudentCredentials>(`/students/${id}/generate-credentials`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students"] });
+      qc.invalidateQueries({ queryKey: queryKeys.students.all });
     },
   });
 }

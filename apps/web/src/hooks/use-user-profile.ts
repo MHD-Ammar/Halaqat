@@ -8,7 +8,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 interface Circle {
   id: string;
@@ -19,6 +20,7 @@ interface UserProfile {
   id: string;
   email: string;
   name: string;
+  fullName?: string;
   role: string;
   mosqueId?: string;
   mosque?: {
@@ -39,17 +41,16 @@ interface ProfileResponse {
  */
 export function useUserProfile() {
   return useQuery({
-    queryKey: ["user", "profile"],
+    queryKey: queryKeys.auth.profile(),
     queryFn: async () => {
-      const response = await api.get<ProfileResponse>("/auth/profile");
-      // API returns { message, user } - extract user and transform fullName to name
-      const user = response.data.user;
+      const res = await apiClient.get<ProfileResponse>("/auth/profile");
+      const user = res.user;
       return {
         ...user,
-        name: (user as unknown as { fullName?: string }).fullName || user.name,
+        name: user.fullName ?? user.name,
       };
     },
-    staleTime: 5 * 60 * 1000, // Profile rarely changes, cache for 5 minutes
-    retry: 1, // Only retry once on failure
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 }

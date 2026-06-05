@@ -8,7 +8,8 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface User {
   id: string;
@@ -43,14 +44,14 @@ export interface PaginatedUsers {
  */
 export function useUsers(options: { page?: number; limit?: number; role?: string; enabled?: boolean } = {}) {
   return useQuery({
-    queryKey: ["users", options],
+    queryKey: queryKeys.users.list(options),
     queryFn: async () => {
       const searchParams = new URLSearchParams();
       if (options.page) searchParams.set("page", String(options.page));
       if (options.limit) searchParams.set("limit", String(options.limit));
       if (options.role) searchParams.set("role", options.role);
 
-      const response = await api.get<{ 
+      const data = await apiClient.get<{ 
         data: User[]; 
         meta: { 
           total: number; 
@@ -59,7 +60,7 @@ export function useUsers(options: { page?: number; limit?: number; role?: string
           limit: number; 
         } 
       }>(`/users?${searchParams}`);
-      const raw = response.data;
+      const raw = data;
 
       return {
         data: raw.data,
@@ -82,15 +83,15 @@ export function useUpdateUserRole() {
 
   return useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      const response = await api.patch<{ data: User }>(
+      const data = await apiClient.patch<{ data: User }>(
         `/users/${userId}/role`,
         { role }
       );
-      return response.data.data;
+      return data.data;
     },
     onSuccess: () => {
       // Invalidate users list to refetch
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
     },
   });
 }
@@ -103,15 +104,15 @@ export function useUpdateUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, ...data }: UpdateUserDto & { id: string }) => {
-      const response = await api.patch<{ message: string; data: User }>(
+    mutationFn: async ({ id, ...dto }: UpdateUserDto & { id: string }) => {
+      const res = await apiClient.patch<{ message: string; data: User }>(
         `/users/${id}`,
-        data
+        dto
       );
-      return response.data.data;
+      return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
     },
   });
 }
@@ -125,10 +126,10 @@ export function useDeleteUser() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/users/${id}`);
+      await apiClient.delete(`/users/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
     },
   });
 }
@@ -146,7 +147,7 @@ export function useResetPassword() {
       userId: string;
       password: string;
     }) => {
-      await api.patch(`/users/${userId}/reset-password`, { password });
+      await apiClient.patch(`/users/${userId}/reset-password`, { password });
     },
   });
 }

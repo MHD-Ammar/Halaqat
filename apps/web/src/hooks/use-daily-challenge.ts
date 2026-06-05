@@ -1,8 +1,20 @@
+/**
+ * Daily Challenge Hooks
+ *
+ * Public-facing hooks for the daily challenge / Ramadan submission flow.
+ * Query keys now come from the central registry; apiClient replaces the
+ * raw `api` instance for consistent error handling.
+ *
+ * All exported names are unchanged from the original.
+ */
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
-// --- Types ---
+// ── Types ──────────────────────────────────────────────────────────────────
+
 export interface ChallengeCircle {
   id: string;
   name: string;
@@ -59,129 +71,85 @@ export interface ActiveCampaignResponse {
   title?: string;
   startDate?: string;
   endDate?: string;
-  config: { 
-    questions?: unknown[] | Record<string, unknown>; 
-    submitted_xp?: number 
+  config: {
+    questions?: unknown[] | Record<string, unknown>;
+    submitted_xp?: number;
   } | null;
 }
 
-// --- Keys ---
-export const challengeKeys = {
-  all: ["daily-challenge"] as const,
-  activeCampaign: () => [...challengeKeys.all, "active-campaign"] as const,
-  circles: (mosqueId: string) => [...challengeKeys.all, "circles", mosqueId] as const,
-  students: (circleId: string) => [...challengeKeys.all, "students", circleId] as const,
-  studentInfo: (studentId: string, campaign: string) =>
-    [...challengeKeys.all, "student-info", studentId, campaign] as const,
-  leaderboard: (mosqueId: string, campaign: string) =>
-    [...challengeKeys.all, "leaderboard", mosqueId, campaign] as const,
-};
+// ── Hooks ──────────────────────────────────────────────────────────────────
 
-// --- Hooks ---
-
-/**
- * Get active campaign config (Public)
- * Used by /ramadan and student portals to render dynamic forms
- */
 export function useActiveCampaign() {
-  return useQuery({
-    queryKey: challengeKeys.activeCampaign(),
-    queryFn: async () => {
-      const { data } = await api.get<ActiveCampaignResponse>("/daily-challenge/active-campaign");
-      return data;
-    },
+  return useQuery<ActiveCampaignResponse>({
+    queryKey: queryKeys.dailyChallenge.activeCampaign(),
+    queryFn: () =>
+      apiClient.get<ActiveCampaignResponse>("/daily-challenge/active-campaign"),
   });
 }
 
-/**
- * Get circles for a mosque (Public)
- */
 export function useDailyChallengeCircles(mosqueId?: string) {
-  return useQuery({
-    queryKey: challengeKeys.circles(mosqueId || "default"),
-    queryFn: async () => {
-      const params = mosqueId ? { mosqueId } : {};
-      const { data } = await api.get<ChallengeCircle[]>("/daily-challenge/circles", {
-        params,
-      });
-      return data;
-    },
+  return useQuery<ChallengeCircle[]>({
+    queryKey: queryKeys.dailyChallenge.circles(mosqueId ?? "default"),
+    queryFn: () =>
+      apiClient.get<ChallengeCircle[]>("/daily-challenge/circles", {
+        params: mosqueId ? { mosqueId } : {},
+      }),
   });
 }
 
-/**
- * Get students for a circle (Public)
- */
 export function useDailyChallengeStudents(circleId: string | null) {
-  return useQuery({
-    queryKey: challengeKeys.students(circleId!),
-    queryFn: async () => {
-      const { data } = await api.get<ChallengeStudent[]>(
-        `/daily-challenge/students/${circleId}`,
-      );
-      return data;
-    },
+  return useQuery<ChallengeStudent[]>({
+    queryKey: queryKeys.dailyChallenge.students(circleId!),
+    queryFn: () =>
+      apiClient.get<ChallengeStudent[]>(`/daily-challenge/students/${circleId}`),
     enabled: !!circleId,
   });
 }
 
-/**
- * Get student info & streak (Public)
- */
-export function useDailyChallengeStudentInfo(studentId: string | null, campaign: string) {
-  return useQuery({
-    queryKey: challengeKeys.studentInfo(studentId!, campaign),
-    queryFn: async () => {
-      const { data } = await api.get<ChallengeStudentInfo>(
+export function useDailyChallengeStudentInfo(
+  studentId: string | null,
+  campaign: string,
+) {
+  return useQuery<ChallengeStudentInfo>({
+    queryKey: queryKeys.dailyChallenge.studentInfo(studentId!, campaign),
+    queryFn: () =>
+      apiClient.get<ChallengeStudentInfo>(
         `/daily-challenge/student-info/${studentId}`,
-        { params: { campaign } }
-      );
-      return data;
-    },
+        { params: { campaign } },
+      ),
     enabled: !!studentId,
   });
 }
 
-/**
- * Submit daily challenge
- */
 export function useDailyChallengeSubmit() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (dto: SubmitChallengeDto) => {
-      const { data } = await api.post<SubmitChallengeResponse>("/daily-challenge/submit", dto);
-      return data;
-    },
+  const qc = useQueryClient();
+  return useMutation<SubmitChallengeResponse, Error, SubmitChallengeDto>({
+    mutationFn: (dto) =>
+      apiClient.post<SubmitChallengeResponse>("/daily-challenge/submit", dto),
     onSuccess: (_, variables) => {
-      // Invalidate student info to update streak
-      queryClient.invalidateQueries({
-        queryKey: challengeKeys.studentInfo(
+      qc.invalidateQueries({
+        queryKey: queryKeys.dailyChallenge.studentInfo(
           variables.studentId,
-          variables.campaignKey ?? variables.campaignId ?? "ramadan"
+          variables.campaignKey ?? variables.campaignId ?? "ramadan",
         ),
       });
-      // Invalidate leaderboard
-      queryClient.invalidateQueries({
-        queryKey: challengeKeys.all,
-      });
+      qc.invalidateQueries({ queryKey: queryKeys.dailyChallenge.all });
     },
   });
 }
 
-/**
- * Get Leaderboard
- */
-export function useDailyChallengeLeaderboard(mosqueId?: string, campaign: string = "ramadan") {
-  return useQuery({
-    queryKey: challengeKeys.leaderboard(mosqueId || "default", campaign),
-    queryFn: async () => {
-      const params = mosqueId ? { mosqueId, campaign } : { campaign };
-      const { data } = await api.get<LeaderboardResponse>(
-        "/daily-challenge/leaderboard",
-        { params },
-      );
-      return data;
-    },
+export function useDailyChallengeLeaderboard(
+  mosqueId?: string,
+  campaign: string = "ramadan",
+) {
+  return useQuery<LeaderboardResponse>({
+    queryKey: queryKeys.dailyChallenge.leaderboard(
+      mosqueId ?? "default",
+      campaign,
+    ),
+    queryFn: () =>
+      apiClient.get<LeaderboardResponse>("/daily-challenge/leaderboard", {
+        params: mosqueId ? { mosqueId, campaign } : { campaign },
+      }),
   });
 }

@@ -8,7 +8,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface AttendanceTrendItem {
   date: string;
@@ -56,12 +57,12 @@ interface TeacherDashboardResponse {
  */
 export function useTeacherDashboard(from: string, to: string) {
   return useQuery({
-    queryKey: ["analytics", "teacher-dashboard", from, to],
+    queryKey: queryKeys.adminStats.teacherDashboard(from, to),
     queryFn: async () => {
-      const response = await api.get<TeacherDashboardResponse>(
+      const data = await apiClient.get<TeacherDashboardResponse>(
         `/analytics/teacher-dashboard?from=${from}&to=${to}`,
       );
-      return response.data.data;
+      return data.data;
     },
     staleTime: 60 * 1000, // 1 minute
     enabled: !!from && !!to,

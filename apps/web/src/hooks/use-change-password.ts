@@ -8,7 +8,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
 
 interface ChangePasswordDto {
   currentPassword: string;
@@ -25,8 +25,8 @@ interface ChangePasswordResponse {
 export function useChangePassword() {
   return useMutation({
     mutationFn: async (dto: ChangePasswordDto) => {
-      const response = await api.post<ChangePasswordResponse>("/auth/change-password", dto);
-      return response.data;
+      const data = await apiClient.post<ChangePasswordResponse>("/auth/change-password", dto);
+      return data;
     },
   });
 }

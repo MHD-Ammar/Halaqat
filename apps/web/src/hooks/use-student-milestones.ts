@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 type RewardType = "BONUS_XP" | "AVATAR_FRAME" | "TITLE";
 
@@ -23,11 +24,8 @@ export interface StudentMilestone {
 
 export const useStudentMilestones = () => {
   return useQuery<StudentMilestone[]>({
-    queryKey: ["student-milestones"],
-    queryFn: async () => {
-      const { data } = await api.get("/student-portal/milestones");
-      return data;
-    },
+    queryKey: queryKeys.studentPortal.milestones(),
+    queryFn: () => apiClient.get<StudentMilestone[]>("/student-portal/milestones"),
   });
 };
 
@@ -36,15 +34,15 @@ export const useClaimMilestone = () => {
 
   return useMutation({
     mutationFn: async (milestoneId: string) => {
-      const { data } = await api.post(`/student-portal/milestones/${milestoneId}/claim`);
+      const data = await apiClient.post(`/student-portal/milestones/${milestoneId}/claim`);
       return data;
     },
     onSuccess: () => {
       // Invalidate both milestones and dashboard to update XP
-      queryClient.invalidateQueries({ queryKey: ["student-milestones"] });
-      queryClient.invalidateQueries({ queryKey: ["student-dashboard"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.studentPortal.milestones() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.studentPortal.all });
       // Invalidate student profile/quests if needed
-      queryClient.invalidateQueries({ queryKey: ["student-quests", "today"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.studentPortal.quests.today() });
     },
   });
 };

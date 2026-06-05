@@ -9,7 +9,8 @@
 import { Gender } from "@halaqat/types";
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface CircleStudent {
   id: string;
@@ -40,13 +41,13 @@ export interface CircleDetails {
  */
 export function useCircle(id?: string, options: { enabled?: boolean } = {}) {
   return useQuery({
-    queryKey: ["circles", id],
+    queryKey: queryKeys.circles.detail(id ?? ""),
     queryFn: async () => {
       if (!id || id === "undefined") {
         throw new Error("Invalid circle ID");
       }
-      const response = await api.get<CircleDetails>(`/circles/${id}`);
-      return response.data;
+      const data = await apiClient.get<CircleDetails>(`/circles/${id}`);
+      return data;
     },
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
     ...options,

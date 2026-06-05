@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
-
-import { challengeKeys } from "./use-daily-challenge";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 // --- Types ---
 
@@ -26,16 +25,12 @@ export interface SubmissionDetail {
   details: Record<string, unknown>;
 }
 
-// --- Keys Extension ---
-// We'll add these to the existing keys object in use-daily-challenge if possible,
-// or just define locally if that file is closed. 
-// Since we can't easily modify the exported const in another file without replacing it,
-// let's define local keys here that extend the pattern.
-
+// Query keys scoped under the existing dailyChallenge namespace
 export const weeklyChallengeKeys = {
   weekly: (circleId: string, startDate: string, campaign: string) =>
-    [...challengeKeys.all, "weekly", circleId, startDate, campaign] as const,
-  submission: (id: string) => [...challengeKeys.all, "submission", id] as const,
+    [...queryKeys.dailyChallenge.all, "weekly", circleId, startDate, campaign] as const,
+  submission: (id: string) =>
+    [...queryKeys.dailyChallenge.all, "submission", id] as const,
 };
 
 // --- Hooks ---
@@ -52,7 +47,7 @@ export function useWeeklySubmissions(
     queryKey: weeklyChallengeKeys.weekly(circleId || "undefined", startDate, campaign),
     queryFn: async () => {
       if (!circleId) return [];
-      const { data } = await api.get<StudentWeeklySubmissions[]>(
+      const data = await apiClient.get<StudentWeeklySubmissions[]>(
         "/daily-challenge/submissions/weekly",
         {
           params: { circleId, startDate, campaign },
@@ -72,7 +67,7 @@ export function useSubmissionDetail(submissionId: string | null) {
     queryKey: weeklyChallengeKeys.submission(submissionId || "undefined"),
     queryFn: async () => {
       if (!submissionId) return null;
-      const { data } = await api.get<SubmissionDetail>(
+      const data = await apiClient.get<SubmissionDetail>(
         `/daily-challenge/submission/${submissionId}`
       );
       return data;

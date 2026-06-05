@@ -8,7 +8,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 interface StudentStats {
   attendanceRate: number;
@@ -65,13 +66,8 @@ interface StudentProfile {
  */
 export function useStudentProfile(studentId: string | undefined) {
   return useQuery({
-    queryKey: ["student", "profile", studentId],
-    queryFn: async () => {
-      const response = await api.get<StudentProfile>(
-        `/students/${studentId}/profile`
-      );
-      return response.data;
-    },
+    queryKey: queryKeys.students.profile(studentId ?? ""),
+    queryFn: () => apiClient.get<StudentProfile>(`/students/${studentId}/profile`),
     enabled: !!studentId,
     staleTime: 30 * 1000,
   });

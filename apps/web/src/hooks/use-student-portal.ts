@@ -8,7 +8,8 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 import { useUserProfile } from "./use-user-profile";
 
@@ -45,12 +46,12 @@ export function useStudentPortal() {
     ?.studentId;
 
   const query = useQuery({
-    queryKey: ["student-portal", studentId],
+    queryKey: queryKeys.studentPortal.dashboard(studentId ?? ""),
     queryFn: async () => {
-      const response = await api.get<StudentPortalData>(
+      const data = await apiClient.get<StudentPortalData>(
         `/students/${studentId}/profile`,
       );
-      return response.data;
+      return data;
     },
     enabled: !!studentId,
     staleTime: 30 * 1000,
@@ -144,13 +145,13 @@ export interface LastWeekLeagueResultResponse {
  */
 export function useStudentDashboard(campaignKey: string = "ramadan") {
   return useQuery({
-    queryKey: ["student-portal-dashboard", campaignKey],
+    queryKey: queryKeys.studentPortal.dashboard(campaignKey),
     queryFn: async () => {
-      const response = await api.get<DashboardData>(
+      const data = await apiClient.get<DashboardData>(
         `/student-portal/dashboard`,
         { params: { campaignKey } },
       );
-      return response.data;
+      return data;
     },
     staleTime: 30 * 1000,
   });
@@ -164,15 +165,15 @@ export function useClaimLoginBonus() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await api.post<ClaimLoginBonusResponse>(
+      const data = await apiClient.post<ClaimLoginBonusResponse>(
         `/student-portal/claim-login-bonus`,
       );
-      return response.data;
+      return data;
     },
     onSuccess: (data) => {
       if (data.claimed) {
-        queryClient.invalidateQueries({ queryKey: ["student-portal-dashboard"] });
-        queryClient.invalidateQueries({ queryKey: ["student-portal"] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.studentPortal.all });
+        queryClient.invalidateQueries({ queryKey: queryKeys.studentPortal.all });
       }
     },
   });
@@ -186,25 +187,25 @@ export function useMarkRecitationRewardSeen() {
 
   return useMutation({
     mutationFn: async (recitationId: string) => {
-      const response = await api.patch(
+      const data = await apiClient.patch(
         `/student-portal/recitation-reward/${recitationId}/seen`,
       );
-      return response.data;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["student-portal-dashboard"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.studentPortal.all });
     },
   });
 }
 
 export function useLastWeekLeagueResult() {
   return useQuery({
-    queryKey: ["student-portal", "league", "last-week-result"],
+    queryKey: ["student-portal", "league", "last-week-result"] as const,
     queryFn: async () => {
-      const response = await api.get<LastWeekLeagueResultResponse | null>(
+      const data = await apiClient.get<LastWeekLeagueResultResponse | null>(
         "/student-portal/league/last-week-result",
       );
-      return response.data;
+      return data;
     },
     staleTime: 30 * 1000,
   });
@@ -215,14 +216,14 @@ export function useMarkLastWeekLeagueResultSeen() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await api.post<{ success: boolean }>(
+      const data = await apiClient.post<{ success: boolean }>(
         "/student-portal/league/last-week-result/seen",
       );
-      return response.data;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["student-portal", "league", "last-week-result"] });
-      queryClient.invalidateQueries({ queryKey: ["student-leaderboard", "league"] });
+      queryClient.invalidateQueries({ queryKey: ["student-portal", "league", "last-week-result"] as const });
+      queryClient.invalidateQueries({ queryKey: queryKeys.studentPortal.leaderboard.league() });
     },
   });
 }
@@ -243,12 +244,12 @@ export interface LiveFeedItem {
  */
 export function useLiveFeed() {
   return useQuery({
-    queryKey: ["student-portal", "live-feed"],
+    queryKey: ["student-portal", "live-feed"] as const,
     queryFn: async () => {
-      const res = await api.get<LiveFeedItem[]>(
+      const data = await apiClient.get<LiveFeedItem[]>(
         "/student-portal/live-feed",
       );
-      return res.data;
+      return data;
     },
     staleTime: 60 * 1000, // 1 minute
     refetchInterval: 60 * 1000,
@@ -262,13 +263,12 @@ export function useToggleFeedReaction() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (feedItemKey: string) => {
-      const res = await api.post<{ reacted: boolean }>(
+      return apiClient.post<{ reacted: boolean }>(
         `/student-portal/live-feed/${feedItemKey}/react`,
       );
-      return res.data;
     },
     onMutate: async (feedItemKey) => {
-      await queryClient.cancelQueries({ queryKey: ["student-portal", "live-feed"] });
+      await queryClient.cancelQueries({ queryKey: ["student-portal", "live-feed"] as const });
       const previousFeed = queryClient.getQueryData<LiveFeedItem[]>(["student-portal", "live-feed"]);
 
       if (previousFeed) {
@@ -295,7 +295,7 @@ export function useToggleFeedReaction() {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["student-portal", "live-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["student-portal", "live-feed"] as const });
     },
   });
 }

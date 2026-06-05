@@ -8,7 +8,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 interface UpdateProfileDto {
   fullName?: string;
@@ -33,12 +34,12 @@ export function useUpdateProfile() {
 
   return useMutation({
     mutationFn: async (dto: UpdateProfileDto) => {
-      const response = await api.patch<UpdateProfileResponse>("/auth/profile", dto);
-      return response.data;
+      const data = await apiClient.patch<UpdateProfileResponse>("/auth/profile", dto);
+      return data;
     },
     onSuccess: () => {
       // Invalidate user profile query to refetch updated data
-      queryClient.invalidateQueries({ queryKey: ["user", "profile"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.profile() });
     },
   });
 }

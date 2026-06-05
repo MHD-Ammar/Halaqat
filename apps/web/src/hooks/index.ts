@@ -2,6 +2,8 @@
  * Hooks - Barrel Export
  */
 
+export { useApiErrorToast } from "./use-api-error-toast";
+
 export {
   useTodaySession,
   useUpdateAttendance,

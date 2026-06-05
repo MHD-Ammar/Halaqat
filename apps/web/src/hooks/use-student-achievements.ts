@@ -3,7 +3,8 @@
 import type { QuestCategory } from "@halaqat/types";
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 import { useUserProfile } from "./use-user-profile";
 
@@ -30,10 +31,10 @@ export function useStudentAchievements() {
   const { data: userProfile, isLoading: isProfileLoading } = useUserProfile();
 
   const query = useQuery({
-    queryKey: achievementKeys.all,
+    queryKey: queryKeys.studentPortal.achievements(),
     queryFn: async () => {
-      const response = await api.get<Achievement[]>("/student-portal/achievements");
-      return response.data;
+      const data = await apiClient.get<Achievement[]>("/student-portal/achievements");
+      return data;
     },
     enabled: !!userProfile && userProfile.role === "STUDENT",
     staleTime: 5 * 60 * 1000,

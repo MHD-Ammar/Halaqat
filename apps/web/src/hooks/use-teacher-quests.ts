@@ -13,7 +13,7 @@
 import type { QuestCategory, QuestFrequency } from "@halaqat/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
 
 // --- Types ---
 
@@ -52,7 +52,7 @@ export function useTeacherQuests() {
   return useQuery({
     queryKey: teacherQuestKeys.list(),
     queryFn: async () => {
-      const { data } = await api.get<TeacherQuest[]>("/teacher/quests");
+      const data = await apiClient.get<TeacherQuest[]>("/teacher/quests");
       return data;
     },
   });
@@ -62,7 +62,7 @@ export function useCreateTeacherQuest() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (dto: CreateTeacherQuestDto) => {
-      const { data } = await api.post<TeacherQuest>("/teacher/quests", dto);
+      const data = await apiClient.post<TeacherQuest>("/teacher/quests", dto);
       return data;
     },
     onSuccess: () => {
@@ -81,7 +81,7 @@ export function useUpdateTeacherQuest() {
       id: string;
       dto: Partial<CreateTeacherQuestDto>;
     }) => {
-      const { data } = await api.put<TeacherQuest>(
+      const data = await apiClient.put<TeacherQuest>(
         `/teacher/quests/${id}`,
         dto,
       );
@@ -97,7 +97,7 @@ export function useDeleteTeacherQuest() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/teacher/quests/${id}`);
+      await apiClient.delete(`/teacher/quests/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teacherQuestKeys.all });

@@ -9,7 +9,8 @@
 import { RecitationType, RecitationQuality } from "@halaqat/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 /**
  * Single page recitation detail
@@ -52,19 +53,19 @@ export function useRecordRecitation() {
       if (!dto.sessionId || dto.sessionId === "undefined")
         throw new Error("Invalid sessionId");
 
-      const response = await api.post<BulkRecitationResponse>(
+      const data = await apiClient.post<BulkRecitationResponse>(
         "/progress/recitations/bulk",
         dto,
       );
-      return response.data;
+      return data;
     },
     onSuccess: (_, variables) => {
       // Invalidate student-related queries
       queryClient.invalidateQueries({
-        queryKey: ["student", "profile", variables.studentId],
+        queryKey: queryKeys.students.profile(variables.studentId),
       });
-      queryClient.invalidateQueries({ queryKey: ["session"] });
-      queryClient.invalidateQueries({ queryKey: ["recitations"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sessions.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.recitations.all });
     },
   });
 }

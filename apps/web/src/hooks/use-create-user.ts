@@ -8,7 +8,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 interface CreateUserData {
   fullName: string;
@@ -39,15 +40,15 @@ export function useCreateUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreateUserData) => {
-      const response = await api.post<CreateUserResponse>("/users", data);
-      return response.data;
+    mutationFn: async (dto: CreateUserData) => {
+      const res = await apiClient.post<CreateUserResponse>("/users", dto);
+      return res;
     },
     onSuccess: () => {
       // Invalidate users list to refetch
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      queryClient.invalidateQueries({ queryKey: ["users", "teachers"] });
-      queryClient.invalidateQueries({ queryKey: ["analytics", "teachers"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.teachers.byRole() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminStats.all });
     },
   });
 }

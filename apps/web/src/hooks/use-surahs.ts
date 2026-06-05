@@ -8,7 +8,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 interface Surah {
   id: number;
@@ -23,10 +24,10 @@ interface Surah {
  */
 export function useSurahs() {
   return useQuery({
-    queryKey: ["curriculum", "surahs"],
+    queryKey: queryKeys.curriculum.surahs(),
     queryFn: async () => {
-      const response = await api.get<Surah[]>("/curriculum/surahs");
-      return response.data;
+      const data = await apiClient.get<Surah[]>("/curriculum/surahs");
+      return data;
     },
     staleTime: 24 * 60 * 60 * 1000, // Surahs never change, cache for 24 hours
   });

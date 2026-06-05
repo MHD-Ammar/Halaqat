@@ -8,7 +8,8 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 import { useAuth } from "./use-auth";
 
@@ -33,10 +34,10 @@ export interface AwardByRuleDto {
  */
 export function useTeacherRewards() {
   return useQuery({
-    queryKey: ["points", "rules", "teacher"],
+    queryKey: ["points", "rules", "teacher"] as const,
     queryFn: async () => {
-      const response = await api.get<TeacherRewardRule[]>("/points/rules/teacher");
-      return response.data;
+      const data = await apiClient.get<TeacherRewardRule[]>("/points/rules/teacher");
+      return data;
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
@@ -51,14 +52,14 @@ export function useTeacherBudget(sessionId: string) {
   const { user } = useAuth();
   
   return useQuery({
-    queryKey: ["points", "budget", sessionId, user?.id],
+    queryKey: ["points", "budget", sessionId, user?.id] as const,
     queryFn: async () => {
       // API now returns weekly budget, but we still trigger it per session view
-      const response = await api.get<{ used: number; limit: number; remaining: number }>(
+      const data = await apiClient.get<{ used: number; limit: number; remaining: number }>(
         "/points/budget",
         { params: { sessionId } },
       );
-      return response.data;
+      return data;
     },
     enabled: !!sessionId && sessionId !== "undefined" && !!user?.id,
   });
@@ -72,13 +73,13 @@ export function useAddManualPoints() {
 
   return useMutation({
     mutationFn: async (dto: { studentId: string; amount: number; reason: string; sessionId: string }) => {
-      const response = await api.post("/points/manual", dto);
-      return response.data;
+      const data = await apiClient.post("/points/manual", dto);
+      return data;
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["points", "history", variables.studentId] });
-      queryClient.invalidateQueries({ queryKey: ["student", variables.studentId] });
-      queryClient.invalidateQueries({ queryKey: ["points", "budget", variables.sessionId] });
+      queryClient.invalidateQueries({ queryKey: ["points", "history", variables.studentId] as const });
+      queryClient.invalidateQueries({ queryKey: queryKeys.students.detail(variables.studentId) });
+      queryClient.invalidateQueries({ queryKey: ["points", "budget", variables.sessionId] as const });
     },
   });
 }
@@ -91,15 +92,15 @@ export function useAwardReward() {
 
   return useMutation({
     mutationFn: async (dto: AwardByRuleDto) => {
-      const response = await api.post("/points/award-by-rule", dto);
-      return response.data;
+      const data = await apiClient.post("/points/award-by-rule", dto);
+      return data;
     },
     onSuccess: (_data, variables) => {
       // Invalidate student points
-      queryClient.invalidateQueries({ queryKey: ["points", "history", variables.studentId] });
-      queryClient.invalidateQueries({ queryKey: ["student", variables.studentId] });
+      queryClient.invalidateQueries({ queryKey: ["points", "history", variables.studentId] as const });
+      queryClient.invalidateQueries({ queryKey: queryKeys.students.detail(variables.studentId) });
       // Invalidate budget
-      queryClient.invalidateQueries({ queryKey: ["points", "budget", variables.sessionId] });
+      queryClient.invalidateQueries({ queryKey: ["points", "budget", variables.sessionId] as const });
     },
   });
 }

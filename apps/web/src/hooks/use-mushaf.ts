@@ -16,7 +16,8 @@ import type {
 } from "@halaqat/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 import { fetchMushafPage, prefetchAdjacentPages } from "@/services/qurani.service";
 
 // ── QuraniHub Page Hooks ──────────────────────────────────────────
@@ -29,7 +30,7 @@ import { fetchMushafPage, prefetchAdjacentPages } from "@/services/qurani.servic
  */
 export function useMushafPage(pageNumber: number) {
   return useQuery<MushafPage>({
-    queryKey: ["mushaf", "page", pageNumber],
+    queryKey: queryKeys.mushaf.page(pageNumber),
     queryFn: () => fetchMushafPage(pageNumber),
     enabled: pageNumber >= 1 && pageNumber <= 604,
     staleTime: 24 * 60 * 60 * 1000, // 24 hours stale time (data rarely changes)
@@ -55,11 +56,8 @@ interface MushafState {
  */
 export function useMyMushafState() {
   return useQuery<MushafState>({
-    queryKey: ["mushaf", "state", "me"],
-    queryFn: async () => {
-      const response = await api.get("/mushaf/state");
-      return response.data;
-    },
+    queryKey: queryKeys.mushaf.myState(),
+    queryFn: () => apiClient.get<MushafState>("/mushaf/state"),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
@@ -69,11 +67,8 @@ export function useMyMushafState() {
  */
 export function useStudentMushafState(studentId: string) {
   return useQuery<MushafState>({
-    queryKey: ["mushaf", "state", studentId],
-    queryFn: async () => {
-      const response = await api.get(`/mushaf/state/${studentId}`);
-      return response.data;
-    },
+    queryKey: queryKeys.mushaf.studentState(studentId),
+    queryFn: () => apiClient.get<MushafState>(`/mushaf/state/${studentId}`),
     enabled: !!studentId,
     staleTime: 5 * 60 * 1000,
   });
@@ -92,11 +87,11 @@ export function useUpdateMyMushafState() {
       surahNumber?: number;
       ayahNumber?: number;
     }) => {
-      const response = await api.patch("/mushaf/state", dto);
-      return response.data;
+      const data = await apiClient.patch("/mushaf/state", dto);
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["mushaf", "state", "me"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.mushaf.myState() });
     },
   });
 }
@@ -117,12 +112,12 @@ export function useUpdateStudentMushafState() {
       surahNumber?: number;
       ayahNumber?: number;
     }) => {
-      const response = await api.patch(`/mushaf/state/${studentId}`, dto);
-      return response.data;
+      const data = await apiClient.patch(`/mushaf/state/${studentId}`, dto);
+      return data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["mushaf", "state", variables.studentId],
+        queryKey: queryKeys.mushaf.studentState(variables.studentId),
       });
     },
   });
@@ -152,15 +147,14 @@ export function useStudentMistakes(
   pageNumber?: number
 ) {
   return useQuery<RecitationMistake[]>({
-    queryKey: ["mushaf", "mistakes", studentId, pageNumber ?? "all"],
+    queryKey: queryKeys.mushaf.studentMistakes(studentId, pageNumber ?? 0),
     queryFn: async () => {
       const params: Record<string, number> = {};
       if (pageNumber) params.pageNumber = pageNumber;
 
-      const response = await api.get(`/mushaf/mistakes/${studentId}`, {
+      return apiClient.get<RecitationMistake[]>(`/mushaf/mistakes/${studentId}`, {
         params,
       });
-      return response.data;
     },
     enabled: !!studentId,
     staleTime: 2 * 60 * 1000, // 2 minutes
@@ -179,13 +173,13 @@ export function useBulkCreateMistakes() {
       studentId: string;
       mistakes: RecitationMistakeDto[];
     }) => {
-      const response = await api.post("/mushaf/mistakes/bulk", dto);
-      return response.data;
+      const data = await apiClient.post("/mushaf/mistakes/bulk", dto);
+      return data;
     },
     onSuccess: (_, variables) => {
       // Invalidate all mistake queries for this student
       queryClient.invalidateQueries({
-        queryKey: ["mushaf", "mistakes", variables.studentId],
+        queryKey: queryKeys.mushaf.studentState(variables.studentId),
       });
     },
   });
@@ -199,12 +193,12 @@ export function useDeleteMistake() {
 
   return useMutation({
     mutationFn: async (mistakeId: string) => {
-      const response = await api.delete(`/mushaf/mistakes/${mistakeId}`);
-      return response.data;
+      const data = await apiClient.delete(`/mushaf/mistakes/${mistakeId}`);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["mushaf", "mistakes"],
+        queryKey: queryKeys.mushaf.all,
       });
     },
   });

@@ -7,16 +7,19 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
+import { TOKEN_COOKIE_NAME } from "./constants/auth";
+import { env } from "./env";
+
+// Re-export for backwards compatibility so existing imports don't break
+export { TOKEN_COOKIE_NAME };
+
 // Create axios instance
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api",
+  baseURL: env.NEXT_PUBLIC_API_URL,
   headers: {
     "Content-Type": "application/json",
   },
 });
-
-// Auth token cookie name
-export const TOKEN_COOKIE_NAME = "token";
 
 // Add auth interceptor - automatically attach JWT token to requests
 api.interceptors.request.use(

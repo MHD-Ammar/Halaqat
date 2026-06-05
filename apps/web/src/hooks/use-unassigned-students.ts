@@ -9,7 +9,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface UnassignedStudent {
   id: string;
@@ -24,12 +25,12 @@ export interface UnassignedStudent {
  */
 export function useUnassignedStudents(search?: string) {
   return useQuery({
-    queryKey: ["students", "unassigned", search],
+    queryKey: queryKeys.students.unassigned(search),
     queryFn: async () => {
-      const response = await api.get<UnassignedStudent[]>("/students/unassigned", {
+      const data = await apiClient.get<UnassignedStudent[]>("/students/unassigned", {
         params: search ? { search } : undefined,
       });
-      return response.data;
+      return data;
     },
     staleTime: 30 * 1000, // Cache for 30 seconds
   });

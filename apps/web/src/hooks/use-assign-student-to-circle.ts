@@ -8,7 +8,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 interface AssignStudentData {
   studentId: string;
@@ -24,19 +25,19 @@ export function useAssignStudentToCircle() {
 
   return useMutation({
     mutationFn: async ({ studentId, circleId }: AssignStudentData) => {
-      const response = await api.patch(`/students/${studentId}`, {
+      const data = await apiClient.patch(`/students/${studentId}`, {
         circleId,
       });
-      return response.data;
+      return data;
     },
     onSuccess: (_data, variables) => {
       // Invalidate related queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ["students", "unassigned"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.students.unassigned() });
       queryClient.invalidateQueries({
-        queryKey: ["circles", variables.circleId],
+        queryKey: queryKeys.circles.detail(variables.circleId),
       });
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      queryClient.invalidateQueries({ queryKey: ["today-session"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.students.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sessions.all });
     },
   });
 }

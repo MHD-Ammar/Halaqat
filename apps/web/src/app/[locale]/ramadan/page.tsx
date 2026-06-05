@@ -53,7 +53,7 @@ function RamadanContent() {
     return [];
   })();
 
-  const campaignId = activeCampaign?.campaignId ?? undefined;
+  const campaignId = activeCampaign?.campaignId;
 
   // State
   const [step, setStep] = useState<"CIRCLE" | "STUDENT" | "FORM" | "SUCCESS">(
@@ -92,7 +92,7 @@ function RamadanContent() {
       {
         studentId,
         submissionData: data,
-        campaignId: campaignId ?? undefined,
+        ...(campaignId ? { campaignId } : {}),
         localDate,
       },
       {
@@ -100,9 +100,8 @@ function RamadanContent() {
           setSubmissionResult(result);
           setStep("SUCCESS");
         },
-        onError: (err: unknown) => {
-          // alert(err.response?.data?.message || "Something went wrong");
-          console.error(err);
+        onError: (_err: unknown) => {
+          // Submission error is surfaced via toast by useApiErrorToast in the mutation hook
         },
       },
     );

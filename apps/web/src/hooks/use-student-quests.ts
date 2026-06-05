@@ -13,7 +13,8 @@ import type { QuestCategory } from "@halaqat/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useToast } from "@/hooks/use-toast";
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 import { useUserProfile } from "./use-user-profile";
 
@@ -118,10 +119,10 @@ export function useStudentQuests() {
   const query = useQuery({
     queryKey: studentQuestKeys.quests(),
     queryFn: async () => {
-      const response = await api.get<GroupedQuestsResponse>(
+      const data = await apiClient.get<GroupedQuestsResponse>(
         "/student-portal/quests",
       );
-      return response.data;
+      return data;
     },
     enabled: !!userProfile && userProfile.role === "STUDENT",
     staleTime: 2 * 60 * 1000, // 2 minutes
@@ -141,14 +142,14 @@ export function useCompleteQuest() {
 
   return useMutation({
     mutationFn: async (questId: string) => {
-      const response = await api.post<CompleteQuestResponse>(
+      const data = await apiClient.post<CompleteQuestResponse>(
         `/student-portal/quests/${questId}/complete`,
       );
-      return response.data;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: studentQuestKeys.all });
-      queryClient.invalidateQueries({ queryKey: ["user", "profile"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.profile() });
     },
   });
 }
@@ -167,15 +168,15 @@ export function useLogQuestProgress() {
       questId: string;
       amount?: number;
     }) => {
-      const response = await api.post<LogProgressResponse>(
+      const data = await apiClient.post<LogProgressResponse>(
         `/student-portal/quests/${questId}/log-progress`,
         { amount },
       );
-      return response.data;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: studentQuestKeys.all });
-      queryClient.invalidateQueries({ queryKey: ["user", "profile"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.profile() });
     },
   });
 }
@@ -189,13 +190,13 @@ export function useTodayQuests(campaignKey: string = "ramadan") {
   const query = useQuery({
     queryKey: studentQuestKeys.today(campaignKey),
     queryFn: async () => {
-      const response = await api.get<TodayQuestsResponse>(
+      const data = await apiClient.get<TodayQuestsResponse>(
         "/student-portal/quests/today",
         {
           params: { campaignKey },
         },
       );
-      return response.data;
+      return data;
     },
     enabled: !!userProfile && userProfile.role === "STUDENT",
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -215,12 +216,12 @@ export function useSubmitStudentQuests() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (data: SubmitQuestRequest) => {
-      const response = await api.post<SubmitQuestResponse>(
+    mutationFn: async (dto: SubmitQuestRequest) => {
+      const res = await apiClient.post<SubmitQuestResponse>(
         "/student-portal/quests/submit",
-        data,
+        dto,
       );
-      return response.data;
+      return res;
     },
     onSuccess: (data) => {
       // Invalidate quest status
@@ -230,12 +231,12 @@ export function useSubmitStudentQuests() {
 
       // Invalidate user profile (HUD) - students get profile from auth
       queryClient.invalidateQueries({
-        queryKey: ["user", "profile"],
+        queryKey: queryKeys.auth.profile(),
       });
 
       // Invalidate daily challenge student info
       queryClient.invalidateQueries({
-        queryKey: ["daily-challenge"],
+        queryKey: queryKeys.dailyChallenge.all,
       });
 
       if (data.shieldUsed) {

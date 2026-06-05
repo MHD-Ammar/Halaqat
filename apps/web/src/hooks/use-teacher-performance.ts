@@ -8,7 +8,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 interface TeacherPerformance {
   teacherId: string;
@@ -29,12 +30,12 @@ interface PerformanceResponse {
  */
 export function useTeacherPerformance(options: { enabled?: boolean } = {}) {
   return useQuery({
-    queryKey: ["analytics", "teachers"],
+    queryKey: queryKeys.adminStats.teacherPerformance("all", "", ""),
     queryFn: async () => {
-      const response = await api.get<PerformanceResponse>(
+      const data = await apiClient.get<PerformanceResponse>(
         "/analytics/teachers",
       );
-      return response.data.data;
+      return data.data;
     },
     staleTime: 60 * 1000, // 1 minute
     ...options,

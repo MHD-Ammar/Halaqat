@@ -10,7 +10,8 @@
 import { AttendanceStatus } from "@halaqat/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 /**
  * Types for session data
@@ -75,17 +76,17 @@ interface BulkAttendanceDto {
  */
 export function useTodaySession(circleId: string | undefined) {
   return useQuery({
-    queryKey: ["session", "today", circleId],
+    queryKey: queryKeys.sessions.today(circleId ?? ""),
     queryFn: async () => {
       if (!circleId || circleId === "undefined") {
         throw new Error("Invalid circle ID");
       }
-      const response = await api.get<Session | null>(
+      const data = await apiClient.get<Session | null>(
         `/sessions/today?circleId=${circleId}`,
       );
       // Backend returns empty string or null if not found
-      if (!response.data) return null;
-      return response.data;
+      if (!data) return null;
+      return data;
     },
     enabled: !!circleId && circleId !== "undefined",
     retry: false,
@@ -100,10 +101,10 @@ export function useStartSession() {
 
   return useMutation({
     mutationFn: async (circleId: string) => {
-      const response = await api.post<Session>(
+      const data = await apiClient.post<Session>(
         `/sessions/today?circleId=${circleId}`,
       );
-      return response.data;
+      return data;
     },
     onSuccess: (data, circleId) => {
       queryClient.setQueryData(["session", "today", circleId], data);
@@ -122,7 +123,7 @@ export function useUpdateAttendance(sessionId: string | undefined) {
       if (!sessionId || sessionId === "undefined") {
         throw new Error("Invalid session ID");
       }
-      const response = await api.patch<Session>(
+      const data = await apiClient.patch<Session>(
         `/sessions/${sessionId}/attendance`,
         {
           updates: updates.filter(
@@ -130,7 +131,7 @@ export function useUpdateAttendance(sessionId: string | undefined) {
           ),
         } as BulkAttendanceDto,
       );
-      return response.data;
+      return data;
     },
     onSuccess: (data) => {
       // Update the cache with new data
@@ -144,15 +145,15 @@ export function useUpdateAttendance(sessionId: string | undefined) {
  */
 export function useSessionHistory(circleId: string | undefined, limit = 30) {
   return useQuery({
-    queryKey: ["sessions", "history", circleId, limit],
+    queryKey: queryKeys.sessions.history(circleId ?? "", limit),
     queryFn: async () => {
       if (!circleId || circleId === "undefined") {
         throw new Error("Invalid circle ID");
       }
-      const response = await api.get<Session[]>(
+      const data = await apiClient.get<Session[]>(
         `/sessions/history?circleId=${circleId}&limit=${limit}`,
       );
-      return response.data;
+      return data;
     },
     enabled: !!circleId && circleId !== "undefined",
   });

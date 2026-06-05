@@ -2,7 +2,8 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export type StoreItemType =
   | "AVATAR_FRAME"
@@ -42,10 +43,10 @@ export interface PurchaseItemResponse {
 
 export function useStoreItems() {
   return useQuery({
-    queryKey: ["student-store-items"],
+    queryKey: queryKeys.studentStore.all,
     queryFn: async () => {
-      const response = await api.get<StoreItemWithStatus[]>("/student-portal/store");
-      return response.data;
+      const data = await apiClient.get<StoreItemWithStatus[]>("/student-portal/store");
+      return data;
     },
     staleTime: 60 * 1000,
   });
@@ -56,17 +57,17 @@ export function usePurchaseItem() {
 
   return useMutation({
     mutationFn: async (itemId: string) => {
-      const response = await api.post<PurchaseItemResponse>(
+      const data = await apiClient.post<PurchaseItemResponse>(
         `/student-portal/store/${itemId}/purchase`
       );
-      return response.data;
+      return data;
     },
     onSuccess: () => {
       // Invalidate store items to update limit/affordability statuses
-      queryClient.invalidateQueries({ queryKey: ["student-store-items"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.studentStore.all });
       // Invalidate dashboard to update XP
-      queryClient.invalidateQueries({ queryKey: ["student-portal-dashboard"] });
-      queryClient.invalidateQueries({ queryKey: ["student-portal"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.studentPortal.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.studentPortal.all });
     },
   });
 }
@@ -85,10 +86,10 @@ export interface PurchaseHistoryItem {
 
 export function usePurchaseHistory() {
   return useQuery({
-    queryKey: ["student-store-purchases"],
+    queryKey: ["student-store-purchases"] as const,
     queryFn: async () => {
-      const response = await api.get<PurchaseHistoryItem[]>("/student-portal/store/purchases");
-      return response.data;
+      const data = await apiClient.get<PurchaseHistoryItem[]>("/student-portal/store/purchases");
+      return data;
     },
     staleTime: 60 * 1000,
   });

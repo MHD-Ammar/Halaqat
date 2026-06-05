@@ -8,7 +8,8 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 // ==================== TYPES ====================
 
@@ -60,10 +61,10 @@ export interface CreatePointRuleDto {
  */
 export function useMosqueSettings() {
   return useQuery({
-    queryKey: ["mosque", "my-mosque"],
+    queryKey: queryKeys.settings.mosque(),
     queryFn: async () => {
-      const response = await api.get<{ message: string; data: Mosque }>("/mosques/my-mosque");
-      return response.data.data;
+      const data = await apiClient.get<{ message: string; data: Mosque }>("/mosques/my-mosque");
+      return data.data;
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
@@ -76,15 +77,15 @@ export function useUpdateMosque() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: UpdateMosqueDto) => {
-      const response = await api.patch<{ message: string; data: Mosque }>(
+    mutationFn: async (dto: UpdateMosqueDto) => {
+      const res = await apiClient.patch<{ message: string; data: Mosque }>(
         "/mosques/my-mosque",
-        data
+        dto,
       );
-      return response.data.data;
+      return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["mosque", "my-mosque"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.mosque() });
     },
   });
 }
@@ -96,10 +97,10 @@ export function useUpdateMosque() {
  */
 export function usePointRules() {
   return useQuery({
-    queryKey: ["points", "rules"],
+    queryKey: queryKeys.settings.pointRules(),
     queryFn: async () => {
-      const response = await api.get<PointRule[]>("/points/rules");
-      return response.data;
+      const data = await apiClient.get<PointRule[]>("/points/rules");
+      return data;
     },
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
   });
@@ -112,15 +113,15 @@ export function useUpdatePointRules() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: BulkUpdatePointRulesDto) => {
-      const response = await api.put<{ message: string; data: PointRule[] }>(
+    mutationFn: async (dto: BulkUpdatePointRulesDto) => {
+      const res = await apiClient.put<{ message: string; data: PointRule[] }>(
         "/points/rules",
-        data
+        dto,
       );
-      return response.data.data;
+      return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["points", "rules"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.pointRules() });
     },
   });
 }
@@ -132,12 +133,10 @@ export function useCreateCustomRule() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreatePointRuleDto) => {
-      const response = await api.post<PointRule>("/points/rules", data);
-      return response.data;
-    },
+    mutationFn: async (dto: CreatePointRuleDto) =>
+      apiClient.post<PointRule>("/points/rules", dto),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["points", "rules"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.pointRules() });
     },
   });
 }
@@ -150,10 +149,10 @@ export function useDeleteCustomRule() {
 
   return useMutation({
     mutationFn: async (ruleId: number) => {
-      await api.delete(`/points/rules/${ruleId}`);
+      await apiClient.delete(`/points/rules/${ruleId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["points", "rules"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.pointRules() });
     },
   });
 }

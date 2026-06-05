@@ -8,7 +8,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface Teacher {
   id: string;
@@ -23,12 +24,12 @@ export interface Teacher {
  */
 export function useTeachers() {
   return useQuery({
-    queryKey: ["users", "teachers"],
+    queryKey: queryKeys.teachers.byRole(),
     queryFn: async () => {
-      const response = await api.get<Teacher[]>("/users", {
+      const data = await apiClient.get<Teacher[]>("/users", {
         params: { role: "TEACHER" },
       });
-      return response.data;
+      return data;
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });

@@ -8,7 +8,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
+import { queryKeys } from "@/lib/query-keys";
 
 interface DailyOverview {
   totalStudents: number;
@@ -27,12 +28,12 @@ interface OverviewResponse {
  */
 export function useTeacherStats(options: { enabled?: boolean } = {}) {
   return useQuery({
-    queryKey: ["analytics", "my-overview"],
+    queryKey: queryKeys.adminStats.all,
     queryFn: async () => {
-      const response = await api.get<OverviewResponse>(
+      const data = await apiClient.get<OverviewResponse>(
         "/analytics/my-overview",
       );
-      return response.data.data;
+      return data.data;
     },
     staleTime: 30 * 1000, // 30 seconds
     ...options,
