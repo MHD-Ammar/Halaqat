@@ -145,6 +145,7 @@ export class PointsService {
       counter++;
     }
 
+    const isCustomEntry = dto.isCustomEntry ?? false;
     const rule = this.pointRuleRepository.create({
       key,
       description: dto.description,
@@ -153,8 +154,8 @@ export class PointsService {
       isActive: true,
       isSystem: false,
       isVisibleToTeacher: dto.isVisibleToTeacher ?? true,
-      isCustomEntry: dto.isCustomEntry ?? false,
-      maxCustomValue: dto.isCustomEntry ? dto.maxCustomValue : null,
+      isCustomEntry,
+      maxCustomValue: isCustomEntry ? (dto.maxCustomValue ?? null) : null,
     });
 
     return this.pointRuleRepository.save(rule);

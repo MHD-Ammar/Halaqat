@@ -1,123 +1,168 @@
 /**
- * Global HTTP Exception Filter
+ * Global Exception Filter
  *
- * Provides consistent error responses across the entire API.
- * Catches all exceptions and formats them into a standard structure.
+ * Maps every thrown value to a stable JSON shape:
+ *   { code, message, messageAr, details?, requestId? }
+ *
+ * Priority:
+ *   1. DomainException  – forwarded as-is (already has code + messageAr)
+ *   2. HttpException    – status mapped to generic ErrorCode
+ *   3. QueryFailedError – mapped to DATABASE_ERROR (or CONFLICT / INVALID_INPUT for PG codes)
+ *   4. Anything else    – INTERNAL_ERROR
+ *
+ * Stack traces are stripped from the response body in production.
  */
 
 import {
-  ExceptionFilter,
-  Catch,
   ArgumentsHost,
+  Catch,
+  ExceptionFilter,
   HttpException,
-  HttpStatus,
   Logger,
 } from "@nestjs/common";
-import { Response, Request } from "express";
-import { QueryFailedError, EntityNotFoundError } from "typeorm";
+import type { Request, Response } from "express";
+import { QueryFailedError } from "typeorm";
 
-export interface ErrorResponse {
-  statusCode: number;
+import { DomainException } from "../errors/domain-exception";
+import { type ErrorCode, mapStatusToCode } from "../errors/error-codes";
+import { ERROR_MESSAGES_AR } from "../errors/error-messages";
+
+export interface ApiErrorResponse {
+  code: ErrorCode;
   message: string;
-  error: string;
-  timestamp: string;
-  path: string;
+  messageAr: string;
+  details?: unknown;
+  requestId?: string;
 }
+
+/** @deprecated Use ApiErrorResponse */
+export type ErrorResponse = ApiErrorResponse;
+
+type AuthedRequest = Request & {
+  user?: { sub: string };
+  requestId?: string;
+};
 
 @Catch()
-export class GlobalExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(GlobalExceptionFilter.name);
+export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger("ExceptionFilter");
 
   catch(exception: unknown, host: ArgumentsHost): void {
-    const ctx = host.switchToHttp();
+    const ctx      = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
+    const request  = ctx.getRequest<AuthedRequest>();
 
-    let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = "An unexpected error occurred";
-    let error = "Internal Server Error";
+    let status: number;
+    let body: ApiErrorResponse;
 
-    // Handle HTTP exceptions (NestJS built-in)
-    if (exception instanceof HttpException) {
-      statusCode = exception.getStatus();
-      const exceptionResponse = exception.getResponse();
+    // ── 1. DomainException ─────────────────────────────────────────────
+    if (exception instanceof DomainException) {
+      status = exception.getStatus();
+      body   = exception.getResponse() as ApiErrorResponse;
 
-      if (typeof exceptionResponse === "string") {
-        message = exceptionResponse;
-      } else if (typeof exceptionResponse === "object") {
-        const responseObj = exceptionResponse as Record<string, unknown>;
-        message = Array.isArray(responseObj.message)
-          ? responseObj.message.join(", ")
-          : (responseObj.message as string) || message;
-        error = (responseObj.error as string) || error;
-      }
-    }
-    // Handle TypeORM QueryFailedError (database errors)
-    else if (exception instanceof QueryFailedError) {
-      const dbException = exception as QueryFailedError & { driverError?: { code?: string } };
-      const driverError = dbException.driverError;
+    // ── 2. Generic HttpException (NestJS built-ins: NotFoundException etc.)
+    } else if (exception instanceof HttpException) {
+      status     = exception.getStatus();
+      const raw  = exception.getResponse();
+      const code = mapStatusToCode(status);
+      let message: string;
+      let details: unknown;
 
-      if (driverError?.code === "23505") {
-        // Unique constraint violation
-        statusCode = HttpStatus.CONFLICT;
-        message = "A record with this value already exists";
-        error = "Conflict";
-      } else if (driverError?.code === "23503") {
-        // Foreign key violation
-        statusCode = HttpStatus.BAD_REQUEST;
-        message = "Referenced record does not exist";
-        error = "Bad Request";
-      } else if (driverError?.code === "22P02") {
-        // Invalid UUID format
-        statusCode = HttpStatus.BAD_REQUEST;
-        message = "Invalid ID format provided";
-        error = "Bad Request";
+      if (typeof raw === "string") {
+        message = raw;
       } else {
-        statusCode = HttpStatus.BAD_REQUEST;
-        message = `Database operation failed: ${exception.message}`;
-        error = "Database Error";
+        const obj = raw as Record<string, unknown>;
+        message = Array.isArray(obj["message"])
+          ? (obj["message"] as string[]).join(", ")
+          : (typeof obj["message"] === "string" ? obj["message"] : code);
+        details = obj;
       }
 
-      this.logger.error(
-        `Database error: ${exception.message}`,
-        exception.stack,
-      );
-    }
-    // Handle TypeORM EntityNotFoundError
-    else if (exception instanceof EntityNotFoundError) {
-      statusCode = HttpStatus.NOT_FOUND;
-      message = "The requested resource was not found";
-      error = "Not Found";
-    }
-    // Handle generic errors
-    else if (exception instanceof Error) {
-      message = exception.message || message;
-      this.logger.error(
-        `Unhandled error: ${exception.message}`,
-        exception.stack,
-      );
+      body = {
+        code,
+        message,
+        messageAr: ERROR_MESSAGES_AR[code],
+        details,
+      };
+
+    // ── 3. TypeORM QueryFailedError ─────────────────────────────────────
+    } else if (exception instanceof QueryFailedError) {
+      const pgCode = (exception as QueryFailedError & { driverError?: { code?: string } })
+        .driverError?.code;
+
+      if (pgCode === "23505") {
+        status = 409;
+        body   = {
+          code:      "ALREADY_EXISTS",
+          message:   "A record with this value already exists",
+          messageAr: ERROR_MESSAGES_AR["ALREADY_EXISTS"],
+        };
+      } else if (pgCode === "23503") {
+        status = 400;
+        body   = {
+          code:      "INVALID_INPUT",
+          message:   "Referenced record does not exist",
+          messageAr: ERROR_MESSAGES_AR["INVALID_INPUT"],
+        };
+      } else if (pgCode === "22P02") {
+        status = 400;
+        body   = {
+          code:      "INVALID_INPUT",
+          message:   "Invalid ID format provided",
+          messageAr: ERROR_MESSAGES_AR["INVALID_INPUT"],
+        };
+      } else {
+        status = 500;
+        body   = {
+          code:      "DATABASE_ERROR",
+          message:   "Database operation failed",
+          messageAr: ERROR_MESSAGES_AR["DATABASE_ERROR"],
+        };
+      }
+
+    // ── 4. Unknown ──────────────────────────────────────────────────────
+    } else {
+      status = 500;
+      body   = {
+        code:      "INTERNAL_ERROR",
+        message:   "Internal Server Error",
+        messageAr: ERROR_MESSAGES_AR["INTERNAL_ERROR"],
+      };
     }
 
-    const errorResponse: ErrorResponse = {
-      statusCode,
-      message,
-      error,
-      timestamp: new Date().toISOString(),
-      path: request.url,
+    // Attach correlation id
+    if (request.requestId) {
+      body.requestId = request.requestId;
+    }
+
+    // Structured logging
+    const logPayload = {
+      requestId: request.requestId,
+      userId:    request.user?.sub,
+      method:    request.method,
+      url:       request.url,
+      status,
+      code:      body.code,
+      message:   body.message,
     };
 
-    // Log errors (only for 5xx errors in production, but warn for 4xx)
-    if (statusCode >= 500) {
-      this.logger.error(
-        `${request.method} ${request.url} - ${statusCode}`,
-        exception instanceof Error ? exception.stack : String(exception),
-      );
-    } else if (statusCode >= 400) {
-      this.logger.warn(
-        `${request.method} ${request.url} - ${statusCode} - ${message} | Raw: ${exception instanceof Error ? exception.message : String(exception)}`,
-      );
+    if (status >= 500) {
+      this.logger.error({
+        ...logPayload,
+        stack: exception instanceof Error ? exception.stack : String(exception),
+      });
+    } else {
+      this.logger.warn(logPayload);
     }
 
-    response.status(statusCode).json(errorResponse);
+    // Scrub internals from 5xx in production
+    if (process.env["NODE_ENV"] === "production" && status >= 500) {
+      delete body.details;
+    }
+
+    response.status(status).json(body);
   }
 }
+
+/** @deprecated Use AllExceptionsFilter */
+export { AllExceptionsFilter as GlobalExceptionFilter };

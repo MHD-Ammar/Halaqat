@@ -10,7 +10,8 @@ import { NestFactory } from "@nestjs/core";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 
 import { AppModule } from "./app.module";
-import { GlobalExceptionFilter } from "./common/filters";
+import { ValidationDomainException } from "./common/errors";
+import { AllExceptionsFilter } from "./common/filters";
 
 /**
  * Bootstrap the NestJS application
@@ -22,15 +23,24 @@ async function bootstrap(): Promise<void> {
   // Configure port (3001 to avoid conflict with Next.js on 3000)
   const port = process.env.PORT || 3001;
 
-  // Global exception filter for consistent error responses
-  app.useGlobalFilters(new GlobalExceptionFilter());
+  // Global exception filter — produces { code, message, messageAr, details, requestId }
+  app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Global validation pipe for DTO validation
+  // Strict global validation pipe — whitelist + transform + domain error shape
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // Strip non-whitelisted properties
-      forbidNonWhitelisted: true, // Throw error on unknown properties
-      transform: true, // Auto-transform payloads to DTO instances
+      whitelist: true,               // strip unknown properties
+      forbidNonWhitelisted: true,    // throw 422 if unknown properties present
+      transform: true,               // auto-transform payloads to DTO instances
+      transformOptions: { enableImplicitConversion: true },
+      exceptionFactory: (errors) =>
+        new ValidationDomainException("VALIDATION_ERROR", {
+          message: "Validation failed",
+          details: errors.map((e) => ({
+            property: e.property,
+            constraints: e.constraints,
+          })),
+        }),
     }),
   );
 

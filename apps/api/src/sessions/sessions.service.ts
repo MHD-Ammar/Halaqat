@@ -6,9 +6,9 @@
  */
 
 import { AttendanceStatus, SessionStatus } from "@halaqat/types";
-import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import { ConflictException, Injectable, Logger, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { QueryFailedError, Repository } from "typeorm";
 
 import { BulkAttendanceDto } from "./dto/bulk-attendance.dto";
 import { Attendance } from "./entities/attendance.entity";
@@ -29,6 +29,8 @@ const STATUS_TO_RULE_KEY: Record<AttendanceStatus, string> = {
 
 @Injectable()
 export class SessionsService {
+  private readonly logger = new Logger(SessionsService.name);
+
   constructor(
     @InjectRepository(Session)
     private sessionRepository: Repository<Session>,
@@ -96,26 +98,41 @@ export class SessionsService {
 
     const today = this.getTodayDate();
 
-    // Check for existing session first to avoid duplicates
-    let session = await this.sessionRepository.findOne({
-      where: {
-        circleId,
+    // Optimistic insert: attempt to save first and fall back to a SELECT if
+    // a unique-constraint violation tells us another request won the race.
+    // This avoids the check-then-act window that existed with the old
+    // findOne → save pattern (two concurrent requests could both see no
+    // session and both insert, producing a duplicate-session error).
+    let session: Session | undefined;
+    try {
+      this.logger.log({ msg: "Creating new session", circleId, date: today });
+      const newSession = this.sessionRepository.create({
+        circleId: circle.id,
         date: today,
-      },
-      relations: ["attendances", "attendances.student", "circle"],
-    });
-
-    // If session doesn't exist, create it
-    if (!session) {
-      const newSession = new Session();
-      newSession.circleId = circle.id;
-      newSession.date = today;
-      newSession.status = SessionStatus.OPEN;
-      newSession.mosqueId = circle.mosqueId;
-
+        status: SessionStatus.OPEN,
+        mosqueId: circle.mosqueId,
+      });
       session = await this.sessionRepository.save(newSession);
-      // Initialize attendances collection
       session.attendances = [];
+    } catch (err) {
+      // PostgreSQL unique_violation code is "23505".
+      const isUniqueViolation =
+        err instanceof QueryFailedError &&
+        (err as QueryFailedError & { code?: string }).code === "23505";
+
+      if (!isUniqueViolation) throw err;
+
+      // Another request already created the session — fetch it.
+      this.logger.log({ msg: "Session already exists (race condition handled)", circleId, date: today });
+      const existing = await this.sessionRepository.findOne({
+        where: { circleId, date: today },
+        relations: ["attendances", "attendances.student", "circle"],
+      });
+      if (!existing) {
+        // Extremely unlikely but guard against it
+        throw new ConflictException("Session creation conflict — please retry");
+      }
+      session = existing;
     }
 
     // Ensure attendance records exist

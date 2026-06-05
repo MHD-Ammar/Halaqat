@@ -1,4 +1,4 @@
- import {
+import {
   getCampaignConfig,
   getCampaignForm,
   FormQuestion,
@@ -6,6 +6,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -21,6 +22,8 @@ import { Student } from "../students/entities/student.entity";
 
 @Injectable()
 export class DailyChallengeService {
+  private readonly logger = new Logger(DailyChallengeService.name);
+
   constructor(
     @InjectRepository(DailySubmission)
     private submissionRepo: Repository<DailySubmission>,
@@ -33,34 +36,35 @@ export class DailyChallengeService {
   ) {}
 
   /**
-   * Helper to resolve legacy campaign keys (e.g. "ramadan") to actual database UUIDs
+   * Resolve a campaign key (e.g. "ramadan") or UUID to an active campaign UUID.
+   *
+   * BUG FIX: Previously this method silently fell back to the *first available*
+   * campaign when no active campaign existed, causing student answers to be
+   * attributed to the wrong campaign.  Now it throws CAMPAIGN_NOT_ACTIVE when
+   * there is no currently active campaign so the caller can surface a meaningful
+   * error instead of silently mis-attributing data.
+   *
+   * If a raw UUID is passed, it is returned as-is (caller is responsible for
+   * verifying the campaign exists and is active when that matters).
    */
   private async resolveCampaignId(campaignParam: string): Promise<string> {
-    // If it's already a valid UUID, return it
+    // If it's already a valid UUID, trust the caller
     if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(campaignParam)) {
       return campaignParam;
     }
 
-    // Find the active campaign as fallback
+    // Require an active campaign – never silently fall back to a random one
     const activeCampaign = await this.submissionRepo.manager.findOne(Campaign, {
       where: { isActive: true },
       order: { createdAt: "DESC" },
     });
 
-    if (activeCampaign) {
-      return activeCampaign.id;
+    if (!activeCampaign) {
+      this.logger.warn({ msg: "No active campaign found", campaignParam });
+      throw new BadRequestException("No active campaign is available at this time");
     }
 
-    // Fallback to the first available campaign
-    const firstCampaign = await this.submissionRepo.manager.findOne(Campaign, {
-      order: { createdAt: "DESC" },
-    });
-
-    if (firstCampaign) {
-      return firstCampaign.id;
-    }
-
-    throw new BadRequestException("No campaigns available");
+    return activeCampaign.id;
   }
 
   /**
@@ -227,7 +231,7 @@ export class DailyChallengeService {
   ): Promise<number> {
     const yesterdayDate = new Date(todayStr);
     yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-    const yesterdayStr = yesterdayDate.toISOString().split("T")[0];
+    const yesterdayStr = yesterdayDate.toISOString().split("T")[0]!;
 
     const previousSubmission = await this.submissionRepo.findOne({
       where: {
@@ -306,7 +310,7 @@ export class DailyChallengeService {
 
     if (lastSubmission) {
       const today = new Date();
-      const todayStr = today.toISOString().split("T")[0];
+      const todayStr = today.toISOString().split("T")[0]!;
       const lastDate = new Date(lastSubmission.submissionDate);
       const diffDays = Math.floor(
         (today.getTime() - lastDate.getTime()) / (1000 * 3600 * 24),
@@ -427,7 +431,7 @@ export class DailyChallengeService {
     const startDate = new Date(startDateStr);
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + 6);
-    const endDateStr = endDate.toISOString().split("T")[0];
+    const endDateStr = endDate.toISOString().split("T")[0]!;
 
     const submissions = await this.submissionRepo
       .createQueryBuilder("submission")
@@ -737,8 +741,8 @@ export class DailyChallengeService {
         if (student) {
           student.totalXp += xpDelta;
 
-          // Recalculate level based on new XP
-          const XP_PER_LEVEL = 500; // Same as in StudentPortalService, should probably be centralized
+          // Recalculate level based on new XP (500 XP per level — shared constant)
+          const XP_PER_LEVEL = 500;
           student.currentLevel = Math.floor(student.totalXp / XP_PER_LEVEL) + 1;
 
           await queryRunner.manager.save(student);

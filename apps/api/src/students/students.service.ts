@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   ForbiddenException,
   BadRequestException,
@@ -50,6 +51,8 @@ const ARABIC_TO_LATIN: Record<string, string> = {
 
 @Injectable()
 export class StudentsService {
+  private readonly logger = new Logger(StudentsService.name);
+
   constructor(
     @InjectRepository(Student)
     private studentsRepository: Repository<Student>,
@@ -166,6 +169,7 @@ export class StudentsService {
     student.username = username;
     student.passwordHash = passwordHash;
 
+    this.logger.log({ msg: "Creating student", username, circleId: createStudentDto.circleId });
     const saved = await this.studentsRepository.save(student);
 
     // Return raw password once (not persisted in plaintext)

@@ -28,7 +28,7 @@ import {
 } from "@nestjs/swagger";
 
 import { SubmitStudentQuestDto } from "./dto/submit-student-quest.dto";
-import { StudentPortalService } from "./student-portal.service";
+import { StudentPortalFacade } from "./student-portal.facade";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -44,7 +44,7 @@ import { NotificationService } from "../notifications/notification.service";
 @UseInterceptors(ClassSerializerInterceptor)
 export class StudentPortalController {
   constructor(
-    private readonly studentPortalService: StudentPortalService,
+    private readonly studentPortalService: StudentPortalFacade,
     private readonly storeService: StoreService,
     private readonly notificationService: NotificationService,
   ) {}

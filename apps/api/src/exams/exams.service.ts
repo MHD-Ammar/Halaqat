@@ -5,8 +5,8 @@
  * Handles exam creation, submission, and scoring.
  */
 
-import {  ExamStatus } from "@halaqat/types";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ExamStatus } from "@halaqat/types";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
@@ -21,6 +21,8 @@ const POINTS_PER_MISTAKE = 0.5;
 
 @Injectable()
 export class ExamsService {
+  private readonly logger = new Logger(ExamsService.name);
+
   constructor(
     @InjectRepository(Exam)
     private examRepository: Repository<Exam>,
@@ -42,7 +44,7 @@ export class ExamsService {
     dto: CreateExamDto,
     mosqueId?: string | null,
   ): Promise<Exam> {
-    console.log("Creating exam:", { examinerId, dto, mosqueId });
+    this.logger.log({ msg: "Creating exam", examinerId, studentId: dto.studentId, mosqueId });
 
     // Calculate attempt number
     const previousAttempts = await this.examRepository.count({

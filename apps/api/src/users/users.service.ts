@@ -66,14 +66,16 @@ export class UsersService {
     // Hash the password
     const hashedPassword = await bcrypt.hash(dto.password, SALT_ROUNDS);
 
-    // Create and save user
+    // Create and save user.
+    // exactOptionalPropertyTypes: omit optional fields entirely when undefined
+    // so TypeORM falls back to the entity's @Column default value.
     const user = this.userRepository.create({
       email: dto.email,
       password: hashedPassword,
       fullName: dto.fullName,
       phoneNumber: dto.phoneNumber,
-      role: dto.role, // Defaults to TEACHER via entity
       mosqueId: dto.mosqueId ?? null,
+      ...(dto.role !== undefined ? { role: dto.role } : {}),
     });
 
     return this.userRepository.save(user);

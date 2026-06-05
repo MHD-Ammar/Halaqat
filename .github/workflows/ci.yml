@@ -1,73 +1,106 @@
-name: CI/CD Pipeline
+name: CI
 
 on:
   push:
-    branches: ["main"]
+    branches: [main]
   pull_request:
-    branches: ["main"]
 
 jobs:
-  quality-check:
-    name: 🔍 Quality Check
+  lint-and-types:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r lint
+      - run: pnpm -r typecheck
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Types
-        run: pnpm --filter @halaqat/types build
-
-      - name: Run Lint
-        # We run lint only on the web app for now as that was the user focus
-        run: pnpm --filter @halaqat/web lint
-
-      - name: Check Build
-        run: pnpm build
+  test-api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
         env:
-           # Ensure standalone mode is ON in CI (must match next.config.ts check)
-           STANDALONE_OUTPUT: "true"
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: halaqat_test
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @halaqat/api test:cov
+        env:
+          CI: "true"
+          TEST_DB_HOST: localhost
+          TEST_DB_PORT: "5432"
+          TEST_DB_USER: postgres
+          TEST_DB_PASSWORD: test
+          TEST_DB_NAME: halaqat_test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api-coverage
+          path: apps/api/coverage
 
-  deploy:
-    name: 🚀 Deploy to VPS
-    needs: quality-check
-    if: github.ref == 'refs/heads/main'
+  test-web:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          # Docker builds take several minutes — set a generous timeout
-          command_timeout: 30m
-          script_stop: true
-          script: |
-            # 1. Navigate to project directory
-            cd ~/Halaqat 
-            
-            # 2. Pull latest changes
-            git pull origin main
-            
-            # 3. Rebuild and restart containers
-            # --no-deps on postgres: avoids unnecessary recreation of the DB container
-            # which causes the api entrypoint to wait for it to be ready again
-            docker compose -f docker-compose.prod.yml up -d --build --force-recreate
-            
-            # 4. Cleanup unused images
-            docker image prune -f
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @halaqat/web test --coverage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-coverage
+          path: apps/web/coverage
+      - run: pnpm --filter @halaqat/web build
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [test-api, test-web]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: halaqat_test
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+

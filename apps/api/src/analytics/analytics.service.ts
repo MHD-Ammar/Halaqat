@@ -67,10 +67,18 @@ export class AnalyticsService {
 
   /**
    * Get daily overview statistics
+   *
+   * BUG FIX: The original code used `new Date(); today.setHours(0,0,0,0)` which
+   * produces a timestamp in SERVER-LOCAL time.  In a multi-tenant deployment
+   * different mosques may be in different timezones, producing wrong counts.
+   * We now use a UTC midnight boundary for session/point queries so the result
+   * is stable regardless of server timezone.  A future enhancement could read
+   * `Mosque.timezone` and apply a proper offset.
    */
   async getDailyOverview(mosqueId?: string | null): Promise<DailyOverview> {
+    // Use UTC midnight to avoid server-timezone drift across mosque timezones
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     // Total active students (not soft-deleted)
     const totalStudents = await this.studentRepository.count({
@@ -144,7 +152,7 @@ export class AnalyticsService {
     mosqueId?: string,
   ): Promise<DailyOverview> {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     // Get circles belonging to this teacher
     // Security: Verify mosqueId if provided
@@ -327,7 +335,7 @@ export class AnalyticsService {
     mosqueId?: string | null,
   ): Promise<DailyOverview & { totalCircles?: number; examsToday?: number }> {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     // Base case: Teacher stats (existing logic)
     if (role.toUpperCase() === "TEACHER") {

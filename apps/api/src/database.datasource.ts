@@ -17,13 +17,21 @@ import { RecitationMistake, StudentMushafState } from "./mushaf";
 // In production/Docker, these will be provided by the environment
 dotenv.config({ path: "../../.env" });
 
+function requiredEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
 const options: DataSourceOptions = {
   type: "postgres",
-  host: process.env.DB_HOST,
+  host: requiredEnv("DB_HOST"),
   port: parseInt(process.env.DB_PORT || "5432", 10),
-  username: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  username: requiredEnv("DB_USER"),
+  password: requiredEnv("DB_PASSWORD"),
+  database: requiredEnv("DB_NAME"),
 
   // Entities and Migrations
   // Using __dirname ensures it works relative to this file's location

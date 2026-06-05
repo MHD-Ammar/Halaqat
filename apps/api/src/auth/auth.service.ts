@@ -6,6 +6,8 @@
  * and student authentication.
  */
 
+import { randomInt } from "crypto";
+
 import { UserRole } from "@halaqat/types";
 import {
   BadRequestException,
@@ -21,6 +23,35 @@ import { StudentsService } from "../students/students.service";
 import { User } from "../users/entities/user.entity";
 import { UsersService } from "../users/users.service";
 
+/**
+ * Randomised delay (50–150 ms) applied on every failed credential check.
+ *
+ * BUG FIX: Previously, `validateUser` returned `null` immediately when the
+ * username did not exist, but only after a bcrypt.compare() call when the
+ * password was wrong.  The timing difference lets an attacker enumerate valid
+ * email addresses via response-time analysis.  We now always run a dummy
+ * bcrypt comparison when the user is not found so the response time is
+ * indistinguishable between "unknown user" and "wrong password".
+ */
+const TIMING_JITTER_MS = { min: 50, max: 150 };
+
+/**
+ * A real bcrypt hash pre-computed at module load time.
+ *
+ * Using a fake/hardcoded hash string (previous approach) is unsafe because
+ * bcrypt.compare() can short-circuit on malformed hashes, restoring the
+ * timing difference we are trying to eliminate. A genuinely valid hash
+ * ensures the full bcrypt work-factor is always exercised.
+ *
+ * Cost factor 10 matches the application's standard hashing cost.
+ */
+const DUMMY_HASH = bcrypt.hashSync("__halaqat_dummy_sentinel__", 10);
+
+async function applyTimingJitter(): Promise<void> {
+  const delay = randomInt(TIMING_JITTER_MS.min, TIMING_JITTER_MS.max);
+  await new Promise((resolve) => setTimeout(resolve, delay));
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -31,7 +62,11 @@ export class AuthService {
   ) {}
 
   /**
-   * Validate user credentials
+   * Validate user credentials.
+   *
+   * Security: Always performs a bcrypt comparison (against a dummy hash if the
+   * user doesn't exist) to prevent user-enumeration via timing attacks.
+   *
    * @returns User without password if valid, null otherwise
    */
   async validateUser(
@@ -41,12 +76,17 @@ export class AuthService {
     const user = await this.usersService.findByEmail(email);
 
     if (!user) {
+      // Constant-time dummy compare so response time is indistinguishable
+      // from a real bcrypt compare, preventing user enumeration.
+      await bcrypt.compare(password, DUMMY_HASH);
+      await applyTimingJitter();
       return null;
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
+      await applyTimingJitter();
       return null;
     }
 

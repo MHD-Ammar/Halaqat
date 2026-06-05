@@ -10,9 +10,9 @@
  * concurrent writes from multiple teachers.
  */
 
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { In, IsNull, Not, Repository } from "typeorm";
+import { DataSource, In, IsNull, Not, Repository } from "typeorm";
 
 
 import { BulkCreateMistakesDto } from "./dto/bulk-create-mistakes.dto";
@@ -24,7 +24,10 @@ import { Recitation } from "../progress/entities/recitation.entity";
 
 @Injectable()
 export class MushafService {
+  private readonly logger = new Logger(MushafService.name);
+
   constructor(
+    private readonly dataSource: DataSource,
     @InjectRepository(StudentMushafState)
     private stateRepo: Repository<StudentMushafState>,
     @InjectRepository(RecitationMistake)
@@ -116,30 +119,64 @@ export class MushafService {
   async bulkCreateMistakes(
     dto: BulkCreateMistakesDto,
   ): Promise<{ count: number; mistakes: RecitationMistake[] }> {
-    const entities = dto.mistakes.map((item) =>
-      this.mistakeRepo.create({
-        recitationId: dto.recitationId ?? null,
-        studentId: dto.studentId,
-        wordLocation: item.wordLocation,
-        pageNumber: item.pageNumber,
-        surahNumber: item.surahNumber,
-        ayahNumber: item.ayahNumber,
-        wordPosition: item.wordPosition,
-        mistakeType: item.mistakeType,
-        notes: item.notes ?? null,
-      }),
-    );
-
-    const saved = await this.mistakeRepo.save(entities);
-
+    // BUG FIX: Verify the recitation belongs to the claimed student before
+    // saving mistakes against it.  Previously a caller could provide any
+    // recitationId and mistakes would be saved against a different student's
+    // recitation record, causing data integrity issues.
     if (dto.recitationId) {
-      await this.syncRecitationMistakeCount(dto.recitationId);
+      const recitation = await this.recitationRepo.findOne({
+        where: { id: dto.recitationId },
+        select: ["id", "studentId"],
+      });
+      if (!recitation) {
+        throw new NotFoundException(`Recitation with ID ${dto.recitationId} not found`);
+      }
+      if (recitation.studentId !== dto.studentId) {
+        this.logger.warn({
+          msg: "bulkCreateMistakes: recitation ownership mismatch",
+          recitationId: dto.recitationId,
+          recitationStudentId: recitation.studentId,
+          claimedStudentId: dto.studentId,
+        });
+        throw new ForbiddenException("Recitation does not belong to this student");
+      }
     }
 
-    return {
-      count: saved.length,
-      mistakes: saved,
-    };
+    // Wrap insert + count sync in a single transaction so a partial failure
+    // (e.g. a constraint violation on one word) does not leave orphaned rows
+    // or a stale mistakesCount on the parent recitation.
+    return this.dataSource.transaction(async (manager) => {
+      const mistakeRepo = manager.getRepository(RecitationMistake);
+      const recitationRepo = manager.getRepository(Recitation);
+
+      const entities = dto.mistakes.map((item) =>
+        mistakeRepo.create({
+          recitationId: dto.recitationId ?? null,
+          studentId: dto.studentId,
+          wordLocation: item.wordLocation,
+          pageNumber: item.pageNumber,
+          surahNumber: item.surahNumber,
+          ayahNumber: item.ayahNumber,
+          wordPosition: item.wordPosition,
+          mistakeType: item.mistakeType,
+          notes: item.notes ?? null,
+        }),
+      );
+
+      const saved = await mistakeRepo.save(entities);
+
+      if (dto.recitationId) {
+        const count = await mistakeRepo.count({
+          where: { recitationId: dto.recitationId },
+        });
+        await recitationRepo.update(
+          { id: dto.recitationId },
+          { mistakesCount: count },
+        );
+      }
+
+      return { count: saved.length, mistakes: saved };
+    });
   }
 
   /**

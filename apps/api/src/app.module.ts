@@ -5,7 +5,7 @@
  * It imports and configures all feature modules, database, and configuration.
  */
 
-import { Module } from "@nestjs/common";
+import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -15,6 +15,7 @@ import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { AuthModule } from "./auth/auth.module";
 import { CirclesModule } from "./circles/circles.module";
+import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
 import { envValidationSchema, typeOrmConfig } from "./config";
 import { CurriculumModule } from "./curriculum/curriculum.module";
 import { DailyChallengeModule } from "./daily-challenge/daily-challenge.module";
@@ -69,4 +70,9 @@ import { UsersModule } from "./users/users.module";
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    // Attach a unique request ID to every inbound request
+    consumer.apply(RequestIdMiddleware).forRoutes("*");
+  }
+}
