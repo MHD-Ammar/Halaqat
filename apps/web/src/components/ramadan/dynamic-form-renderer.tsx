@@ -137,9 +137,9 @@ export function DynamicFormRenderer({
             {q.type === "NUMBER" && (
               <NumberStepper
                 value={(formData[q.id] as number) ?? q.defaultValue ?? q.min ?? 0}
-                max={q.max}
-                min={q.min}
-                step={q.step}
+                {...(q.max !== undefined ? { max: q.max } : {})}
+                {...(q.min !== undefined ? { min: q.min } : {})}
+                {...(q.step !== undefined ? { step: q.step } : {})}
                 onChange={(val) => handleChange(q.id, val)}
               />
             )}

@@ -14,3 +14,13 @@ export {
   getMistakeStyle,
 } from "./mistake-style";
 export type { MistakeStyle } from "./mistake-style";
+
+// ── New decomposed parts (Task-48) ────────────────────────────────────────
+export { AssessorToolbar } from "./parts/AssessorToolbar";
+export { PendingMistakesPanel } from "./parts/PendingMistakesPanel";
+export { SaveBar } from "./parts/SaveBar";
+export { SurahSearchSheet } from "./parts/SurahSearchSheet";
+export { PageJumpInput } from "./parts/PageJumpInput";
+export { usePendingMistakes } from "./hooks/usePendingMistakes";
+export type { PendingMistake, UsePendingMistakesReturn } from "./hooks/usePendingMistakes";
+export { useMushafKeyboard } from "./hooks/useMushafKeyboard";

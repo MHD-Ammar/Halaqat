@@ -160,7 +160,7 @@ interface MushafPageRendererProps {
   /** Map of saved mistakes for the current page → underline + tint. */
   highlightedWords?: Map<string, MistakeType>;
   /** Set of pending mistakes (in-memory) → indigo selection ring. */
-  selectedWords?: Set<string>;
+  selectedWords?: ReadonlySet<string>;
   /** Whether to wire up pointer handlers. Off ⇒ pure read-only display. */
   interactive?: boolean;
   /** Called from each word's pointerdown when `interactive` is true. */
@@ -275,9 +275,11 @@ export const MushafPageRenderer = React.memo<MushafPageRendererProps>(
                     key={`${word.location}-${idx}`}
                     word={word}
                     interactive={interactive}
-                    mistake={highlightedWords?.get(word.location)}
+                    {...(highlightedWords?.has(word.location)
+                      ? { mistake: highlightedWords.get(word.location) as MistakeType }
+                      : {})}
                     isSelected={selectedWords?.has(word.location) ?? false}
-                    onPointerDown={onWordPointerDown}
+                    {...(onWordPointerDown ? { onPointerDown: onWordPointerDown } : {})}
                   />
                 ))}
               </div>
