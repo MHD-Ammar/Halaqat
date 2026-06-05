@@ -1,178 +1,107 @@
 "use client";
 
-/**
- * Create Custom Rule Dialog
- *
- * Dialog for creating custom reward categories in admin settings.
- * Supports both fixed-value and variable-input rules.
- */
-
-import { Loader2, Plus } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { CrudDialog } from "@/components/ui/crud-dialog";
+import { NumberField, SwitchField, TextField } from "@/components/ui/form-fields";
 import { useCreateCustomRule } from "@/hooks/use-settings";
 import { useToast } from "@/hooks/use-toast";
+import {
+  createCustomRuleSchema,
+  type CreateCustomRuleInput,
+} from "@/lib/schemas/custom-rule";
 
 interface CreateCustomRuleDialogProps {
   children?: React.ReactNode;
 }
 
+const DEFAULT_VALUES: CreateCustomRuleInput = {
+  description: "",
+  points: 5,
+  isCustomEntry: false,
+  maxCustomValue: 20,
+};
+
 export function CreateCustomRuleDialog({ children }: CreateCustomRuleDialogProps) {
-  const t = useTranslations("Settings");
-  const tCommon = useTranslations("Common");
+  const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const createRule = useCreateCustomRule();
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [description, setDescription] = useState("");
-  const [points, setPoints] = useState<number>(5);
-  const [isCustomEntry, setIsCustomEntry] = useState(false);
-  const [maxCustomValue, setMaxCustomValue] = useState<number>(20);
-
-  const resetForm = () => {
-    setDescription("");
-    setPoints(5);
-    setIsCustomEntry(false);
-    setMaxCustomValue(20);
-  };
-
-  const handleSubmit = async () => {
-    if (!description.trim()) {
-      toast({
-        variant: "destructive",
-        title: tCommon("error"),
-        description: t("customRules.labelRequired"),
-      });
-      return;
-    }
-
-    try {
-      await createRule.mutateAsync({
-        description: description.trim(),
-        points,
-        isVisibleToTeacher: true,
-        isCustomEntry,
-        maxCustomValue: isCustomEntry ? maxCustomValue : undefined,
-      });
-
-      toast({
-        title: tCommon("success"),
-        description: t("customRules.created"),
-      });
-
-      resetForm();
-      setIsOpen(false);
-    } catch {
-      toast({
-        variant: "destructive",
-        title: tCommon("error"),
-        description: t("customRules.createFailed"),
-      });
-    }
-  };
-
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
+    <>
+      <span
+        onClick={() => setOpen(true)}
+        style={{ cursor: "pointer", display: "contents" }}
+      >
         {children || (
           <Button size="sm">
             <Plus className="h-4 w-4 me-2" />
-            {t("customRules.add")}
+            إضافة قاعدة
           </Button>
         )}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("customRules.addTitle")}</DialogTitle>
-          <DialogDescription>{t("customRules.addDesc")}</DialogDescription>
-        </DialogHeader>
+      </span>
 
-        <div className="space-y-4 py-4">
-          {/* Label */}
-          <div className="space-y-2">
-            <Label htmlFor="rule-label">{t("customRules.label")}</Label>
-            <Input
-              id="rule-label"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t("customRules.labelPlaceholder")}
-            />
-          </div>
-
-          {/* Default Points */}
-          <div className="space-y-2">
-            <Label htmlFor="rule-points">{t("customRules.defaultPoints")}</Label>
-            <Input
-              id="rule-points"
-              type="number"
-              min={0}
-              max={100}
-              value={points}
-              onChange={(e) => setPoints(parseInt(e.target.value, 10) || 0)}
-              className="w-24"
-            />
-          </div>
-
-          {/* Variable Input Toggle */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="variable-input">{t("customRules.variableInput")}</Label>
-              <p className="text-xs text-muted-foreground">
-                {t("customRules.variableInputDesc")}
-              </p>
-            </div>
-            <Switch
-              id="variable-input"
-              checked={isCustomEntry}
-              onCheckedChange={setIsCustomEntry}
-            />
-          </div>
-
-          {/* Max Points (if variable) */}
-          {isCustomEntry && (
-            <div className="space-y-2">
-              <Label htmlFor="max-points">{t("customRules.maxPoints")}</Label>
-              <Input
-                id="max-points"
-                type="number"
-                min={1}
-                max={100}
-                value={maxCustomValue}
-                onChange={(e) => setMaxCustomValue(parseInt(e.target.value, 10) || 1)}
-                className="w-24"
+      <CrudDialog<CreateCustomRuleInput, unknown>
+        open={open}
+        onOpenChange={setOpen}
+        title="إضافة قاعدة مخصصة"
+        description="أنشئ فئة مكافأة جديدة للمعلمين"
+        schema={createCustomRuleSchema}
+        defaultValues={DEFAULT_VALUES}
+        submitLabel="إضافة"
+        size="sm"
+        onSubmit={(values) =>
+          createRule.mutateAsync({
+            description: values.description.trim(),
+            points: values.points,
+            isVisibleToTeacher: true,
+            isCustomEntry: values.isCustomEntry,
+            ...(values.isCustomEntry && typeof values.maxCustomValue === "number"
+              ? { maxCustomValue: values.maxCustomValue }
+              : {}),
+          })
+        }
+        onSuccess={() =>
+          toast({ title: "تم الإضافة", description: "تم إنشاء القاعدة المخصصة بنجاح" })
+        }
+      >
+        {(form) => {
+          const isCustomEntry = form.watch("isCustomEntry");
+          return (
+            <>
+              <TextField
+                name="description"
+                label="الوصف"
+                placeholder="مثلاً: حفظ صفحة"
+                required
               />
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
-            {tCommon("cancel")}
-          </Button>
-          <Button onClick={handleSubmit} disabled={createRule.isPending}>
-            {createRule.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin me-2" />
-            ) : (
-              <Plus className="h-4 w-4 me-2" />
-            )}
-            {tCommon("create")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+              <NumberField
+                name="points"
+                label="النقاط الافتراضية"
+                min={0}
+                max={100}
+                required
+              />
+              <SwitchField
+                name="isCustomEntry"
+                label="إدخال مخصص"
+                description="يسمح للمعلم بإدخال قيمة مخصصة بدلاً من القيمة الافتراضية"
+              />
+              {isCustomEntry && (
+                <NumberField
+                  name="maxCustomValue"
+                  label="الحد الأقصى للقيمة المخصصة"
+                  min={1}
+                  max={100}
+                  required
+                />
+              )}
+            </>
+          );
+        }}
+      </CrudDialog>
+    </>
   );
 }
