@@ -28,6 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getNavItemsForRole } from "@/config/nav";
 import { useAuth } from "@/hooks";
 import { usePathname, Link, useRouter } from "@/i18n/routing";
+import { routes } from "@/lib/constants/routes";
 import { cn } from "@/lib/utils";
 
 export function MainNav() {
@@ -154,7 +155,7 @@ export function MainNav() {
                     )}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push("/profile")}>
+                  <DropdownMenuItem onClick={() => router.push(routes.profile())}>
                     <User className="mr-2 h-4 w-4" />
                     {t("profile")}
                   </DropdownMenuItem>

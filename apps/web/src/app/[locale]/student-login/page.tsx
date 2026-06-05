@@ -20,7 +20,9 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "@/i18n/routing";
 import { TOKEN_COOKIE_NAME } from "@/lib/api";
+import { routes } from "@/lib/constants/routes";
 import { authService } from "@/services/auth.service";
+
 
 export default function StudentLoginPage() {
   const router = useRouter();
@@ -64,7 +66,7 @@ export default function StudentLoginPage() {
         description: t("loginSuccessDesc"),
       });
 
-      router.push("/student-portal");
+      router.push(routes.studentPortal());
       router.refresh();
     } catch {
       toast({

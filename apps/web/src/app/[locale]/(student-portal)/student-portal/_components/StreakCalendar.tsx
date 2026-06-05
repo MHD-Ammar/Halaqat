@@ -2,7 +2,7 @@
 
 import { Check, Flame } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { Fragment, useMemo } from "react";
+import { Fragment, useCallback, useMemo } from "react";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -28,11 +28,11 @@ export function StreakCalendar({ streakCalendar }: StreakCalendarProps) {
   const locale = useLocale();
   const dateLocale = locale === "ar" ? "ar-SA" : "en-US";
 
-  const formatWeekdayShort = (weekdayIndex: number) => {
+  const formatWeekdayShort = useCallback((weekdayIndex: number) => {
     // 2025-01-05 is Sunday. This aligns weekdayIndex 0 with Sunday, 6 with Saturday.
     const date = new Date(Date.UTC(2025, 0, 5 + weekdayIndex));
     return date.toLocaleDateString(dateLocale, { weekday: "short" });
-  };
+  }, [dateLocale]);
 
   const sortedDates = useMemo(() => Object.keys(streakCalendar).sort(), [streakCalendar]);
   const days = useMemo<DayCell[]>(
@@ -101,7 +101,7 @@ export function StreakCalendar({ streakCalendar }: StreakCalendarProps) {
       const weekday = (newestWeekday - daysBack + 14) % 7;
       return formatWeekdayShort(weekday);
     });
-  }, [newestDay, dateLocale]);
+  }, [newestDay, formatWeekdayShort]);
 
   const monthLabels = useMemo(() => {
     return Array.from({ length: columnCount }).map((_, col) => {

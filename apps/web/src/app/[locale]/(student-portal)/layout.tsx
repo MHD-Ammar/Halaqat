@@ -7,6 +7,7 @@
 
 "use client";
 
+import { UserRole } from "@halaqat/types";
 import { useQueryClient } from "@tanstack/react-query";
 import Cookies from "js-cookie";
 import { Flame, LogOut, Rocket, Shield, Star, Trophy } from "lucide-react";
@@ -22,6 +23,7 @@ import { useStudentDashboard } from "@/hooks/use-student-portal";
 import { useUserProfile } from "@/hooks/use-user-profile";
 import { Link, useRouter } from "@/i18n/routing";
 import { TOKEN_COOKIE_NAME } from "@/lib/api";
+import { routes } from "@/lib/constants/routes";
 
 import { StudentBottomNav } from "./_components/StudentBottomNav";
 import { RewardChests } from "./student-portal/_components/RewardChests";
@@ -63,13 +65,13 @@ export default function StudentPortalLayout({
   useEffect(() => {
     const token = Cookies.get(TOKEN_COOKIE_NAME);
     if (!token) {
-      router.replace("/student-login");
+      router.replace(routes.studentLogin());
       return;
     }
 
     if (!isLoading && profile) {
-      if ((profile as { role?: string }).role !== "STUDENT") {
-        router.replace("/overview");
+      if ((profile as { role?: string }).role !== UserRole.STUDENT) {
+        router.replace(routes.overview());
         return;
       }
       setIsChecking(false);
@@ -79,7 +81,7 @@ export default function StudentPortalLayout({
   const handleLogout = useCallback(() => {
     Cookies.remove(TOKEN_COOKIE_NAME);
     queryClient.clear();
-    router.push("/student-login");
+    router.push(routes.studentLogin());
     router.refresh();
   }, [queryClient, router]);
 
@@ -178,7 +180,7 @@ export default function StudentPortalLayout({
 
             {/* Trophy Room Link (Hidden on mobile, uses bottom nav) */}
             <Link
-              href="/student-portal/achievements"
+              href={routes.studentPortalAchievements()}
               className="hidden md:flex items-center gap-1.5 p-2 rounded-full hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
               title={t("trophyRoom") || "غرفة الجوائز"}
             >

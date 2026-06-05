@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCircle } from "@/hooks";
+import { routes } from "@/lib/constants/routes";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -78,7 +79,7 @@ export default function CircleDetailsPage({ params }: PageProps) {
     <div className="p-4 md:p-6 space-y-6">
       {/* Header with back button */}
       <div className="flex items-center gap-4">
-        <Link href="/circles">
+        <Link href={routes.circles()}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>

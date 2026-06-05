@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks";
 import { useRouter } from "@/i18n/routing";
+import { routes } from "@/lib/constants/routes";
 
 /**
  * Get initials from name
@@ -46,7 +47,7 @@ export function MobileHeader() {
   };
 
   const handleSettings = () => {
-    router.push("/profile");
+    router.push(routes.profile());
   };
 
   return (

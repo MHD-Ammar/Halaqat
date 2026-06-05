@@ -6,6 +6,7 @@
 
 "use client";
 
+import { UserRole } from "@halaqat/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
 import { Loader2, Ticket } from "lucide-react";
@@ -26,6 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useRouter } from "@/i18n/routing"; // Use locale-aware Link and router
+import { routes } from "@/lib/constants/routes";
 import { authService } from "@/services/auth.service";
 
 export default function RegisterPage() {
@@ -86,13 +88,13 @@ export default function RegisterPage() {
 
       // Redirect based on role:
       // Teachers go to setup wizard, others go to overview
-      if (user.role === "TEACHER") {
-        router.push("/setup/welcome");
+      if (user.role === UserRole.TEACHER) {
+        router.push(routes.setupWelcome());
       } else {
-        router.push("/overview");
+        router.push(routes.overview());
       }
-    } catch (error: any) {
-      const message = error.response?.data?.message || tCommon("error");
+    } catch (error: unknown) {
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || tCommon("error");
 
       toast({
         variant: "destructive",
@@ -243,7 +245,7 @@ export default function RegisterPage() {
         <div className="text-sm text-center text-muted-foreground">
           {t("alreadyHaveAccount")}{" "}
           <Link
-            href="/login"
+            href={routes.login()}
             className="text-primary hover:underline font-medium"
           >
             {tAuth("signIn")}

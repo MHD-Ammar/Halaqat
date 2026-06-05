@@ -80,7 +80,11 @@ export default function MyStudentsPage() {
   const { toast } = useToast();
 
   // Fetches students for the logged-in teacher automatically
-  const { data, isLoading, isError } = useStudents({ page, limit, search: debouncedSearch || undefined });
+  const { data, isLoading, isError } = useStudents({
+    page,
+    limit,
+    ...(debouncedSearch ? { search: debouncedSearch } : {}),
+  });
   const deleteStudentMutation = useDeleteStudent();
 
   const handleConfirmDelete = async () => {

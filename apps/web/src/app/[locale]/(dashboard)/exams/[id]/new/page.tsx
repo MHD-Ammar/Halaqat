@@ -103,6 +103,7 @@ export default function NewExamPage({ params }: { params: Promise<{ id: string }
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      // Placeholder for testing exam wizard functionality
       const score = calculateScore();
       const testedParts = [parseInt(selectedPart), ...cumulativeParts]
         .filter(p => !isNaN(p) && p > 0); // Defensive filtering
@@ -136,7 +137,7 @@ export default function NewExamPage({ params }: { params: Promise<{ id: string }
       });
 
       router.push(`/exams/student/${studentId}`);
-    } catch (error) {
+    } catch {
       toast({
         title: tCommon("error"),
         description: t("failedToSubmit"),

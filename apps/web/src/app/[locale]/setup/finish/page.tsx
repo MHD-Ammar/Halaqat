@@ -22,6 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useRouter } from "@/i18n/routing";
+import { routes } from "@/lib/constants/routes";
 
 export default function SetupFinishPage() {
   const router = useRouter();
@@ -37,7 +38,7 @@ export default function SetupFinishPage() {
 
     if (!storedCircleName) {
       // No setup data, go back to welcome
-      router.replace("/setup/welcome");
+      router.replace(routes.setupWelcome());
       return;
     }
 
@@ -50,7 +51,7 @@ export default function SetupFinishPage() {
     sessionStorage.removeItem("setup_circleId");
     sessionStorage.removeItem("setup_circleName");
     sessionStorage.removeItem("setup_studentCount");
-    router.push("/my-circle");
+    router.push(routes.myCircle());
   };
 
   return (

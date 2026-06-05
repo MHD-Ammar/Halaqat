@@ -27,6 +27,7 @@ import {
   useWeeklySubmissions,
 } from "@/hooks/use-weekly-submissions";
 import { Link } from "@/i18n/routing";
+import { routes } from "@/lib/constants/routes";
 
 export default function ChallengesDashboardPage() {
   const t = useTranslations("ChallengesDashboard");
@@ -95,7 +96,7 @@ export default function ChallengesDashboardPage() {
       <div className="flex flex-col gap-4">
         {/* Back + Title row */}
         <div className="flex items-center gap-3">
-          <Link href="/overview">
+          <Link href={routes.overview()}>
             <Button variant="ghost" size="icon" className="shrink-0 h-9 w-9 rounded-lg">
               <ArrowRight className="h-5 w-5 rtl:rotate-0 ltr:rotate-180" />
             </Button>

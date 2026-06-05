@@ -59,7 +59,10 @@ export function GenericDialog({
   preventOutsideClose = false,
 }: GenericDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      {...(open !== undefined ? { open } : {})}
+      {...(onOpenChange ? { onOpenChange } : {})}
+    >
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       
       <DialogContent 

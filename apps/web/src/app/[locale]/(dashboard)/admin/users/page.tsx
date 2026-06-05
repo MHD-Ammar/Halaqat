@@ -6,6 +6,7 @@
  * Lists all users and allows role changes, editing, and deletion.
  */
 
+import { UserRole } from "@halaqat/types";
 import { Pencil, Trash2, UserCog, Users, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -29,24 +30,24 @@ import { useUsers, useUpdateUserRole, useDeleteUser, type User } from "@/hooks";
 import { useToast } from "@/hooks/use-toast";
 
 const ROLES = [
-  "ADMIN",
-  "SUPERVISOR",
-  "TEACHER",
-  "EXAMINER",
-  "STUDENT",
+  UserRole.ADMIN,
+  UserRole.SUPERVISOR,
+  UserRole.TEACHER,
+  UserRole.EXAMINER,
+  UserRole.STUDENT,
 ] as const;
 
 function getRoleBadgeVariant(
   role: string
 ): "default" | "secondary" | "destructive" | "outline" {
   switch (role) {
-    case "ADMIN":
+    case UserRole.ADMIN:
       return "destructive";
-    case "SUPERVISOR":
+    case UserRole.SUPERVISOR:
       return "default";
-    case "TEACHER":
+    case UserRole.TEACHER:
       return "secondary";
-    case "EXAMINER":
+    case UserRole.EXAMINER:
       return "outline";
     default:
       return "secondary";

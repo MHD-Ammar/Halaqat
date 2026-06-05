@@ -13,6 +13,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useCampaigns, useResetStreaks } from "@/hooks/use-campaigns";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "@/i18n/routing";
+import { routes } from "@/lib/constants/routes";
 
 export default function AdminCampaignsPage() {
   const t = useTranslations("AdminCampaigns");
@@ -60,7 +61,7 @@ export default function AdminCampaignsPage() {
             {t("resetStreaks")}
           </Button>
           <Button
-            onClick={() => router.push("/admin/campaigns/create")}
+            onClick={() => router.push(routes.adminCampaignCreate())}
             className="flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />

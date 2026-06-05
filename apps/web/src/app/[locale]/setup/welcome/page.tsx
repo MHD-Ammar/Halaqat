@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth, useMyCircles, useCreateCircle } from "@/hooks";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "@/i18n/routing";
+import { routes } from "@/lib/constants/routes";
 
 export default function SetupWelcomePage() {
   const router = useRouter();
@@ -45,7 +46,7 @@ export default function SetupWelcomePage() {
     if (isCreatingCircle) return; // Skip check during circle creation
 
     if (!isCirclesLoading && circles && circles.length > 0) {
-      router.replace("/overview");
+      router.replace(routes.overview());
     } else if (!isCirclesLoading) {
       setHasCheckedCircles(true);
     }
@@ -89,7 +90,7 @@ export default function SetupWelcomePage() {
       // Store circle ID for next step and navigate
       sessionStorage.setItem("setup_circleId", circle.id);
       sessionStorage.setItem("setup_circleName", circle.name);
-      router.push("/setup/students");
+      router.push(routes.setupStudents());
     } catch (error: unknown) {
       setIsCreatingCircle(false);
       const axiosError = error as { response?: { data?: { message?: string } } };

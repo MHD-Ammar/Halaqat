@@ -198,7 +198,10 @@ export default function ExamSessionPage({
              juzNumber: state.config.currentJuz,
              testedParts: [state.config.currentJuz, ...state.config.cumulativeParts].filter(Boolean)
          };
-         console.log("Submitting exam payload:", payload);
+         if (process.env.NODE_ENV === "development") {
+           // eslint-disable-next-line no-console
+           console.log("Submitting exam payload:", payload);
+         }
 
          const createRes = await api.post("/exams", payload);
          
@@ -206,7 +209,14 @@ export default function ExamSessionPage({
 
          // 2. Submit Results
          // We construct the generic "questions" payload derived from our counters
-         const questionsPayload: any[] = [];
+         type QuestionPayloadItem = {
+           type: "CURRENT_PART" | "CUMULATIVE";
+           questionJuzNumber: number;
+           mistakesCount: number;
+           maxScore: number;
+           questionText: string;
+         };
+         const questionsPayload: QuestionPayloadItem[] = [];
          
          // Current Part Question
          // Current Part Question
@@ -214,7 +224,7 @@ export default function ExamSessionPage({
          state.scores.currentQuestions.forEach((q) => {
              questionsPayload.push({
                  type: "CURRENT_PART",
-                 questionJuzNumber: state.config.currentJuz,
+                 questionJuzNumber: state.config.currentJuz!,
                  mistakesCount: q.mistakes * 2, // BACKEND SCALE: 1 pt = 2 mistakes (0.5 multiplier)
                  maxScore: Math.round(WEIGHT_CURRENT / 3), // Split weight? Or just store mistakes. 
                  // Actually, maxScore per question isn't strictly defined in the aggregated view, 
@@ -235,7 +245,7 @@ export default function ExamSessionPage({
                  questionJuzNumber: cJuz,
                  mistakesCount: (state.scores.cumulativeMistakes[cJuz] || 0) * 2, // BACKEND SCALE
                  maxScore: WEIGHT_CUMULATIVE,
-                 questionText: state.scores.cumulativeQuestionTexts[cJuz]
+                 questionText: state.scores.cumulativeQuestionTexts[cJuz] ?? ""
              });
          });
 
@@ -258,13 +268,14 @@ export default function ExamSessionPage({
 
          router.push(`/exams/${studentId}/${state.config.currentJuz}`);
 
-     } catch (err: any) {
-         console.error("Exam submission failed:", err);
-         const errorMessage = err.response?.data?.message || err.message || "Failed to submit exam";
-         
+     } catch (err: unknown) {
+         const error = err as Record<string, unknown>;
+         const responseData = (error.response as Record<string, unknown> | undefined)?.data as Record<string, unknown> | undefined;
+         const errorMessage = (responseData?.message ?? error.message ?? "Failed to submit exam") as string | string[];
+
          toast({
              title: tCommon("error"),
-             description: Array.isArray(errorMessage) ? errorMessage.join(", ") : errorMessage,
+             description: Array.isArray(errorMessage) ? errorMessage.join(", ") : String(errorMessage),
              variant: "destructive"
          });
      } finally {

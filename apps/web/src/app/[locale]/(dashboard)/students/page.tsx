@@ -72,7 +72,11 @@ export default function StudentsPage() {
   const tCommon = useTranslations("Common");
   const { toast } = useToast();
 
-  const { data, isLoading, isError } = useStudents({ page, limit, search: debouncedSearch || undefined });
+  const { data, isLoading, isError } = useStudents({
+    page,
+    limit,
+    ...(debouncedSearch ? { search: debouncedSearch } : {}),
+  });
   const deleteStudentMutation = useDeleteStudent();
 
   const handleConfirmDelete = async () => {
@@ -301,4 +305,3 @@ export default function StudentsPage() {
     </div>
   );
 }
-

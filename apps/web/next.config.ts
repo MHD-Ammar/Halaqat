@@ -14,12 +14,15 @@ const withNextIntl = createNextIntlPlugin("./src/i18n.ts");
  * @see https://nextjs.org/docs/app/api-reference/next-config-js
  */
 const nextConfig: NextConfig = {
+  typescript: {
+    ignoreBuildErrors: false, // Task-51: must be false — TypeScript errors fail the build
+  },
   /**
    * Output mode for Next.js.
    * Standalone mode is enabled via environment variable for production/CI/Linux environments
    * to avoid EPERM symlink errors on Windows dev machines.
    */
-  output: process.env.STANDALONE_OUTPUT === "true" ? "standalone" : undefined,
+  ...(process.env.STANDALONE_OUTPUT === "true" ? { output: "standalone" as const } : {}),
 
   // Allow tracing files outside the app directory (monorepo support)
   outputFileTracingRoot: path.join(__dirname, "../../"),

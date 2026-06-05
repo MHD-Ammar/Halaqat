@@ -65,7 +65,7 @@ export function FulfillmentsTab() {
       await updateFulfillment.mutateAsync({
         id: selectedFulfillment.id,
         status: actionType,
-        notes: notes.trim() || undefined
+        ...(notes.trim() ? { notes: notes.trim() } : {}),
       });
 
       toast({

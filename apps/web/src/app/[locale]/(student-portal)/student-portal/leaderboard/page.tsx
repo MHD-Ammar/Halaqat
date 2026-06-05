@@ -48,15 +48,15 @@ export default function StudentLeaderboardPage() {
         </TabsList>
 
         <TabsContent value="circle" className="mt-6 focus-visible:outline-none focus-visible:ring-0">
-          <CircleLeaderboardTab currentUserId={currentUserId} />
+          <CircleLeaderboardTab {...(currentUserId ? { currentUserId } : {})} />
         </TabsContent>
 
         <TabsContent value="league" className="mt-6 focus-visible:outline-none focus-visible:ring-0">
-          <LeagueLeaderboardTab currentUserId={currentUserId} />
+          <LeagueLeaderboardTab {...(currentUserId ? { currentUserId } : {})} />
         </TabsContent>
 
         <TabsContent value="global" className="mt-6 focus-visible:outline-none focus-visible:ring-0">
-          <GlobalLeaderboardTab currentUserId={currentUserId} />
+          <GlobalLeaderboardTab {...(currentUserId ? { currentUserId } : {})} />
         </TabsContent>
       </Tabs>
     </div>
@@ -72,7 +72,7 @@ function CircleLeaderboardTab({ currentUserId }: { currentUserId?: string }) {
     return <EmptyState message={t("noCircleAssigned")} />;
   }
 
-  return <DefaultLeaderboardView data={data} currentUserId={currentUserId} />;
+  return <DefaultLeaderboardView data={data} {...(currentUserId ? { currentUserId } : {})} />;
 }
 
 function GlobalLeaderboardTab({ currentUserId }: { currentUserId?: string }) {
@@ -84,7 +84,7 @@ function GlobalLeaderboardTab({ currentUserId }: { currentUserId?: string }) {
     return <EmptyState message={t("noLeaderboardData")} />;
   }
 
-  return <DefaultLeaderboardView data={data} currentUserId={currentUserId} />;
+  return <DefaultLeaderboardView data={data} {...(currentUserId ? { currentUserId } : {})} />;
 }
 
 function LeagueLeaderboardTab({ currentUserId }: { currentUserId?: string }) {
@@ -162,7 +162,12 @@ function DefaultLeaderboardView({ data, currentUserId }: { data: LeaderboardResp
 
   return (
     <div className="animate-in fade-in duration-500">
-      {top3.length > 0 && <LeaderboardPodium topStudents={top3} currentUserId={currentUserId} />}
+      {top3.length > 0 && (
+        <LeaderboardPodium
+          topStudents={top3}
+          {...(currentUserId ? { currentUserId } : {})}
+        />
+      )}
 
       <div className="mt-8 space-y-3">
         {rest.map((student) => (

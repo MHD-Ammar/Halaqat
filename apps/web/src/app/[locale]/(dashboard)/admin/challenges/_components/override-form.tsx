@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 interface OverrideFormProps {
   submissionId: string;
   initialXp: number;
-  initialData: any;
+  initialData: Record<string, unknown>;
   onSuccess: () => void;
   onCancel: () => void;
 }

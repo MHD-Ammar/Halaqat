@@ -6,21 +6,18 @@
  * Provides authentication utilities including logout and current user info.
  */
 
+import { UserRole } from "@halaqat/types";
 import { useQueryClient } from "@tanstack/react-query";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 
 import { TOKEN_COOKIE_NAME } from "@/lib/api";
+import { routes } from "@/lib/constants/routes";
 
 import { useUserProfile } from "./use-user-profile";
 
-export type UserRole =
-  | "ADMIN"
-  | "TEACHER"
-  | "SUPERVISOR"
-  | "STUDENT"
-  | "EXAMINER";
+export { UserRole };
 
 export interface AuthUser {
   id: string;
@@ -49,8 +46,8 @@ export function useAuth() {
     queryClient.clear();
 
     // Redirect to appropriate login page
-    const isStudentUser = profile?.role === "STUDENT";
-    router.push(isStudentUser ? "/student-login" : "/login");
+    const isStudentUser = profile?.role === UserRole.STUDENT;
+    router.push(isStudentUser ? routes.studentLogin() : routes.login());
     router.refresh();
   }, [queryClient, router, profile?.role]);
 
@@ -71,17 +68,18 @@ export function useAuth() {
   /**
    * Check if user is Admin or Supervisor
    */
-  const isAdmin = profile?.role === "ADMIN" || profile?.role === "SUPERVISOR";
+  const isAdmin =
+    profile?.role === UserRole.ADMIN || profile?.role === UserRole.SUPERVISOR;
 
   /**
    * Check if user is Teacher
    */
-  const isTeacher = profile?.role === "TEACHER";
+  const isTeacher = profile?.role === UserRole.TEACHER;
 
   /**
    * Check if user is Student
    */
-  const isStudent = profile?.role === "STUDENT";
+  const isStudent = profile?.role === UserRole.STUDENT;
 
   return {
     user: profile as AuthUser | undefined,

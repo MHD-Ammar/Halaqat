@@ -26,6 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "@/i18n/routing";
 import { api } from "@/lib/api";
+import { routes } from "@/lib/constants/routes";
 
 interface ManualStudent {
   name: string;
@@ -58,7 +59,7 @@ export default function SetupStudentsPage() {
 
     if (!storedCircleId) {
       // No circle created, go back to welcome
-      router.replace("/setup/welcome");
+      router.replace(routes.setupWelcome());
       return;
     }
 
@@ -159,7 +160,7 @@ export default function SetupStudentsPage() {
         description: t("successMessage", { count: studentCount }),
       });
 
-      router.push("/setup/finish");
+      router.push(routes.setupFinish());
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { message?: string } } };
       toast({
@@ -175,7 +176,7 @@ export default function SetupStudentsPage() {
   // Skip student addition
   const handleSkip = () => {
     sessionStorage.setItem("setup_studentCount", "0");
-    router.push("/setup/finish");
+    router.push(routes.setupFinish());
   };
 
   if (!circleId) {

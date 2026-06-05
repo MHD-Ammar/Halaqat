@@ -82,19 +82,15 @@ export function QuestCard({ quest, onComplete, isSubmitting, streakMultiplier = 
     <motion.button
       type="button"
       layout="position"
-      whileTap={!showAsCompleted && !isSubmitting && !isPending && !isLoggingProgress ? { scale: 0.97 } : undefined}
+      {...(!showAsCompleted && !isSubmitting && !isPending && !isLoggingProgress
+        ? { whileTap: { scale: 0.97 } }
+        : {})}
       disabled={showAsCompleted || isSubmitting || (isPending && !isMultiStep)}
       onClick={handleComplete}
-      animate={
-        justCompleted
-          ? { scale: [1, 0.95, 1.02, 1] }
-          : undefined
-      }
-      transition={
-        justCompleted 
-          ? { type: "spring", stiffness: 500, damping: 15, duration: 0.5 }
-          : undefined
-      }
+      {...(justCompleted ? { animate: { scale: [1, 0.95, 1.02, 1] } } : {})}
+      {...(justCompleted
+        ? { transition: { type: "spring", stiffness: 500, damping: 15, duration: 0.5 } }
+        : {})}
       className={`relative w-full text-left rounded-2xl border p-4 transition-all duration-300 ${
         showAsCompleted
           ? "border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50/50 text-emerald-950 dark:border-emerald-900/50 dark:from-emerald-950/40 dark:to-green-950/20 dark:text-emerald-100"
@@ -122,7 +118,7 @@ export function QuestCard({ quest, onComplete, isSubmitting, streakMultiplier = 
             
             {/* XP Badge */}
             <motion.div 
-              animate={justCompleted ? { scale: [1, 1.3, 1] } : undefined}
+              {...(justCompleted ? { animate: { scale: [1, 1.3, 1] } } : {})}
               transition={{ delay: 0.1, duration: 0.4 }}
               className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold shadow-sm flex items-center gap-1 ${
                 showAsCompleted

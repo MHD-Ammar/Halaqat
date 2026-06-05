@@ -40,6 +40,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCircles, useDeleteCircle, useAuth, Circle } from "@/hooks";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "@/i18n/routing";
+import { routes } from "@/lib/constants/routes";
 
 export default function CirclesPage() {
   const { isAdmin, isLoading: authLoading } = useAuth();
@@ -64,7 +65,7 @@ export default function CirclesPage() {
   // Protect the page - redirect non-admins
   useEffect(() => {
     if (!authLoading && !isAdmin) {
-      router.push("/overview");
+      router.push(routes.overview());
     }
   }, [isAdmin, authLoading, router]);
 
@@ -227,7 +228,7 @@ export default function CirclesPage() {
           setEditDialogOpen(open);
           if (!open) setCircleToEdit(undefined);
         }}
-        circle={circleToEdit}
+        {...(circleToEdit ? { circle: circleToEdit } : {})}
       />
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

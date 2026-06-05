@@ -37,6 +37,7 @@ export type {
 
 // Mushaf
 export { MistakeType, isMistakeType } from "./MistakeType";
+export type { PendingMistake } from "./PendingMistake";
 export type {
   WordLocation,
   MushafWord,
@@ -57,3 +58,7 @@ export type {
   PageScoreResult,
   MistakeCounts,
 } from "./MushafScoring";
+
+// Result<T, E> discriminated union for expected business outcomes
+export { ok, err } from "./result";
+export type { Result } from "./result";

@@ -4,6 +4,7 @@ import { BellRing, X } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import { env } from "@/lib/env";
 import { requestPushPermission, subscribeToPush } from "@/lib/push-notifications";
 
 
@@ -30,14 +31,17 @@ export function PushPermissionPrompt() {
     setShow(false);
     const granted = await requestPushPermission();
     if (granted) {
-      if (!process.env.NEXT_PUBLIC_VAPID_KEY) {
-        console.error("Missing NEXT_PUBLIC_VAPID_KEY");
+      if (!env.NEXT_PUBLIC_VAPID_KEY) {
+        if (process.env.NODE_ENV === "development") {
+          // eslint-disable-next-line no-console
+          console.error("Missing NEXT_PUBLIC_VAPID_KEY");
+        }
         return;
       }
       try {
-        await subscribeToPush(process.env.NEXT_PUBLIC_VAPID_KEY);
-      } catch (err) {
-        console.error("Failed to subscribe to push", err);
+        await subscribeToPush(env.NEXT_PUBLIC_VAPID_KEY);
+      } catch {
+        // Push subscription failed silently — user can retry later
       }
     }
   };

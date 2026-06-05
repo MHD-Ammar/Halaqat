@@ -124,12 +124,26 @@ export function StoreTab() {
   };
 
   const onSubmit = async (values: StoreItemFormValues) => {
+    const dto: Partial<StoreItem> = {
+      name: values.name,
+      nameAr: values.nameAr,
+      type: values.type,
+      xpCost: values.xpCost,
+      rewardValue: values.rewardValue,
+      icon: values.icon,
+      isActive: values.isActive,
+      minLevel: values.minLevel,
+      ...(values.description !== undefined ? { description: values.description } : {}),
+      ...(values.descriptionAr !== undefined ? { descriptionAr: values.descriptionAr } : {}),
+      ...(values.maxPerStudent !== undefined ? { maxPerStudent: values.maxPerStudent } : {}),
+      ...(values.stock !== undefined ? { stock: values.stock } : {}),
+    };
     try {
       if (editingItem) {
-        await updateItem.mutateAsync({ id: editingItem.id, dto: values });
+        await updateItem.mutateAsync({ id: editingItem.id, dto });
         toast({ title: t("toast.updated") });
       } else {
-        await createItem.mutateAsync(values);
+        await createItem.mutateAsync(dto);
         toast({ title: t("toast.created") });
       }
       setIsDialogOpen(false);

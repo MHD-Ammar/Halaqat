@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 interface SubmissionDetailViewerProps {
   config: FormQuestion[];
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 export function SubmissionDetailViewer({
@@ -49,7 +49,7 @@ export function SubmissionDetailViewer({
   );
 }
 
-function renderAnswer(question: FormQuestion, value: any) {
+function renderAnswer(question: FormQuestion, value: unknown) {
   if (value === undefined || value === null) {
     return <span className="text-muted-foreground italic">Did not answer</span>;
   }
@@ -79,7 +79,7 @@ function renderAnswer(question: FormQuestion, value: any) {
     case "NUMBER":
       return (
         <div className="text-2xl font-bold font-mono">
-          {value} <span className="text-sm text-muted-foreground font-sans font-normal">Times/Pages</span>
+          {String(value)} <span className="text-sm text-muted-foreground font-sans font-normal">Times/Pages</span>
         </div>
       );
 

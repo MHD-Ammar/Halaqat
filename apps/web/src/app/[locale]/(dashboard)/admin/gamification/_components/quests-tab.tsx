@@ -1,52 +1,59 @@
 "use client";
 
 import { QuestCategory, QuestFrequency } from "@halaqat/types";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
 
 import { DataTable } from "@/components/shared/data-table";
-import { GenericDialog } from "@/components/shared/generic-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { CrudDialog } from "@/components/ui/crud-dialog";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+  NumberField,
+  SelectField,
+  SwitchField,
+  TextField,
+} from "@/components/ui/form-fields";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { useAdminQuests, useCreateQuest, useUpdateQuest, useDeleteQuest, type Quest } from "@/hooks/use-admin-gamification";
+  useAdminQuests,
+  useCreateQuest,
+  useDeleteQuest,
+  useUpdateQuest,
+  type Quest,
+} from "@/hooks/use-admin-gamification";
 import { useToast } from "@/hooks/use-toast";
+import { createQuestSchema, type CreateQuestInput } from "@/lib/schemas/quest";
 
-const questSchema = z.object({
-  title: z.string().min(2, "Title is required"),
-  description: z.string().optional().nullable(),
-  category: z.nativeEnum(QuestCategory),
-  frequency: z.nativeEnum(QuestFrequency),
-  xpReward: z.number().min(0, "XP must be at least 0"),
-  icon: z.string().min(1, "Icon is required"),
-  isActive: z.boolean(),
-  target: z.number().min(1, "Target must be at least 1"),
-  targetUnit: z.string().optional().nullable(),
-});
+const CATEGORY_OPTIONS = Object.values(QuestCategory).map((c) => ({ value: c, label: c }));
+const FREQUENCY_OPTIONS = Object.values(QuestFrequency).map((f) => ({ value: f, label: f }));
 
-type QuestFormValues = z.infer<typeof questSchema>;
+const EMPTY_DEFAULTS: CreateQuestInput = {
+  title: "",
+  description: "",
+  category: QuestCategory.GENERAL,
+  frequency: QuestFrequency.DAILY,
+  xpReward: 10,
+  icon: "⭐",
+  isActive: true,
+  target: 1,
+  targetUnit: "",
+};
+
+function questToDefaults(q: Quest): CreateQuestInput {
+  return {
+    title: q.title,
+    description: q.description ?? "",
+    category: q.category,
+    frequency: q.frequency,
+    xpReward: q.xpReward,
+    icon: q.icon,
+    isActive: q.isActive,
+    target: q.target ?? 1,
+    targetUnit: q.targetUnit ?? "",
+  };
+}
 
 export function QuestsTab() {
   const t = useTranslations("GamificationHub.quests");
@@ -56,144 +63,66 @@ export function QuestsTab() {
   const deleteQuest = useDeleteQuest();
   const { toast } = useToast();
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [editingQuest, setEditingQuest] = useState<Quest | null>(null);
-  
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [questToDelete, setQuestToDelete] = useState<string | null>(null);
 
-  const form = useForm<QuestFormValues>({
-    resolver: zodResolver(questSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      category: QuestCategory.GENERAL,
-      frequency: QuestFrequency.DAILY,
-      xpReward: 10,
-      icon: "⭐",
-      isActive: true,
-      target: 1,
-      targetUnit: "",
-    },
-  });
-
-  const handleOpenCreate = () => {
-    setEditingQuest(null);
-    form.reset({
-      title: "",
-      description: "",
-      category: QuestCategory.GENERAL,
-      frequency: QuestFrequency.DAILY,
-      xpReward: 10,
-      icon: "⭐",
-      isActive: true,
-      target: 1,
-      targetUnit: "",
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleOpenEdit = (quest: Quest) => {
-    setEditingQuest(quest);
-    form.reset({
-      title: quest.title,
-      description: quest.description,
-      category: quest.category,
-      frequency: quest.frequency,
-      xpReward: quest.xpReward,
-      icon: quest.icon,
-      isActive: quest.isActive,
-      target: quest.target ?? 1,
-      targetUnit: quest.targetUnit ?? "",
-    });
-    setIsDialogOpen(true);
-  };
-
-  const onSubmit = async (values: QuestFormValues) => {
-    try {
-      if (editingQuest) {
-        await updateQuest.mutateAsync({ id: editingQuest.id, dto: values });
-        toast({ title: t("toast.updated") });
-      } else {
-        await createQuest.mutateAsync(values);
-        toast({ title: t("toast.created") });
-      }
-      setIsDialogOpen(false);
-    } catch {
-      toast({ title: t("toast.operationFailed"), variant: "destructive" });
-    }
-  };
+  const handleOpenCreate = () => { setEditingQuest(null); setDialogOpen(true); };
+  const handleOpenEdit = (q: Quest) => { setEditingQuest(q); setDialogOpen(true); };
 
   const handleDelete = async () => {
     if (!questToDelete) return;
     try {
       await deleteQuest.mutateAsync(questToDelete);
       toast({ title: t("toast.deleted") });
-      setDeleteDialogOpen(false);
-      setQuestToDelete(null);
     } catch {
       toast({ title: t("toast.deleteFailed"), variant: "destructive" });
+    } finally {
+      setDeleteDialogOpen(false);
+      setQuestToDelete(null);
     }
   };
 
   const columns = [
-    {
-      header: t("columns.icon"),
-      cell: (row: Quest) => <span className="text-2xl">{row.icon}</span>,
-    },
+    { header: t("columns.icon"), cell: (r: Quest) => <span className="text-2xl">{r.icon}</span> },
     {
       header: t("columns.title"),
-      cell: (row: Quest) => (
+      cell: (r: Quest) => (
         <div className="flex flex-col">
-          <span className="font-medium">{row.title}</span>
-          {row.target > 1 && (
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
-              Target: {row.target} {row.targetUnit || ""}
+          <span className="font-medium">{r.title}</span>
+          {r.target > 1 && (
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Target: {r.target} {r.targetUnit ?? ""}
             </span>
           )}
         </div>
       ),
     },
-    {
-      header: t("columns.category"),
-      cell: (row: Quest) => <Badge variant="outline">{row.category}</Badge>,
-    },
-    {
-      header: t("columns.frequency"),
-      cell: (row: Quest) => <Badge variant="secondary">{row.frequency}</Badge>,
-    },
-    {
-      header: t("columns.xp"),
-      accessorFn: (row: Quest) => row.xpReward,
-    },
+    { header: t("columns.category"), cell: (r: Quest) => <Badge variant="outline">{r.category}</Badge> },
+    { header: t("columns.frequency"), cell: (r: Quest) => <Badge variant="secondary">{r.frequency}</Badge> },
+    { header: t("columns.xp"), accessorFn: (r: Quest) => r.xpReward },
     {
       header: t("columns.status"),
-      cell: (row: Quest) => (
-        <Badge variant={row.isActive ? "default" : "secondary"}>
-          {row.isActive ? t("columns.active") : t("columns.inactive")}
+      cell: (r: Quest) => (
+        <Badge variant={r.isActive ? "default" : "secondary"}>
+          {r.isActive ? t("columns.active") : t("columns.inactive")}
         </Badge>
       ),
     },
     {
       header: t("columns.actions"),
       className: "w-[120px] text-right",
-      cell: (row: Quest) => (
+      cell: (r: Quest) => (
         <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => handleOpenEdit(row)}
-          >
+          <Button variant="outline" size="icon" onClick={() => handleOpenEdit(r)}>
             <Pencil className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             className="text-destructive hover:bg-destructive/10"
-            onClick={() => {
-              setQuestToDelete(row.id);
-              setDeleteDialogOpen(true);
-            }}
+            onClick={() => { setQuestToDelete(r.id); setDeleteDialogOpen(true); }}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -204,7 +133,7 @@ export function QuestsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold tracking-tight">{t("title")}</h2>
         <Button onClick={handleOpenCreate} className="flex items-center gap-2">
           <Plus className="h-4 w-4" /> {t("createBtn")}
@@ -215,193 +144,45 @@ export function QuestsTab() {
         data={quests}
         columns={columns}
         isLoading={isLoading}
-        emptyState={{
-          title: t("emptyState.title"),
-          description: t("emptyState.description"),
-        }}
+        emptyState={{ title: t("emptyState.title"), description: t("emptyState.description") }}
       />
 
-      <GenericDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
+      <CrudDialog<CreateQuestInput, unknown>
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
         title={editingQuest ? t("editTitle") : t("createTitle")}
+        schema={createQuestSchema}
+        defaultValues={editingQuest ? questToDefaults(editingQuest) : EMPTY_DEFAULTS}
+        mode={editingQuest ? "edit" : "create"}
+        onSubmit={(values) =>
+          editingQuest
+            ? updateQuest.mutateAsync({ id: editingQuest.id, dto: values })
+            : createQuest.mutateAsync(values)
+        }
+        onSuccess={() =>
+          toast({ title: editingQuest ? t("toast.updated") : t("toast.created") })
+        }
       >
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("form.title")}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t("form.titlePlaceholder")} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("form.description")}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t("form.descPlaceholder")} {...field} value={field.value || ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
+        {() => (
+          <>
+            <TextField name="title" label={t("form.title")} placeholder={t("form.titlePlaceholder")} required />
+            <TextField name="description" label={t("form.description")} placeholder={t("form.descPlaceholder")} />
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("form.category")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t("form.selectCategory")} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {Object.values(QuestCategory).map((c) => (
-                          <SelectItem key={c} value={c}>{c}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="frequency"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("form.frequency")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t("form.selectFrequency")} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {Object.values(QuestFrequency).map((f) => (
-                          <SelectItem key={f} value={f}>{f}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <SelectField name="category" label={t("form.category")} options={CATEGORY_OPTIONS} required />
+              <SelectField name="frequency" label={t("form.frequency")} options={FREQUENCY_OPTIONS} required />
             </div>
-
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="xpReward"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("form.xpReward")}</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="icon"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("form.icon")}</FormLabel>
-                    <FormControl>
-                      <Input placeholder="⭐" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <NumberField name="xpReward" label={t("form.xpReward")} min={0} required />
+              <TextField name="icon" label={t("form.icon")} placeholder="⭐" required />
             </div>
-
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="target"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Target (Steps)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 1)} 
-                      />
-                    </FormControl>
-                    <FormDescription>For multi-step quests (e.g. 5 pages)</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="targetUnit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Target Unit</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. صفحات, مرات" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormDescription>Displayed as &quot;current / target [unit]&quot;</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <NumberField name="target" label="الهدف (خطوات)" min={1} description="للمهام متعددة الخطوات" required />
+              <TextField name="targetUnit" label="وحدة الهدف" placeholder="مثلاً: صفحات" />
             </div>
-
-            <FormField
-              control={form.control}
-              name="isActive"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">{t("form.activeStatus")}</FormLabel>
-                    <FormDescription>
-                      {t("form.activeDesc")}
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                {t("form.cancel")}
-              </Button>
-              <Button type="submit" disabled={createQuest.isPending || updateQuest.isPending}>
-                {editingQuest ? t("form.save") : t("form.create")}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </GenericDialog>
+            <SwitchField name="isActive" label={t("form.activeStatus")} description={t("form.activeDesc")} />
+          </>
+        )}
+      </CrudDialog>
 
       <ConfirmationDialog
         open={deleteDialogOpen}

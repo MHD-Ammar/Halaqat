@@ -10,6 +10,7 @@
  * - First-run detection: Teachers with no circles go to /setup/welcome
  */
 
+import { UserRole } from "@halaqat/types";
 import Cookies from "js-cookie";
 import { ReactNode, useEffect, useState } from "react";
 
@@ -20,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth, useMyCircles } from "@/hooks";
 import { useRouter } from "@/i18n/routing";
 import { TOKEN_COOKIE_NAME } from "@/lib/api";
+import { routes } from "@/lib/constants/routes";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -32,7 +34,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
     if (!token) {
       // No token, redirect to login
-      router.replace("/login");
+      router.replace(routes.login());
     } else {
       setHasToken(true);
     }
@@ -60,13 +62,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     if (isAuthError || !user) return;
 
     // For teachers, wait for circles to be fetched before deciding
-    if (user.role === "TEACHER") {
+    if (user.role === UserRole.TEACHER) {
       // Wait for circles query to complete
       if (isCirclesLoading || !isCirclesFetched) return;
 
       // If teacher has no circles, redirect to setup wizard
       if (!circles || circles.length === 0) {
-        router.replace("/setup/welcome");
+        router.replace(routes.setupWelcome());
         return;
       }
     }

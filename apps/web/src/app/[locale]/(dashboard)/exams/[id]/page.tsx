@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useStudentExamCard } from "@/hooks";
 import { Link } from "@/i18n/routing";
 import { api } from "@/lib/api";
+import { routes } from "@/lib/constants/routes";
 
 
 interface Student {
@@ -78,7 +79,7 @@ export default function StudentExamHistoryPage({
     <div className="p-4 md:p-6 space-y-6">
       {/* Back Link */}
       <Link
-        href="/exams"
+        href={routes.exams()}
         className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="h-4 w-4 me-2" />

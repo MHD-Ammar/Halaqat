@@ -16,6 +16,7 @@ import { Logo } from "@/components/logo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "@/i18n/routing";
 import { TOKEN_COOKIE_NAME } from "@/lib/api";
+import { routes } from "@/lib/constants/routes";
 
 export default function SetupLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -27,7 +28,7 @@ export default function SetupLayout({ children }: { children: ReactNode }) {
 
     if (!token) {
       // No token, redirect to login
-      router.replace("/login");
+      router.replace(routes.login());
     } else {
       setIsChecking(false);
     }

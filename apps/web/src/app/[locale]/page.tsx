@@ -12,6 +12,7 @@ import { setRequestLocale } from "next-intl/server";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/routing";
+import { routes } from "@/lib/constants/routes";
 
 interface HomePageProps {
   params: Promise<{ locale: string }>;
@@ -68,10 +69,10 @@ function HomePageContent() {
           </div>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
-            <Link href="/login">
+            <Link href={routes.login()}>
               <Button variant="ghost">{tAuth("signIn")}</Button>
             </Link>
-            <Link href="/register">
+            <Link href={routes.register()}>
               <Button>{t("getStarted")}</Button>
             </Link>
           </div>
@@ -89,7 +90,7 @@ function HomePageContent() {
             {t("heroDescription")}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/login">
+            <Link href={routes.login()}>
               <Button size="lg" className="w-full sm:w-auto">
                 {t("getStarted")}
                 <ArrowRight className="ms-2 h-4 w-4" />

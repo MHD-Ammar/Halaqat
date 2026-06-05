@@ -109,12 +109,20 @@ export default function CircleQuestsPage() {
   };
 
   const onSubmit = async (values: QuestFormValues) => {
+    const dto = {
+      title: values.title,
+      category: values.category,
+      frequency: values.frequency,
+      xpReward: values.xpReward,
+      icon: values.icon,
+      ...(values.description !== undefined ? { description: values.description } : {}),
+    };
     try {
       if (editingQuest) {
-        await updateQuest.mutateAsync({ id: editingQuest.id, dto: values });
+        await updateQuest.mutateAsync({ id: editingQuest.id, dto });
         toast({ title: t("toast.updated") });
       } else {
-        await createQuest.mutateAsync(values);
+        await createQuest.mutateAsync(dto);
         toast({ title: t("toast.created") });
       }
       setIsDialogOpen(false);

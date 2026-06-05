@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
+import { routes } from "@/lib/constants/routes";
 
 import { DailyCountdownTimer } from "./DailyCountdownTimer";
 
@@ -53,7 +54,7 @@ export function DailyQuestCTA({ hasSubmittedToday }: DailyQuestCTAProps) {
               animate={{ scale: [1, 1.03, 1] }}
               transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
             >
-              <Link href="/student-portal/quests" className="w-full sm:w-auto mt-2">
+              <Link href={routes.studentPortalQuests()} className="w-full sm:w-auto mt-2">
                 <Button size="lg" className="h-14 w-full rounded-full text-lg shadow-lg hover:scale-105 transition-transform sm:w-auto px-10 relative overflow-hidden group">
                   <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                   <span className="relative z-10 flex items-center gap-2">

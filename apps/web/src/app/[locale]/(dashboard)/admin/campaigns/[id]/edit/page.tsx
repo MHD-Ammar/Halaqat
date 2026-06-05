@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { useCampaign, useUpdateCampaign } from "@/hooks/use-campaigns";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "@/i18n/routing";
+import { routes } from "@/lib/constants/routes";
 import type { CreateCampaignDto } from "@/types/campaign";
 
 import { CampaignForm } from "../../_components/campaign-form";
@@ -28,7 +29,7 @@ export default function EditCampaignPage() {
         title: "Success",
         description: "Campaign updated successfully",
       });
-      router.push("/admin/campaigns");
+      router.push(routes.adminCampaigns());
     } catch {
       toast({
         title: "Error",

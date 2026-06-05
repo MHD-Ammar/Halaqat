@@ -1,53 +1,42 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
 
 import { DataTable } from "@/components/shared/data-table";
-import { GenericDialog } from "@/components/shared/generic-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { CrudDialog } from "@/components/ui/crud-dialog";
+import { NumberField, SelectField, TextField } from "@/components/ui/form-fields";
 import {
   useAdminMilestones,
   useCreateMilestone,
-  useUpdateMilestone,
   useDeleteMilestone,
+  useUpdateMilestone,
   type MilestoneReward,
-  type RewardType,
 } from "@/hooks/use-admin-gamification";
 import { useToast } from "@/hooks/use-toast";
+import {
+  createMilestoneSchema,
+  REWARD_TYPE_LABELS,
+  REWARD_TYPES,
+  type CreateMilestoneInput,
+} from "@/lib/schemas/milestone";
 
-const REWARD_TYPES: RewardType[] = ["BONUS_XP", "AVATAR_FRAME", "TITLE"];
+const REWARD_OPTIONS = REWARD_TYPES.map((r) => ({ value: r, label: REWARD_TYPE_LABELS[r] }));
 
-const milestoneSchema = z.object({
-  targetLevel: z.number().min(1, "Target Level must be at least 1"),
-  title: z.string().min(2, "Title is required"),
-  rewardType: z.enum(["BONUS_XP", "AVATAR_FRAME", "TITLE"] as const),
-  rewardValue: z.string().min(1, "Reward Value is required"),
-});
+const EMPTY_DEFAULTS: CreateMilestoneInput = {
+  targetLevel: 2,
+  title: "",
+  rewardType: "BONUS_XP",
+  rewardValue: "",
+};
 
-type MilestoneFormValues = z.infer<typeof milestoneSchema>;
+function milestoneToDefaults(m: MilestoneReward): CreateMilestoneInput {
+  return { targetLevel: m.targetLevel, title: m.title, rewardType: m.rewardType, rewardValue: m.rewardValue };
+}
 
 export function MilestonesTab() {
   const t = useTranslations("GamificationHub.milestones");
@@ -57,115 +46,55 @@ export function MilestonesTab() {
   const deleteMilestone = useDeleteMilestone();
   const { toast } = useToast();
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState<MilestoneReward | null>(null);
-
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [milestoneToDelete, setMilestoneToDelete] = useState<string | null>(null);
 
-  const form = useForm<MilestoneFormValues>({
-    resolver: zodResolver(milestoneSchema),
-    defaultValues: {
-      targetLevel: 2,
-      title: "",
-      rewardType: "BONUS_XP",
-      rewardValue: "",
-    },
-  });
-
-  const handleOpenCreate = () => {
-    setEditingMilestone(null);
-    form.reset({
-      targetLevel: 2,
-      title: "",
-      rewardType: "BONUS_XP",
-      rewardValue: "",
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleOpenEdit = (milestone: MilestoneReward) => {
-    setEditingMilestone(milestone);
-    form.reset({
-      targetLevel: milestone.targetLevel,
-      title: milestone.title,
-      rewardType: milestone.rewardType,
-      rewardValue: milestone.rewardValue,
-    });
-    setIsDialogOpen(true);
-  };
-
-  const onSubmit = async (values: MilestoneFormValues) => {
-    try {
-      if (editingMilestone) {
-        await updateMilestone.mutateAsync({ id: editingMilestone.id, dto: values });
-        toast({ title: t("toast.updated") });
-      } else {
-        await createMilestone.mutateAsync(values);
-        toast({ title: t("toast.created") });
-      }
-      setIsDialogOpen(false);
-    } catch {
-      toast({ title: t("toast.operationFailed"), variant: "destructive" });
-    }
-  };
+  const handleOpenCreate = () => { setEditingMilestone(null); setDialogOpen(true); };
+  const handleOpenEdit = (m: MilestoneReward) => { setEditingMilestone(m); setDialogOpen(true); };
 
   const handleDelete = async () => {
     if (!milestoneToDelete) return;
     try {
       await deleteMilestone.mutateAsync(milestoneToDelete);
       toast({ title: t("toast.deleted") });
-      setDeleteDialogOpen(false);
-      setMilestoneToDelete(null);
     } catch {
       toast({ title: t("toast.deleteFailed"), variant: "destructive" });
+    } finally {
+      setDeleteDialogOpen(false);
+      setMilestoneToDelete(null);
     }
   };
 
   const columns = [
     {
       header: t("columns.level"),
-      cell: (row: MilestoneReward) => (
+      cell: (r: MilestoneReward) => (
         <Badge variant="default" className="text-xs">
-          {t("levelBadge", { level: row.targetLevel })}
+          {t("levelBadge", { level: r.targetLevel })}
         </Badge>
       ),
     },
-    {
-      header: t("columns.title"),
-      accessorFn: (row: MilestoneReward) => row.title,
-      className: "font-medium",
-    },
+    { header: t("columns.title"), accessorFn: (r: MilestoneReward) => r.title, className: "font-medium" },
     {
       header: t("columns.rewardType"),
-      cell: (row: MilestoneReward) => (
-        <Badge variant="outline">{row.rewardType.replace("_", " ")}</Badge>
-      ),
+      cell: (r: MilestoneReward) => <Badge variant="outline">{r.rewardType.replace("_", " ")}</Badge>,
     },
-    {
-      header: t("columns.value"),
-      accessorFn: (row: MilestoneReward) => row.rewardValue,
-    },
+    { header: t("columns.value"), accessorFn: (r: MilestoneReward) => r.rewardValue },
     {
       header: t("columns.actions"),
       className: "w-[120px] text-right",
-      cell: (row: MilestoneReward) => (
+      cell: (r: MilestoneReward) => (
         <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => handleOpenEdit(row)}
-          >
+          <Button variant="outline" size="icon" onClick={() => handleOpenEdit(r)}>
             <Pencil className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             className="text-destructive hover:bg-destructive/10"
-            onClick={() => {
-              setMilestoneToDelete(row.id);
-              setDeleteDialogOpen(true);
-            }}
+            onClick={() => { setMilestoneToDelete(r.id); setDeleteDialogOpen(true); }}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -176,7 +105,7 @@ export function MilestonesTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold tracking-tight">{t("title")}</h2>
         <Button onClick={handleOpenCreate} className="flex items-center gap-2">
           <Plus className="h-4 w-4" /> {t("createBtn")}
@@ -187,101 +116,39 @@ export function MilestonesTab() {
         data={milestones}
         columns={columns}
         isLoading={isLoading}
-        emptyState={{
-          title: t("emptyState.title"),
-          description: t("emptyState.description"),
-        }}
+        emptyState={{ title: t("emptyState.title"), description: t("emptyState.description") }}
       />
 
-      <GenericDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
+      <CrudDialog<CreateMilestoneInput, unknown>
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
         title={editingMilestone ? t("editTitle") : t("createTitle")}
+        schema={createMilestoneSchema}
+        defaultValues={editingMilestone ? milestoneToDefaults(editingMilestone) : EMPTY_DEFAULTS}
+        mode={editingMilestone ? "edit" : "create"}
+        onSubmit={(values) =>
+          editingMilestone
+            ? updateMilestone.mutateAsync({ id: editingMilestone.id, dto: values })
+            : createMilestone.mutateAsync(values)
+        }
+        onSuccess={() =>
+          toast({ title: editingMilestone ? t("toast.updated") : t("toast.created") })
+        }
+        size="sm"
       >
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {() => (
+          <>
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="targetLevel"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("form.targetLevel")}</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("form.title")}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t("form.titlePlaceholder")} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <NumberField name="targetLevel" label={t("form.targetLevel")} min={1} required />
+              <TextField name="title" label={t("form.title")} placeholder={t("form.titlePlaceholder")} required />
             </div>
-
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="rewardType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("form.rewardType")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t("form.selectType")} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {REWARD_TYPES.map((t) => (
-                          <SelectItem key={t} value={t}>{t.replace("_", " ")}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="rewardValue"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("form.rewardValue")}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t("form.valuePlaceholder")} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <SelectField name="rewardType" label={t("form.rewardType")} options={REWARD_OPTIONS} required />
+              <TextField name="rewardValue" label={t("form.rewardValue")} placeholder={t("form.valuePlaceholder")} required />
             </div>
-
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                {t("form.cancel")}
-              </Button>
-              <Button type="submit" disabled={createMilestone.isPending || updateMilestone.isPending}>
-                {editingMilestone ? t("form.save") : t("form.create")}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </GenericDialog>
+          </>
+        )}
+      </CrudDialog>
 
       <ConfirmationDialog
         open={deleteDialogOpen}

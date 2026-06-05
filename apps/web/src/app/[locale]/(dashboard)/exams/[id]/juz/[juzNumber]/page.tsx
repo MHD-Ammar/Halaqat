@@ -56,15 +56,25 @@ export default function JuzHistoryPage({
     queryKey: ["exams", "history", studentId, juzNumber],
     queryFn: async () => {
       // We might need a specific filter endpoint or filter client-side
+      interface ExamData {
+        id: string;
+        date: string;
+        finalScore: number | null;
+        passed: boolean;
+        notes: string | null;
+        examiner?: { fullName: string };
+      }
       const res = await api.get(`/exams?studentId=${studentId}&juzNumber=${juzNumber}`);
       // Map backend entity to frontend interface
-      return (res.data as any[]).map((e: any) => ({
+      return (res.data as ExamData[]).map((e) => ({
         id: e.id,
         date: e.date,
         score: e.finalScore,
         passed: e.passed,
         notes: e.notes,
-        examinerName: e.examiner?.fullName
+        ...(e.examiner?.fullName !== undefined && {
+          examinerName: e.examiner.fullName,
+        }),
       })) as ExamHistoryItem[];
     },
   });
@@ -189,9 +199,11 @@ export default function JuzHistoryPage({
                                       </div>
                                   </TableCell>
                                   <TableCell className="text-right">
-                                      <Button variant="ghost" size="sm" onClick={() => console.log("View details", exam.id)}>
-                                          {t("viewDetails")}
-                                      </Button>
+                                      <Link href={`/exams/${studentId}/${juzNumber}/${exam.id}`}>
+                                          <Button variant="ghost" size="sm">
+                                              {t("viewDetails")}
+                                          </Button>
+                                      </Link>
                                   </TableCell>
                               </TableRow>
                           ))}

@@ -1,5 +1,6 @@
 "use client";
 
+import { UserRole } from "@halaqat/types";
 import { useTranslations } from "next-intl";
 
 import { AdminDashboard } from "@/components/dashboards/admin-dashboard";
@@ -25,12 +26,12 @@ export default function OverviewPage() {
   }
 
   switch (user.role) {
-    case "ADMIN":
-    case "SUPERVISOR":
+    case UserRole.ADMIN:
+    case UserRole.SUPERVISOR:
       return <AdminDashboard />;
-    case "TEACHER":
+    case UserRole.TEACHER:
       return <TeacherDashboard />;
-    case "EXAMINER":
+    case UserRole.EXAMINER:
       return <ExaminerDashboard />;
     default:
       return (

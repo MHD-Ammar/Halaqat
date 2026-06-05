@@ -1,4 +1,10 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/*
+ * The `any` casts here are confined to react-hook-form's `control` and dynamic
+ * `name` path strings for the discriminated-union `formConfig` array.
+ * RHF cannot infer template-literal paths, so `as any` is the only safe escape.
+ */
 
 import type { FormQuestion, QuestionType } from "@halaqat/types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -178,9 +184,14 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
   });
 
   const handleSubmit = async (values: FormValues) => {
-    const questions: FormQuestion[] = values.formConfig.map((q) => {
+    const questions: FormQuestion[] = values.formConfig.map((q): FormQuestion => {
       const id = q.id || crypto.randomUUID();
-      const base = { id, title: q.title, description: q.description || undefined };
+      // exactOptionalPropertyTypes: omit description entirely when falsy
+      const base = {
+        id,
+        title: q.title,
+        ...(q.description ? { description: q.description } : {}),
+      };
 
       switch (q.type) {
         case "BOOLEAN":
@@ -190,14 +201,16 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
             ...base,
             type: "NUMBER" as const,
             multiplier: Number(q.multiplier ?? 1),
-            max: q.max !== undefined && q.max !== null ? Number(q.max) : undefined,
-            min: q.min !== undefined && q.min !== null ? Number(q.min) : undefined,
-            step: q.step !== undefined && q.step !== null ? Number(q.step) : undefined,
-            defaultValue: q.defaultValue !== undefined && q.defaultValue !== null ? Number(q.defaultValue) : undefined,
+            ...(q.max !== null ? { max: Number(q.max) } : {}),
+            ...(q.min !== null ? { min: Number(q.min) } : {}),
+            ...(q.step !== null ? { step: Number(q.step) } : {}),
+            ...(q.defaultValue !== null ? { defaultValue: Number(q.defaultValue) } : {}),
           };
-        case "GRID":
+        case "GRID": {
           const rawRows = q.rows || [];
-          const rowStrings = rawRows.map((r: any) => (typeof r === "string" ? r : r?.value ?? "")).filter(Boolean);
+          const rowStrings = rawRows
+            .map((r: any) => (typeof r === "string" ? r : r?.value ?? ""))
+            .filter(Boolean) as string[];
           return {
             ...base,
             type: "GRID" as const,
@@ -208,6 +221,7 @@ export function CampaignForm({ initialData, onSubmit, isLoading }: CampaignFormP
               xp: Number(c.xp),
             })),
           };
+        }
         case "SELECT":
           return {
             ...base,

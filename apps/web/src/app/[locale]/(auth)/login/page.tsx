@@ -6,6 +6,7 @@
 
 "use client";
 
+import { UserRole } from "@halaqat/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
 import { Loader2 } from "lucide-react";
@@ -27,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, Link } from "@/i18n/routing";
 import { TOKEN_COOKIE_NAME } from "@/lib/api";
+import { routes } from "@/lib/constants/routes";
 import { authService } from "@/services/auth.service";
 
 export default function LoginPage() {
@@ -79,20 +81,20 @@ export default function LoginPage() {
       const userRole = tokenPayload.role;
 
       // Smart redirect based on role
-      let redirectPath = "/overview";
+      let redirectPath: string = routes.overview();
       switch (userRole) {
-        case "ADMIN":
-        case "SUPERVISOR":
-          redirectPath = "/overview";
+        case UserRole.ADMIN:
+        case UserRole.SUPERVISOR:
+          redirectPath = routes.overview();
           break;
-        case "TEACHER":
-          redirectPath = "/my-circle";
+        case UserRole.TEACHER:
+          redirectPath = routes.myCircle();
           break;
-        case "EXAMINER":
-          redirectPath = "/exams";
+        case UserRole.EXAMINER:
+          redirectPath = routes.exams();
           break;
-        case "STUDENT":
-          redirectPath = "/student-portal";
+        case UserRole.STUDENT:
+          redirectPath = routes.studentPortal();
           break;
       }
 
@@ -180,7 +182,7 @@ export default function LoginPage() {
         <div className="text-sm text-center text-muted-foreground">
           {t("noAccount")}{" "}
           <Link
-            href="/register"
+            href={routes.register()}
             className="text-primary hover:underline font-medium"
           >
             {t("signUp")}
