@@ -173,7 +173,7 @@ export function EditStudentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] max-w-[calc(100%-2rem)]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <GraduationCap className="h-5 w-5" />
@@ -185,7 +185,7 @@ export function EditStudentDialog({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <ScrollArea className="h-[400px]" dir={dir}>
-              <div className="space-y-6 px-4">
+              <div className="space-y-6 px-4 py-2">
                 {/* Student Information Section */}
                 <div className="space-y-4">
                   <h4 className="font-medium text-sm text-muted-foreground">

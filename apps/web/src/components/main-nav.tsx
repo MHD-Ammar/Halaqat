@@ -40,6 +40,19 @@ export function MainNav() {
   // Get nav items filtered by user role
   const navItems = getNavItemsForRole(user?.role);
 
+  // Check if a nav item is active, accounting for sibling sub-routes
+  // e.g. /my-circle should NOT be active when /my-circle/quests is open
+  const isNavItemActive = (href: string) => {
+    if (pathname === href) return true;
+    if (!pathname.startsWith(href + "/")) return false;
+    // If a more-specific child nav item matches the current path, this one is not active
+    return !navItems.some(
+      (other) =>
+        other.href.startsWith(href + "/") &&
+        (pathname === other.href || pathname.startsWith(other.href + "/"))
+    );
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -98,8 +111,7 @@ export function MainNav() {
           {/* Navigation Links */}
           <nav className="flex-1 px-3 space-y-1">
             {navItems.map((item) => {
-              const isActive =
-                pathname === item.href || pathname.startsWith(item.href + "/");
+              const isActive = isNavItemActive(item.href);
               const Icon = item.icon;
 
               return (
@@ -186,8 +198,7 @@ export function MainNav() {
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t pb-safe">
         <div className="flex items-center justify-around h-16">
           {navItems.slice(0, 5).map((item) => {
-            const isActive =
-              pathname === item.href || pathname.startsWith(item.href + "/");
+            const isActive = isNavItemActive(item.href);
             const Icon = item.icon;
 
             return (

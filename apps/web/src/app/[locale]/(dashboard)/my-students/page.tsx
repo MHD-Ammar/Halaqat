@@ -20,6 +20,7 @@ import {
   Pencil,
   Trash2,
   Key,
+  MoreVertical,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
@@ -36,6 +37,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStudents, useDeleteStudent, type Student } from "@/hooks";
@@ -85,12 +93,19 @@ export default function MyStudentsPage() {
 
   const handleConfirmDelete = async () => {
     if (!selectedStudent) return;
-    await deleteStudentMutation.mutateAsync(selectedStudent.id);
-    setDeleteDialogOpen(false);
-    toast({
-      title: t("studentDeleted"),
-      description: t("deleteSuccess"),
-    });
+    try {
+      await deleteStudentMutation.mutateAsync(selectedStudent.id);
+      setDeleteDialogOpen(false);
+      toast({
+        title: t("studentDeleted"),
+        description: t("deleteSuccess"),
+      });
+    } catch {
+      toast({
+        title: tCommon("error"),
+        variant: "destructive",
+      });
+    }
   };
 
   const students = data?.data || [];
@@ -188,69 +203,51 @@ export default function MyStudentsPage() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <Link
-                      href={`/students/${student.id}`} // We can keep this same detailed view or create a specific one if needed
-                      className="font-medium hover:text-primary hover:underline"
+                      href={`/students/${student.id}`}
+                      className="font-medium hover:text-primary hover:underline block truncate"
                     >
                       {student.name}
                     </Link>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                      {/* Guardian Info */}
-                      {student.guardianName && (
-                        <div className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          <span>
-                            {student.guardianName}
-                            {student.guardianPhone &&
-                              ` (${student.guardianPhone})`}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                    {student.guardianName && (
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        {student.guardianName}
+                      </p>
+                    )}
                   </div>
 
-                  {/* Portal Access Badge */}
-                  {student.username ? (
-                    <Badge variant="outline" className="font-mono text-xs gap-1">
-                      <Key className="h-3 w-3" />
-                      {student.username}
-                    </Badge>
-                  ) : null}
-
                   {/* Points Badge */}
-                  {student.totalPoints !== undefined && (
-                    <Badge variant="secondary" className="font-mono">
+                  {student.totalPoints !== undefined && student.totalPoints > 0 && (
+                    <Badge variant="secondary" className="font-mono shrink-0">
                       {student.totalPoints} {tCommon("points")}
                     </Badge>
                   )}
 
-                  {/* Action Buttons */}
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleCredentialsClick(student)}
-                      title={student.username ? t("resetCredentials") : t("generateCredentials")}
-                    >
-                      <Key className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEditClick(student)}
-                      title={t("editStudent")}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => handleDeleteClick(student)}
-                      title={t("deleteStudent")}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  {/* Action Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="shrink-0" aria-label={tCommon("actions")}>
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleCredentialsClick(student)}>
+                        <Key className="h-4 w-4 me-2" />
+                        {student.username ? t("resetCredentials") : t("generateCredentials")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEditClick(student)}>
+                        <Pencil className="h-4 w-4 me-2" />
+                        {t("editStudent")}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => handleDeleteClick(student)}
+                      >
+                        <Trash2 className="h-4 w-4 me-2" />
+                        {t("deleteStudent")}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </CardContent>
             </Card>
