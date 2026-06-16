@@ -367,7 +367,15 @@
     "studentTracking": "Student Tracking",
     "studentTrackingDesc": "Track attendance and progress of your students",
     "scheduling": "Scheduling",
-    "schedulingDesc": "Plan and schedule your teaching sessions"
+    "schedulingDesc": "Plan and schedule your teaching sessions",
+    "chooseRoleTitle": "How would you like to sign in?",
+    "chooseRoleSubtitle": "Pick your account type to go straight to your dashboard",
+    "studentRole": "I'm a Student",
+    "studentRoleDesc": "Access your portal, track your memorization, points and achievements",
+    "teacherRole": "I'm a Teacher or Supervisor",
+    "teacherRoleDesc": "Manage your circles and track your students' progress and attendance",
+    "enterAsStudent": "Student Login",
+    "enterAsTeacher": "Teacher Login"
   },
   "Register": {
     "title": "Create account",

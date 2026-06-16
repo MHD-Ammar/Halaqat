@@ -25,6 +25,7 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 
+import { AssessMushafDto } from "./dto/assess-mushaf.dto";
 import { BulkRecitationDto } from "./dto/bulk-recitation.dto";
 import { RecordRecitationDto } from "./dto/record-recitation.dto";
 import { ProgressService } from "./progress.service";
@@ -75,6 +76,24 @@ export class ProgressController {
   @ApiResponse({ status: 400, description: "Validation error" })
   recordBulkRecitation(@Body() dto: BulkRecitationDto) {
     return this.progressService.recordBulkRecitation(dto);
+  }
+
+  /**
+   * Record a Mushaf assessment: recitation rows + linked word-level mistakes
+   * in one call. Awards points / XP just like the bulk recitation flow.
+   * POST /api/progress/recitations/assess
+   */
+  @Post("recitations/assess")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR)
+  @ApiOperation({
+    summary: "Record Mushaf assessment",
+    description:
+      "Create one recitation per assessed page (awarding points/XP) and save the word-level mistakes marked on each page, linked to that recitation.",
+  })
+  @ApiResponse({ status: 201, description: "Assessment recorded successfully" })
+  @ApiResponse({ status: 400, description: "Validation error" })
+  recordMushafAssessment(@Body() dto: AssessMushafDto) {
+    return this.progressService.recordMushafAssessment(dto);
   }
 
   /**

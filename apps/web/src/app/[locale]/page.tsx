@@ -4,7 +4,14 @@
  * Simple landing page with redirect to login.
  */
 
-import { BookOpen, Users, Calendar, ArrowRight } from "lucide-react";
+import {
+  BookOpen,
+  Users,
+  Calendar,
+  ArrowRight,
+  GraduationCap,
+  Rocket,
+} from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
@@ -98,6 +105,59 @@ function HomePageContent() {
             <Button size="lg" variant="outline" className="w-full sm:w-auto">
               {t("learnMore")}
             </Button>
+          </div>
+        </div>
+
+        {/* Role selection */}
+        <div className="mt-20 max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+              {t("chooseRoleTitle")}
+            </h2>
+            <p className="text-muted-foreground">{t("chooseRoleSubtitle")}</p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-6">
+            {/* Student card */}
+            <Link href="/student-login" className="group">
+              <div className="h-full bg-card border-2 rounded-2xl p-8 text-center transition-all duration-300 hover:border-orange-400 hover:shadow-xl hover:shadow-orange-500/10 hover:-translate-y-1">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-orange-500/30">
+                  <Rocket className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  {t("studentRole")}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-6">
+                  {t("studentRoleDesc")}
+                </p>
+                <Button
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                >
+                  {t("enterAsStudent")}
+                  <ArrowRight className="ms-2 h-4 w-4" />
+                </Button>
+              </div>
+            </Link>
+
+            {/* Teacher card */}
+            <Link href="/login" className="group">
+              <div className="h-full bg-card border-2 rounded-2xl p-8 text-center transition-all duration-300 hover:border-primary hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
+                  <GraduationCap className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  {t("teacherRole")}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-6">
+                  {t("teacherRoleDesc")}
+                </p>
+                <Button size="lg" variant="outline" className="w-full">
+                  {t("enterAsTeacher")}
+                  <ArrowRight className="ms-2 h-4 w-4" />
+                </Button>
+              </div>
+            </Link>
           </div>
         </div>
 

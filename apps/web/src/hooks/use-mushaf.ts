@@ -13,6 +13,8 @@ import type {
   MistakeType,
   MushafPage,
   RecitationMistakeDto,
+  RecitationQuality,
+  RecitationType,
 } from "@halaqat/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -145,17 +147,30 @@ interface RecitationMistake {
 }
 
 /**
- * Get all mistakes for a student, optionally filtered by page number.
+ * Get mistakes for a student, optionally filtered by page number.
+ *
+ * @param latestOnly - when true (and a page is given) only the most recent
+ *   recitation attempt's mistakes are returned. Used by the Mushaf overlay so
+ *   re-reciting a page shows the latest attempt rather than every attempt
+ *   merged together.
  */
 export function useStudentMistakes(
   studentId: string,
-  pageNumber?: number
+  pageNumber?: number,
+  latestOnly?: boolean,
 ) {
   return useQuery<RecitationMistake[]>({
-    queryKey: ["mushaf", "mistakes", studentId, pageNumber ?? "all"],
+    queryKey: [
+      "mushaf",
+      "mistakes",
+      studentId,
+      pageNumber ?? "all",
+      latestOnly ? "latest" : "all-attempts",
+    ],
     queryFn: async () => {
-      const params: Record<string, number> = {};
+      const params: Record<string, number | boolean> = {};
       if (pageNumber) params.pageNumber = pageNumber;
+      if (latestOnly && pageNumber) params.latestOnly = true;
 
       const response = await api.get(`/mushaf/mistakes/${studentId}`, {
         params,
@@ -164,6 +179,37 @@ export function useStudentMistakes(
     },
     enabled: !!studentId,
     staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+}
+
+/**
+ * A single recitation attempt on a page.
+ */
+export interface PageRecitationAttempt {
+  recitationId: string | null;
+  recitedAt: string;
+  mistakeCount: number;
+  mistakes: RecitationMistake[];
+}
+
+/**
+ * Get the recitation history (all attempts, newest first) for a page.
+ */
+export function usePageRecitationHistory(
+  studentId: string,
+  pageNumber: number,
+  enabled = true,
+) {
+  return useQuery<PageRecitationAttempt[]>({
+    queryKey: ["mushaf", "history", studentId, pageNumber],
+    queryFn: async () => {
+      const response = await api.get(`/mushaf/history/${studentId}`, {
+        params: { pageNumber },
+      });
+      return response.data;
+    },
+    enabled: enabled && !!studentId && pageNumber >= 1 && pageNumber <= 604,
+    staleTime: 60 * 1000,
   });
 }
 
@@ -187,6 +233,69 @@ export function useBulkCreateMistakes() {
       queryClient.invalidateQueries({
         queryKey: ["mushaf", "mistakes", variables.studentId],
       });
+    },
+  });
+}
+
+/**
+ * A single assessed page: its quality, type and the mistakes marked on it.
+ */
+export interface AssessPagePayload {
+  pageNumber: number;
+  quality: RecitationQuality;
+  type: RecitationType;
+  mistakes: {
+    wordLocation: string;
+    surahNumber: number;
+    ayahNumber: number;
+    wordPosition: number;
+    mistakeType: MistakeType;
+    notes?: string;
+  }[];
+}
+
+interface AssessMushafResponse {
+  recitations: unknown[];
+  totalPointsAwarded: number;
+  pageCount: number;
+}
+
+/**
+ * Record a full Mushaf assessment in one call: creates a recitation per page
+ * (awarding points / XP / achievements) AND saves the linked word-level
+ * mistakes. This is what makes recording from the Mushaf produce the same
+ * student achievement (إنجاز) and points as the recitation tab.
+ */
+export function useRecordMushafAssessment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (dto: {
+      studentId: string;
+      sessionId: string;
+      pages: AssessPagePayload[];
+    }) => {
+      const response = await api.post<AssessMushafResponse>(
+        "/progress/recitations/assess",
+        dto,
+      );
+      return response.data;
+    },
+    onSuccess: (_, variables) => {
+      // Mistakes changed → refresh the highlight overlays.
+      queryClient.invalidateQueries({
+        queryKey: ["mushaf", "mistakes", variables.studentId],
+      });
+      // Page history changed → refresh the attempts panel.
+      queryClient.invalidateQueries({
+        queryKey: ["mushaf", "history", variables.studentId],
+      });
+      // Recitations / points / profile changed → refresh student-facing data.
+      queryClient.invalidateQueries({
+        queryKey: ["student", "profile", variables.studentId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["session"] });
+      queryClient.invalidateQueries({ queryKey: ["recitations"] });
     },
   });
 }

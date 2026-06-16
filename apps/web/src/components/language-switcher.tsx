@@ -39,11 +39,19 @@ export function LanguageSwitcher() {
   const handleLanguageChange = (newLocale: "ar" | "en") => {
     if (newLocale === locale) return;
 
-    // Store preference in cookie (30 days expiry)
+    // Store preference in cookie (30 days expiry). The cookie is the source
+    // of truth next-intl reads on the server. We also mirror it to
+    // localStorage as a client-side backup so the choice survives the cookie
+    // being cleared (see the sync effect in the locale layout).
     Cookies.set(LOCALE_COOKIE_NAME, newLocale, {
       expires: 30,
       sameSite: "lax",
     });
+    try {
+      window.localStorage.setItem(LOCALE_COOKIE_NAME, newLocale);
+    } catch {
+      // Private mode / storage disabled — cookie alone is sufficient.
+    }
 
     startTransition(() => {
       router.replace(pathname, { locale: newLocale });

@@ -9,6 +9,7 @@
 
 import { UserRole } from "@halaqat/types";
 import {
+  BadRequestException,
   Controller,
   Get,
   Patch,
@@ -139,6 +140,30 @@ export class MushafController {
     @Query() query: GetMistakesQueryDto
   ) {
     return this.mushafService.getMistakes(studentId, query);
+  }
+
+  /**
+   * GET /mushaf/history/:studentId?pageNumber=N
+   * Recitation attempts for a page, newest first, each with its mistakes.
+   */
+  @Get("history/:studentId")
+  @Roles(UserRole.TEACHER, UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.STUDENT)
+  @ApiOperation({
+    summary: "Get page recitation history",
+    description:
+      "Returns every recitation attempt on a page (newest first) with the mistakes recorded in each.",
+  })
+  @ApiParam({ name: "studentId", description: "Student UUID" })
+  @ApiQuery({ name: "pageNumber", required: true, description: "Page (1-604)" })
+  @ApiResponse({ status: 200, description: "List of attempts" })
+  async getPageHistory(
+    @Param("studentId", ParseUUIDPipe) studentId: string,
+    @Query() query: GetMistakesQueryDto,
+  ) {
+    if (!query.pageNumber) {
+      throw new BadRequestException("pageNumber is required (1–604)");
+    }
+    return this.mushafService.getPageHistory(studentId, query.pageNumber);
   }
 
   /**

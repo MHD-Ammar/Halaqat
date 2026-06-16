@@ -430,7 +430,15 @@
     "studentTracking": "تتبع الطلاب",
     "studentTrackingDesc": "تتبع حضور وتقدم طلابك",
     "scheduling": "الجدولة",
-    "schedulingDesc": "خطط وجدول جلسات التدريس"
+    "schedulingDesc": "خطط وجدول جلسات التدريس",
+    "chooseRoleTitle": "كيف بدك تسجّل دخولك؟",
+    "chooseRoleSubtitle": "اختر نوع حسابك لتدخل على واجهتك مباشرة",
+    "studentRole": "أنا طالب",
+    "studentRoleDesc": "ادخل على واجهتك، تابع حفظك ونقاطك وإنجازاتك",
+    "teacherRole": "أنا معلّم أو مشرف",
+    "teacherRoleDesc": "أدر حلقاتك، وتابع تقدم طلابك وحضورهم",
+    "enterAsStudent": "دخول الطالب",
+    "enterAsTeacher": "دخول المعلّم"
   },
   "Register": {
     "title": "إنشاء حساب",

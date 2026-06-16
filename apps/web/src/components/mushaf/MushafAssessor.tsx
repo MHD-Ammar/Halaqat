@@ -30,6 +30,7 @@
 import {
   MistakeType,
   RecitationQuality,
+  RecitationType,
   calculatePageScore,
   averagePageScores,
   tallyMistakes,
@@ -44,8 +45,10 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  History,
   Loader2,
   RefreshCw,
+  RotateCcw,
   Search,
   Trash2,
   Undo2,
@@ -62,7 +65,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   triggerPrefetch,
-  useBulkCreateMistakes,
+  usePageRecitationHistory,
+  useRecordMushafAssessment,
   useMushafPage,
   useStudentMistakes,
   useStudentMushafState,
@@ -81,6 +85,7 @@ import {
   MushafPageRenderer,
   type WordPointerEvent,
 } from "./MushafPageRenderer";
+import { PageHistorySheet } from "./PageHistorySheet";
 import { QualityOverridePicker } from "./QualityOverridePicker";
 import { RadialMistakePicker } from "./RadialMistakePicker";
 import { usePageSwipe } from "./use-page-swipe";
@@ -145,19 +150,40 @@ function parseLocation(location: string): {
 
 export const MushafAssessor: React.FC<MushafAssessorProps> = ({
   student,
-  sessionId: _sessionId,
-  recitationId,
+  sessionId,
+  recitationId: _recitationId,
   initialPage,
   onSaved,
 }) => {
   const { toast } = useToast();
 
+  /**
+   * Lesson type for the whole assessment. Mistake-marking is usually done
+   * during review, so REVIEW is the default; the teacher can flip it to a new
+   * lesson before saving.
+   */
+  const [lessonType, setLessonType] = useState<RecitationType>(
+    RecitationType.REVIEW,
+  );
+
   // ── Page navigation state ────────────────────────────────────────────
   const [currentPage, setCurrentPage] = useState(initialPage ?? 1);
   const [showReview, setShowReview] = useState(false);
   const [showNav, setShowNav] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [navSearch, setNavSearch] = useState("");
   const [pageInputVal, setPageInputVal] = useState("");
+
+  /**
+   * Set of pages the teacher has chosen to "re-recite". While a page is in
+   * this set, its previously-saved mistakes are treated as a faded backdrop
+   * and no longer lock the words — so the teacher can mark a brand-new attempt
+   * cleanly. Saving creates a fresh recitation; the old attempt stays in the
+   * history. Cleared on save.
+   */
+  const [reRecitePages, setReRecitePages] = useState<Set<number>>(
+    () => new Set(),
+  );
 
   /**
    * Pending mistakes are keyed by page so the teacher can mark errors on
@@ -212,12 +238,14 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
     error: pageError,
   } = useMushafPage(currentPage);
 
+  // Latest attempt's mistakes for the current page (the saved overlay).
   const { data: existingMistakes } = useStudentMistakes(
     student.id,
     currentPage,
+    true,
   );
 
-  const bulkCreate = useBulkCreateMistakes();
+  const assessMushaf = useRecordMushafAssessment();
 
   // ── Derived: page-level mistake set + map ────────────────────────────
 
@@ -233,12 +261,21 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
     [pendingForPage],
   );
 
-  /** Map of saved mistakes for this page, keyed by wordLocation. */
+  /** True while the current page is being re-recited as a fresh attempt. */
+  const isReReciting = reRecitePages.has(currentPage);
+
+  /**
+   * Map of saved mistakes for this page, keyed by wordLocation. While
+   * re-reciting we treat the page as blank (empty map) so the previously
+   * saved words no longer lock — the teacher marks a clean new attempt and
+   * the old one is preserved in the history.
+   */
   const savedHighlightMap = useMemo(() => {
     const map = new Map<string, MistakeType>();
+    if (isReReciting) return map;
     existingMistakes?.forEach((m) => map.set(m.wordLocation, m.mistakeType));
     return map;
-  }, [existingMistakes]);
+  }, [existingMistakes, isReReciting]);
 
   /**
    * Combined highlight map (saved + pending) used by the renderer so the
@@ -254,14 +291,18 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
   }, [savedHighlightMap, pendingForPage]);
 
   /**
-   * Tally pending + saved counts → score for the live header.
+   * Tally pending + saved counts → score for the live header. During a
+   * re-recite the saved attempt is excluded so the score reflects only the
+   * fresh attempt being marked.
    */
   const liveCounts = useMemo<MistakeCounts>(() => {
     return tallyMistakes([
-      ...(existingMistakes ?? []).map((m) => ({ mistakeType: m.mistakeType })),
+      ...(isReReciting
+        ? []
+        : (existingMistakes ?? []).map((m) => ({ mistakeType: m.mistakeType }))),
       ...pendingForPage,
     ]);
-  }, [existingMistakes, pendingForPage]);
+  }, [existingMistakes, pendingForPage, isReReciting]);
 
   const liveResult = useMemo<PageScoreResult>(
     () => calculatePageScore(liveCounts),
@@ -406,6 +447,50 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
     [radial, savedHighlightMap],
   );
 
+  // Always-on history fetch for the current page — used to detect whether a
+  // saved attempt exists even when the student recited perfectly (zero mistakes).
+  const { data: pageHistory } = usePageRecitationHistory(student.id, currentPage);
+
+  /** Whether the current page already has a saved attempt to re-recite. */
+  const hasSavedAttempt = (pageHistory?.length ?? 0) > 0;
+
+  /** Start a fresh attempt on the current page (unlocks the saved words). */
+  const startReRecite = useCallback(() => {
+    setReRecitePages((prev) => {
+      const next = new Set(prev);
+      next.add(currentPage);
+      return next;
+    });
+    // Drop any pending marks/override on the page so the new attempt is clean.
+    setPendingMistakesByPage((prev) => {
+      if (!(currentPage in prev)) return prev;
+      const copy = { ...prev };
+      delete copy[currentPage];
+      return copy;
+    });
+    setQualityOverridesByPage((prev) => {
+      if (!(currentPage in prev)) return prev;
+      const copy = { ...prev };
+      delete copy[currentPage];
+      return copy;
+    });
+  }, [currentPage]);
+
+  /** Cancel a re-recite, restoring the saved attempt as the overlay. */
+  const cancelReRecite = useCallback(() => {
+    setReRecitePages((prev) => {
+      const next = new Set(prev);
+      next.delete(currentPage);
+      return next;
+    });
+    setPendingMistakesByPage((prev) => {
+      if (!(currentPage in prev)) return prev;
+      const copy = { ...prev };
+      delete copy[currentPage];
+      return copy;
+    });
+  }, [currentPage]);
+
   // ── Page navigation ──────────────────────────────────────────────────
 
   const goToPage = useCallback(
@@ -456,35 +541,63 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
 
   const handleSave = async () => {
     if (allPendingFlat.length === 0) return;
+    if (!sessionId || sessionId === "undefined") {
+      toast({
+        variant: "destructive",
+        title: "خطأ في الحفظ",
+        description: "الجلسة غير صالحة.",
+      });
+      return;
+    }
+
+    // Build one assessment page per page that has pending mistakes. Each page's
+    // quality is the teacher override if set, otherwise the auto-suggested
+    // quality derived from that page's mistake counts (same algorithm as the
+    // live header). This records a real recitation per page so points / XP /
+    // achievements fire exactly like the recitation tab.
+    const pages = Object.entries(pendingMistakesByPage)
+      .filter(([, list]) => list.length > 0)
+      .map(([pageStr, list]) => {
+        const pageNum = Number(pageStr);
+        const autoQuality = calculatePageScore(
+          tallyMistakes(list),
+        ).suggestedQuality;
+        const quality =
+          qualityOverridesByPage[pageNum] ?? autoQuality;
+        return {
+          pageNumber: pageNum,
+          quality,
+          type: lessonType,
+          mistakes: list.map((m) => ({
+            wordLocation: m.wordLocation,
+            surahNumber: m.surahNumber,
+            ayahNumber: m.ayahNumber,
+            wordPosition: m.wordPosition,
+            mistakeType: m.mistakeType,
+          })),
+        };
+      });
 
     try {
-      await bulkCreate.mutateAsync({
+      const result = await assessMushaf.mutateAsync({
         studentId: student.id,
-        ...(recitationId ? { recitationId } : {}),
-        mistakes: allPendingFlat.map((m) => ({
-          wordLocation: m.wordLocation,
-          pageNumber: m.pageNumber,
-          surahNumber: m.surahNumber,
-          ayahNumber: m.ayahNumber,
-          wordPosition: m.wordPosition,
-          mistakeType: m.mistakeType,
-        })),
+        sessionId,
+        pages,
       });
 
       const count = allPendingFlat.length;
       toast({
-        title: "تم الحفظ ✓",
-        description: `تم حفظ ${count} ${count === 1 ? "خطأ" : "أخطاء"} لـ ${student.name}`,
+        title: "تم تسجيل التسميع ✓",
+        description: `${result.pageCount} ${result.pageCount === 1 ? "صفحة" : "صفحات"} · ${count} ${count === 1 ? "خطأ" : "أخطاء"} · +${result.totalPointsAwarded} نقطة`,
       });
 
       // Reset all pending state on successful save.
       setPendingMistakesByPage({});
       setQualityOverridesByPage({});
+      setReRecitePages(new Set());
       setShowReview(false);
       onSaved?.(count);
     } catch (error) {
-      // Surfacing the actual API error message (when present) helps the
-      // teacher distinguish "duplicate" from "validation" from "network".
       const message =
         (error as { response?: { data?: { message?: string } } })?.response
           ?.data?.message ?? "تحقق من اتصالك وحاول مرة أخرى.";
@@ -565,13 +678,45 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
           </span>
         </button>
 
+        {/* History of past attempts for this page */}
+        <button
+          onClick={() => setShowHistory(true)}
+          className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center hover:bg-muted/70 active:scale-95 transition-all"
+          title="سجل التسميع"
+          aria-label="سجل التسميع"
+        >
+          <History className="h-4 w-4" />
+        </button>
+
+        {/* Re-recite: start a fresh attempt on a page that already has one. */}
+        {hasSavedAttempt &&
+          (isReReciting ? (
+            <button
+              onClick={cancelReRecite}
+              className="h-9 px-2.5 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 flex items-center gap-1 text-xs font-bold hover:bg-amber-200 active:scale-95 transition-all"
+              title="إلغاء إعادة التسميع"
+            >
+              <X className="h-3.5 w-3.5" />
+              إلغاء الإعادة
+            </button>
+          ) : (
+            <button
+              onClick={startReRecite}
+              className="h-9 px-2.5 rounded-lg bg-primary/10 text-primary flex items-center gap-1 text-xs font-bold hover:bg-primary/20 active:scale-95 transition-all"
+              title="إعادة تسميع هذه الصفحة"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              إعادة تسميع
+            </button>
+          ))}
+
         <div className="ms-auto flex items-center gap-1">
           <button
-            onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage >= 604}
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage <= 1}
             className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center disabled:opacity-40 hover:bg-muted/70 active:scale-95 transition-all"
-            title="الصفحة التالية"
-            aria-label="الصفحة التالية"
+            title="الصفحة السابقة"
+            aria-label="الصفحة السابقة"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -583,11 +728,11 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
             {currentPage}
           </button>
           <button
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage <= 1}
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage >= 604}
             className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center disabled:opacity-40 hover:bg-muted/70 active:scale-95 transition-all"
-            title="الصفحة السابقة"
-            aria-label="الصفحة السابقة"
+            title="الصفحة التالية"
+            aria-label="الصفحة التالية"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -601,6 +746,14 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
         overrideQuality={qualityOverridesByPage[currentPage] ?? null}
         className="flex-none"
       />
+
+      {/* Re-recite banner — reminds the teacher this is a fresh attempt. */}
+      {isReReciting && (
+        <div className="flex-none flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary text-xs font-bold border-b border-primary/20">
+          <RotateCcw className="h-3.5 w-3.5" />
+          إعادة تسميع — محاولة جديدة لصفحة {currentPage}. المحاولة السابقة محفوظة في السجل.
+        </div>
+      )}
 
       {/* Mushaf body */}
       <div
@@ -761,6 +914,34 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
           <Undo2 className="h-4 w-4" />
         </button>
 
+        {/* Lesson-type toggle — applies to the whole assessment when saved. */}
+        <div className="flex-none flex items-center rounded-xl bg-muted p-0.5 text-xs font-bold">
+          <button
+            onClick={() => setLessonType(RecitationType.REVIEW)}
+            className={cn(
+              "h-9 px-2.5 rounded-lg transition-all",
+              lessonType === RecitationType.REVIEW
+                ? "bg-background shadow-sm text-foreground"
+                : "text-muted-foreground",
+            )}
+            title="مراجعة"
+          >
+            مراجعة
+          </button>
+          <button
+            onClick={() => setLessonType(RecitationType.NEW_LESSON)}
+            className={cn(
+              "h-9 px-2.5 rounded-lg transition-all",
+              lessonType === RecitationType.NEW_LESSON
+                ? "bg-background shadow-sm text-foreground"
+                : "text-muted-foreground",
+            )}
+            title="درس جديد"
+          >
+            جديد
+          </button>
+        </div>
+
         {pendingTotal > 0 ? (
           <button
             onClick={() => setShowReview((v) => !v)}
@@ -794,15 +975,15 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
 
         <button
           onClick={handleSave}
-          disabled={pendingTotal === 0 || bulkCreate.isPending}
+          disabled={pendingTotal === 0 || assessMushaf.isPending}
           className={cn(
             "flex-1 h-11 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]",
-            pendingTotal > 0 && !bulkCreate.isPending
+            pendingTotal > 0 && !assessMushaf.isPending
               ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
               : "bg-muted text-muted-foreground cursor-not-allowed opacity-40",
           )}
         >
-          {bulkCreate.isPending ? (
+          {assessMushaf.isPending ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
               <span>جاري الحفظ...</span>
@@ -810,7 +991,7 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
           ) : (
             <>
               <Check className="h-4 w-4" />
-              حفظ الأخطاء
+              حفظ التسميع
               {pendingTotal > 0 && (
                 <span className="opacity-75 font-normal text-xs tabular-nums">
                   ({pendingTotal})
@@ -950,6 +1131,14 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
           activeIndex={radial.state.activeIndex}
         />
       )}
+
+      {/* Recitation history panel for the current page */}
+      <PageHistorySheet
+        open={showHistory}
+        onOpenChange={setShowHistory}
+        studentId={student.id}
+        pageNumber={currentPage}
+      />
     </div>
   );
 };

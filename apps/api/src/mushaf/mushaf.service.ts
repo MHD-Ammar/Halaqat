@@ -83,6 +83,11 @@ export class MushafService {
 
   /**
    * Get all mistakes for a student, optionally filtered by page or surah.
+   *
+   * When `latestOnly` is set together with a `pageNumber`, only the mistakes
+   * from the *most recent* recitation attempt on that page are returned. This
+   * is what the Mushaf overlay uses so that re-reciting a page shows the new
+   * attempt's mistakes rather than every attempt ever merged together.
    */
   async getMistakes(
     studentId: string,
@@ -97,10 +102,117 @@ export class MushafService {
       where.surahNumber = query.surahNumber;
     }
 
-    return this.mistakeRepo.find({
+    const mistakes = await this.mistakeRepo.find({
       where,
       order: { createdAt: "DESC" },
     });
+
+    if (!query.latestOnly || !query.pageNumber) {
+      return mistakes;
+    }
+
+    if (mistakes.length === 0) return mistakes;
+
+    const newest = mistakes[0]; // already sorted DESC by createdAt
+    const latestKey = newest?.recitationId ?? null;
+
+    if (latestKey !== null) {
+      // Linked recitation: return exactly the mistakes for that attempt.
+      return mistakes.filter((m) => m.recitationId === latestKey);
+    }
+
+    // Legacy path: the newest mistake has no recitationId. Scope to mistakes
+    // within 24 hours of the newest one so we don't merge multiple historical
+    // unlinked sessions into one bucket. New assessments always produce a
+    // non-null recitationId, so this branch only runs for pre-linking data.
+    const newestTime =
+      newest?.createdAt instanceof Date
+        ? newest.createdAt.getTime()
+        : new Date(newest?.createdAt as unknown as string).getTime();
+    const cutoff = new Date(newestTime - 24 * 60 * 60 * 1000);
+    return mistakes.filter(
+      (m) => m.recitationId === null && m.createdAt >= cutoff,
+    );
+  }
+
+  /**
+   * Get the recitation history for a single page: every attempt the student
+   * made on that page, newest first, each with its mistakes attached.
+   *
+   * Attempts are grouped by `recitationId`. Mistakes that predate the
+   * recitation-linking work (null recitationId) are returned under a single
+   * synthetic attempt with `recitationId: null` so nothing is lost.
+   */
+  async getPageHistory(
+    studentId: string,
+    pageNumber: number,
+  ): Promise<
+    Array<{
+      recitationId: string | null;
+      recitedAt: string;
+      mistakeCount: number;
+      mistakes: RecitationMistake[];
+    }>
+  > {
+    // Query Recitation rows first — they are the authoritative list of
+    // attempts. Relying only on RecitationMistake rows would miss perfect
+    // recitations (zero mistakes) which still earn points and XP.
+    const recitations = await this.recitationRepo.find({
+      where: { studentId, pageNumber },
+      order: { createdAt: "DESC" },
+    });
+
+    const recitationIds = recitations.map((r) => r.id);
+
+    // Fetch all linked mistakes in one query, then group in memory.
+    const linkedMistakes =
+      recitationIds.length > 0
+        ? await this.mistakeRepo.find({
+            where: { recitationId: In(recitationIds) },
+          })
+        : [];
+
+    const mistakesByRecitation = new Map<string, RecitationMistake[]>();
+    for (const m of linkedMistakes) {
+      if (!m.recitationId) continue;
+      const arr = mistakesByRecitation.get(m.recitationId) ?? [];
+      arr.push(m);
+      mistakesByRecitation.set(m.recitationId, arr);
+    }
+
+    const attempts: Array<{
+      recitationId: string | null;
+      recitedAt: string;
+      mistakeCount: number;
+      mistakes: RecitationMistake[];
+    }> = recitations.map((r) => {
+      const mistakes = mistakesByRecitation.get(r.id) ?? [];
+      const recitedAt =
+        r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt);
+      return { recitationId: r.id, recitedAt, mistakeCount: mistakes.length, mistakes };
+    });
+
+    // Append a synthetic entry for legacy null-recitationId mistakes if any
+    // exist (mistakes recorded before recitation-linking was introduced).
+    const legacyMistakes = await this.mistakeRepo.find({
+      where: { studentId, pageNumber, recitationId: IsNull() },
+      order: { createdAt: "DESC" },
+    });
+
+    if (legacyMistakes.length > 0) {
+      const first = legacyMistakes[0]?.createdAt;
+      const recitedAt = first instanceof Date ? first.toISOString() : String(first);
+      attempts.push({
+        recitationId: null,
+        recitedAt,
+        mistakeCount: legacyMistakes.length,
+        mistakes: legacyMistakes,
+      });
+    }
+
+    // ISO strings are lexicographically monotone — localeCompare sorts correctly.
+    attempts.sort((a, b) => b.recitedAt.localeCompare(a.recitedAt));
+    return attempts;
   }
 
   /**

@@ -7,14 +7,15 @@
  * Includes: Auto-resume, Swipe gestures, State saving, and Mistake highlights.
  */
 
-import { MistakeType } from "@halaqat/types";
-import { AlertCircle, ChevronLeft, ChevronRight, Search, Loader2 } from "lucide-react";
+import { MistakeType, tallyMistakes } from "@halaqat/types";
+import { AlertCircle, ChevronLeft, ChevronRight, Search, Loader2, History } from "lucide-react";
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 
 import {
   MushafPageRenderer,
   MushafPageHeader,
-  MistakeLegend,
+  StudentMistakeSummary,
+  PageHistorySheet,
 } from "@/components/mushaf";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -42,6 +43,7 @@ export default function MushafViewerPage() {
   const [showJumpDialog, setShowJumpDialog] = useState(false);
   const [jumpPageInput, setJumpPageInput] = useState("");
   const [showSurahPicker, setShowSurahPicker] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   // 3. Set initial page from backend state
   useEffect(() => {
@@ -59,8 +61,13 @@ export default function MushafViewerPage() {
     refetch: retryFetchPage,
   } = useMushafPage(currentPage);
 
-  // 5. Fetch mistakes for this page
-  const { data: mistakes } = useStudentMistakes(studentId || "", currentPage);
+  // 5. Fetch mistakes for this page — latest attempt only, so re-recited
+  // pages show the newest attempt rather than every attempt merged.
+  const { data: mistakes } = useStudentMistakes(
+    studentId || "",
+    currentPage,
+    true,
+  );
 
   // 6. Fetch surahs for the picker
   const { data: surahList } = useSurahsWithPages();
@@ -75,6 +82,12 @@ export default function MushafViewerPage() {
     }
     return map;
   }, [mistakes]);
+
+  // 7b. Per-type counts for the student summary bar.
+  const mistakeCounts = useMemo(
+    () => tallyMistakes(mistakes ?? []),
+    [mistakes],
+  );
 
   // 8. State saving logic
   const updateStateMutation = useUpdateMyMushafState();
@@ -132,8 +145,11 @@ export default function MushafViewerPage() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (showJumpDialog || showSurahPicker) return;
-      if (e.key === "ArrowRight") goToPage(currentPage + 1);
-      if (e.key === "ArrowLeft") goToPage(currentPage - 1);
+      // Arabic / Mushaf RTL: the right arrow leafs *backward* (lower page
+      // number) and the left arrow leafs *forward*, matching how a physical
+      // Mushaf is turned.
+      if (e.key === "ArrowRight") goToPage(currentPage - 1);
+      if (e.key === "ArrowLeft") goToPage(currentPage + 1);
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -204,11 +220,13 @@ export default function MushafViewerPage() {
           </div>
         ) : null}
 
-        {/* ── Floating Mistake Legend ── */}
-        {/* bottom-36 clears both the sticky nav footer (~52px) and the fixed bottom nav (64px) */}
+        {/* ── Floating Mistake Summary ── */}
+        {/* Shows the student a per-type breakdown of the mistakes their
+            teacher marked on this page. bottom-36 clears both the sticky nav
+            footer (~52px) and the fixed bottom nav (64px). */}
         {mistakes && mistakes.length > 0 && (
           <div className="fixed bottom-36 inset-x-0 flex justify-center z-30 px-4 animate-in slide-in-from-bottom-4">
-            <MistakeLegend />
+            <StudentMistakeSummary counts={mistakeCounts} />
           </div>
         )}
       </main>
@@ -219,9 +237,9 @@ export default function MushafViewerPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage >= 604}
-            title="الصفحة التالية"
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage <= 1}
+            title="الصفحة السابقة"
           >
             <ChevronRight className="h-6 w-6" />
           </Button>
@@ -272,6 +290,17 @@ export default function MushafViewerPage() {
               </DialogContent>
             </Dialog>
 
+            {/* Recitation history for this page */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowHistory(true)}
+              title="سجل التسميع"
+              aria-label="سجل التسميع"
+            >
+              <History className="h-5 w-5" />
+            </Button>
+
             {/* Surah Picker Dialog */}
             <Dialog open={showSurahPicker} onOpenChange={setShowSurahPicker}>
               <DialogTrigger asChild>
@@ -310,14 +339,24 @@ export default function MushafViewerPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage <= 1}
-            title="الصفحة السابقة"
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage >= 604}
+            title="الصفحة التالية"
           >
             <ChevronLeft className="h-6 w-6" />
           </Button>
         </div>
       </div>
+
+      {/* Recitation history panel for the current page */}
+      {studentId && (
+        <PageHistorySheet
+          open={showHistory}
+          onOpenChange={setShowHistory}
+          studentId={studentId}
+          pageNumber={currentPage}
+        />
+      )}
     </div>
   );
 }

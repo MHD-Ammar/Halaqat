@@ -240,39 +240,63 @@ export function useRadialPicker<TItem, TPayload>(
     const anchor = pendingAnchorRef.current;
     if (payload === null || items === null || anchor === null) return;
 
+    // Capture the pointer *now* — only once we are sure this is a long-press
+    // and not a scroll. Capturing at pointerdown (the previous behaviour)
+    // stole the gesture from the browser's scroller, so the page could not
+    // be scrolled by starting the touch on a word. Deferring it here keeps
+    // native vertical scrolling responsive until the press is confirmed.
+    const el = capturingElementRef.current as
+      | (Element & { setPointerCapture?: (id: number) => void })
+      | null;
+    const pid = pointerIdRef.current;
+    if (el && pid !== null) {
+      try {
+        el.setPointerCapture?.(pid);
+      } catch {
+        // Older browsers / disconnected nodes — document listeners still fire.
+      }
+    }
+
     triggerHaptic();
     setState({ payload, items, anchor, activeIndex: -1 });
   }, []);
 
   /**
-   * Document-level pointermove listener. Handles two phases:
-   *   PRESSING — cancel if we move too far (likely the user is scrolling).
-   *   PICKING  — recompute the active option.
+   * PRESSING-phase pointermove — cancels the gesture if the pointer drifts
+   * beyond MOVE_TOLERANCE_PX so the browser can scroll the page freely.
+   *
+   * Registered permanently as { passive: true } so the browser never has to
+   * wait for JS before deciding to scroll. It must never call e.preventDefault().
    */
-  const handlePointerMove = useCallback(
+  const handlePointerMovePressing = useCallback(
     (e: PointerEvent) => {
       if (pointerIdRef.current !== e.pointerId) return;
-
+      // Only relevant while the long-press timer is still running.
+      if (longPressTimerRef.current === null) return;
       const start = pointerStartRef.current;
       if (!start) return;
-
-      const current = stateRef.current;
-
-      if (longPressTimerRef.current !== null) {
-        // Still in PRESSING — check tolerance.
-        const distance = Math.hypot(
-          e.clientX - start.x,
-          e.clientY - start.y,
-        );
-        if (distance > MOVE_TOLERANCE_PX) {
-          // Likely a scroll, not a press. Abort cleanly.
-          cleanup();
-        }
-        return;
+      const distance = Math.hypot(e.clientX - start.x, e.clientY - start.y);
+      if (distance > MOVE_TOLERANCE_PX) {
+        // Pointer moved too far before long-press fired — treat as a scroll.
+        cleanup();
       }
+    },
+    [cleanup],
+  );
 
+  /**
+   * PICKING-phase pointermove — recomputes the active option and calls
+   * e.preventDefault() to prevent the page from scrolling while the teacher
+   * drags toward a mistake type.
+   *
+   * Registered as { passive: false } ONLY while the picker is open (state ≠
+   * null) so the non-passive cost is never paid during normal scrolling.
+   */
+  const handlePointerMovePicking = useCallback(
+    (e: PointerEvent) => {
+      if (pointerIdRef.current !== e.pointerId) return;
+      const current = stateRef.current;
       if (!current) return;
-      // PICKING: update active index.
       const idx = computeActiveIndex(
         current.anchor,
         { x: e.clientX, y: e.clientY },
@@ -282,10 +306,9 @@ export function useRadialPicker<TItem, TPayload>(
       if (idx !== current.activeIndex) {
         setState({ ...current, activeIndex: idx });
       }
-      // Prevent the page from scrolling while we are picking.
       e.preventDefault();
     },
-    [cleanup, innerRadius],
+    [innerRadius],
   );
 
   /**
@@ -323,20 +346,34 @@ export function useRadialPicker<TItem, TPayload>(
     [cleanup, onQuickTap, onSelect],
   );
 
-  // Install document listeners only while a gesture is in flight. Using
-  // refs in the handlers means the listeners themselves can stay stable.
+  // Always-on, passive listener — handles PRESSING-phase scroll detection
+  // and pointer-up/cancel for the full gesture lifecycle.
   useEffect(() => {
-    document.addEventListener("pointermove", handlePointerMove, {
-      passive: false,
+    document.addEventListener("pointermove", handlePointerMovePressing, {
+      passive: true,
     });
     document.addEventListener("pointerup", handlePointerUp);
     document.addEventListener("pointercancel", handlePointerUp);
     return () => {
-      document.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener("pointermove", handlePointerMovePressing);
       document.removeEventListener("pointerup", handlePointerUp);
       document.removeEventListener("pointercancel", handlePointerUp);
     };
-  }, [handlePointerMove, handlePointerUp]);
+  }, [handlePointerMovePressing, handlePointerUp]);
+
+  // Non-passive listener installed ONLY while the picker is open.
+  // `isPicking` is boolean so this effect only re-runs on open/close, not on
+  // every activeIndex update — avoiding rapid listener churn during dragging.
+  const isPicking = state !== null;
+  useEffect(() => {
+    if (!isPicking) return;
+    document.addEventListener("pointermove", handlePointerMovePicking, {
+      passive: false,
+    });
+    return () => {
+      document.removeEventListener("pointermove", handlePointerMovePicking);
+    };
+  }, [isPicking, handlePointerMovePicking]);
 
   // Cancel any in-flight gesture if the component using the hook unmounts.
   useEffect(() => {
@@ -357,17 +394,9 @@ export function useRadialPicker<TItem, TPayload>(
       pointerIdRef.current = args.pointerId;
       capturingElementRef.current = args.capturingElement;
 
-      // Try to capture the pointer so we keep getting events even if the
-      // finger drifts outside the originating word.
-      const el = args.capturingElement as Element & {
-        setPointerCapture?: (id: number) => void;
-      };
-      try {
-        el.setPointerCapture?.(args.pointerId);
-      } catch {
-        // Older browsers / disconnected nodes — fall back to document
-        // listeners which will still fire.
-      }
+      // NOTE: pointer capture is intentionally deferred until the long-press
+      // timer fires (see handleLongPressFire). Capturing here would block the
+      // browser's native vertical scroll when the touch starts on a word.
 
       longPressTimerRef.current = setTimeout(
         handleLongPressFire,

@@ -6,6 +6,7 @@ import { getMessages, setRequestLocale } from "next-intl/server";
 
 import "../globals.css";
 
+import { LocalePersistence } from "@/components/locale-persistence";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { routing } from "@/i18n/routing";
@@ -109,6 +110,7 @@ export default async function LocaleLayout({
     <html lang={locale} dir={dir} suppressHydrationWarning>
       <body className={`${fontClass} antialiased`} suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
+          <LocalePersistence />
           <QueryProvider>
             <TooltipProvider>{children}</TooltipProvider>
           </QueryProvider>

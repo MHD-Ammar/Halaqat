@@ -5,8 +5,8 @@
  */
 
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { Type } from "class-transformer";
-import { IsInt, IsOptional, Min, Max } from "class-validator";
+import { Transform, Type } from "class-transformer";
+import { IsBoolean, IsInt, IsOptional, Min, Max } from "class-validator";
 
 export class GetMistakesQueryDto {
   @ApiPropertyOptional({
@@ -30,4 +30,14 @@ export class GetMistakesQueryDto {
   @IsOptional()
   @Type(() => Number)
   surahNumber?: number;
+
+  @ApiPropertyOptional({
+    description:
+      "When true, return only the mistakes from the most recent recitation attempt on the filtered page (ignored without pageNumber).",
+    example: true,
+  })
+  @IsBoolean()
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === "true")
+  latestOnly?: boolean;
 }

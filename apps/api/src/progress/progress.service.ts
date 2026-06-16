@@ -9,14 +9,16 @@
 
 import { RecitationQuality } from "@halaqat/types";
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, LessThanOrEqual } from "typeorm";
+import { InjectDataSource, InjectRepository } from "@nestjs/typeorm";
+import { DataSource, Repository, LessThanOrEqual } from "typeorm";
 
 import { calculateLevelFromXp } from "../common/constants/leveling-curve";
 import { CurriculumService } from "../curriculum/curriculum.service";
 import { MilestoneReward } from "../gamification/entities/milestone-reward.entity";
 import { StudentMilestone } from "../gamification/entities/student-milestone.entity";
+import { RecitationMistake } from "../mushaf/entities/recitation-mistake.entity";
 import { PointsService } from "../points/points.service";
+import { AssessMushafDto } from "./dto/assess-mushaf.dto";
 import { BulkRecitationDto } from "./dto/bulk-recitation.dto";
 import { RecordRecitationDto } from "./dto/record-recitation.dto";
 import { Recitation } from "./entities/recitation.entity";
@@ -64,6 +66,10 @@ export class ProgressService {
     private milestoneRewardRepo: Repository<MilestoneReward>,
     @InjectRepository(StudentMilestone)
     private studentMilestoneRepo: Repository<StudentMilestone>,
+    @InjectRepository(RecitationMistake)
+    private mistakeRepository: Repository<RecitationMistake>,
+    @InjectDataSource()
+    private dataSource: DataSource,
     private pointsService: PointsService,
     private curriculumService: CurriculumService,
   ) {}
@@ -279,6 +285,85 @@ export class ProgressService {
       totalPointsAwarded,
       pageCount: recitations.length,
     };
+  }
+
+  /**
+   * Record a full Mushaf assessment: one recitation row per page (awarding
+   * points / XP / milestones exactly like {@link recordBulkRecitation}) plus
+   * the word-level mistakes marked on each page, linked to that page's new
+   * recitation row and reflected in its `mistakesCount`.
+   *
+   * This is the single source of truth for "recording from the Mushaf" so the
+   * student earns the same achievement (إنجاز) and points they would from the
+   * page-range recitation wizard.
+   */
+  async recordMushafAssessment(
+    dto: AssessMushafDto,
+  ): Promise<BulkRecitationResult> {
+    // Reuse the existing, well-tested bulk path for points / XP / milestones.
+    const bulkResult = await this.recordBulkRecitation({
+      studentId: dto.studentId,
+      sessionId: dto.sessionId,
+      details: dto.pages.map((p) => ({
+        pageNumber: p.pageNumber,
+        quality: p.quality,
+        type: p.type,
+      })),
+    });
+
+    // Map page number → created recitation id so we can link mistakes. If the
+    // same page somehow appears twice, the last write wins — callers send one
+    // entry per page.
+    const recitationByPage = new Map<number, Recitation>();
+    for (const r of bulkResult.recitations) {
+      recitationByPage.set(r.pageNumber, r);
+    }
+
+    // Build mistake rows linked to the right recitation, and remember how many
+    // landed on each recitation so we can persist the count.
+    const mistakeEntities: RecitationMistake[] = [];
+    const countByRecitation = new Map<string, number>();
+
+    for (const page of dto.pages) {
+      const recitation = recitationByPage.get(page.pageNumber);
+      if (!recitation || !page.mistakes?.length) continue;
+
+      for (const m of page.mistakes) {
+        mistakeEntities.push(
+          this.mistakeRepository.create({
+            recitationId: recitation.id,
+            studentId: dto.studentId,
+            wordLocation: m.wordLocation,
+            pageNumber: page.pageNumber,
+            surahNumber: m.surahNumber,
+            ayahNumber: m.ayahNumber,
+            wordPosition: m.wordPosition,
+            mistakeType: m.mistakeType,
+            notes: m.notes ?? null,
+          }),
+        );
+      }
+      countByRecitation.set(recitation.id, page.mistakes.length);
+    }
+
+    if (mistakeEntities.length > 0) {
+      // Save mistakes and update counts atomically so a partial DB failure
+      // cannot leave recitations with points awarded but no mistake records.
+      await this.dataSource.transaction(async (manager) => {
+        await manager.save(RecitationMistake, mistakeEntities);
+        for (const [id, count] of countByRecitation) {
+          await manager.update(Recitation, { id }, { mistakesCount: count });
+        }
+      });
+
+      // Reflect the counts on the returned objects too.
+      for (const r of bulkResult.recitations) {
+        const count = countByRecitation.get(r.id);
+        if (count !== undefined) r.mistakesCount = count;
+      }
+    }
+
+    return bulkResult;
   }
 
   /**

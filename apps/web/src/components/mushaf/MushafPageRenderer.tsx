@@ -136,9 +136,14 @@ const WordItem = React.memo<WordItemProps>(
           "font-['Uthmanic']",
           interactive &&
             "cursor-pointer hover:bg-primary/10 active:bg-primary/15",
-          // `touch-none` so the browser does not interpret the long-press
-          // as a system gesture (text selection, callout, scroll).
-          interactive && "touch-none select-none",
+          // `touch-pan-y` lets the browser keep handling *vertical* scroll
+          // when the finger lands on a word, while still letting us own the
+          // long-press + horizontal-drag gesture via pointer events. Using
+          // `touch-none` here (the previous behaviour) blocked scrolling
+          // entirely because the justified words leave almost no whitespace
+          // to start a scroll from. `select-none` still suppresses the
+          // text-selection callout on long-press.
+          interactive && "touch-pan-y select-none",
           style?.bgSoft,
           mistake && "border-b-2",
           style?.borderColor,
