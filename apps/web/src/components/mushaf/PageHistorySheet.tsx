@@ -106,12 +106,26 @@ export const PageHistorySheet: React.FC<PageHistorySheetProps> = ({
                         <CalendarClock className="h-3.5 w-3.5" />
                         {formatDate(attempt.recitedAt)}
                       </div>
-                      {isLatest && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
-                          <Sparkles className="h-3 w-3" />
-                          الأحدث
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5">
+                        {attempt.type && (
+                          <span
+                            className={cn(
+                              "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold",
+                              attempt.type === "NEW_LESSON"
+                                ? "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400"
+                                : "bg-sky-500/15 text-sky-600 dark:text-sky-400",
+                            )}
+                          >
+                            {attempt.type === "NEW_LESSON" ? "حفظ جديد" : "مراجعة"}
+                          </span>
+                        )}
+                        {isLatest && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
+                            <Sparkles className="h-3 w-3" />
+                            الأحدث
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {attempt.mistakeCount === 0 ? (

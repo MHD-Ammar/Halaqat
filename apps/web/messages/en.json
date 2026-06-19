@@ -42,6 +42,19 @@
     "submitting": "Submitting...",
     "continue": "Continue"
   },
+  "ApiErrors": {
+    "generic": "Something went wrong. Please try again.",
+    "badRequest": "Invalid request.",
+    "unauthorized": "Your session has expired. Please sign in again.",
+    "forbidden": "You don't have permission to do this.",
+    "notFound": "The requested item was not found.",
+    "conflict": "This conflicts with existing data.",
+    "validation": "Please check your input and try again.",
+    "tooManyRequests": "Too many attempts. Please wait and try again.",
+    "serverError": "Server error. Please try again later.",
+    "forbiddenStudent": "You can't access another student's profile.",
+    "forbiddenCircleMove": "You can't move a student to a circle you don't own."
+  },
   "Nav": {
     "overview": "Overview",
     "circles": "Circles",
@@ -677,9 +690,12 @@
       "achievementCompletedNoTitle": "{name} unlocked achievement {item}!",
       "milestoneCompleted": "{name} ({title}) opened reward {item}!",
       "milestoneCompletedNoTitle": "{name} opened reward {item}!",
-      "levelUpCompleted": "🎉 {name} reached level {item}!",
-      "streakMilestoneCompleted": "🔥 {name} reached a {item}-day streak!",
-      "leaguePromotionCompleted": "📈 {name} was promoted to {item}!",
+      "levelUpCompleted": "{name} reached level {item}!",
+      "levelUpCompletedNoTitle": "{name} reached level {item}!",
+      "streakMilestoneCompleted": "{name} reached a {item}-day streak!",
+      "streakMilestoneCompletedNoTitle": "{name} reached a {item}-day streak!",
+      "leaguePromotionCompleted": "{name} was promoted to {item}!",
+      "leaguePromotionCompletedNoTitle": "{name} was promoted to {item}!",
       "congrats": "Congrats 🎊"
     },
     "unknown": "Unknown",

@@ -406,21 +406,47 @@ export function StudentActionSheet({
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent side="bottom" className="flex flex-col h-[90dvh] p-0 gap-0 overflow-hidden" dir={dir}>
-        <SheetHeader className="flex-none px-6 pt-5 pb-3">
-          <SheetTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5" />
+      <SheetContent
+        side="bottom"
+        className={
+          // The Mushaf assessor wants maximum vertical space, so when that tab
+          // is active we expand the sheet to (almost) full screen. The other
+          // tabs keep the comfortable 90dvh.
+          `flex flex-col p-0 gap-0 overflow-hidden ${
+            activeTab === "mushaf" ? "h-[100dvh]" : "h-[90dvh]"
+          }`
+        }
+        dir={dir}
+      >
+        {/* Header — compact on the Mushaf tab to give the page maximum room.
+            The student name stays (small), the descriptive line is dropped
+            there since the assessor UI is self-explanatory. */}
+        <SheetHeader
+          className={
+            activeTab === "mushaf"
+              ? "flex-none px-4 pt-3 pb-2"
+              : "flex-none px-6 pt-5 pb-3"
+          }
+        >
+          <SheetTitle
+            className={
+              activeTab === "mushaf"
+                ? "flex items-center gap-2 text-base"
+                : "flex items-center gap-2"
+            }
+          >
+            <BookOpen className={activeTab === "mushaf" ? "h-4 w-4" : "h-5 w-5"} />
             {student.name}
           </SheetTitle>
-          <SheetDescription>
-            {activeTab === "recitation"
-              ? step === "INPUT"
-                ? t("enterPageRange")
-                : t("reviewPages", { count: pageDetails.length })
-              : activeTab === "mushaf"
-              ? "تحديد أخطاء التلاوة كلمةً بكلمة"
-              : t("rewardsTab.description")}
-          </SheetDescription>
+          {activeTab !== "mushaf" && (
+            <SheetDescription>
+              {activeTab === "recitation"
+                ? step === "INPUT"
+                  ? t("enterPageRange")
+                  : t("reviewPages", { count: pageDetails.length })
+                : t("rewardsTab.description")}
+            </SheetDescription>
+          )}
         </SheetHeader>
 
         {/* Tabbed Interface */}

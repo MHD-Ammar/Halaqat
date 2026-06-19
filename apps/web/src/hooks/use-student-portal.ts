@@ -40,9 +40,17 @@ interface StudentPortalData {
 export function useStudentPortal() {
   const { data: userProfile, isLoading: isUserLoading } = useUserProfile();
 
-  // The user profile should have a studentId for STUDENT role users
-  const studentId = (userProfile as { studentId?: string } | undefined)
-    ?.studentId;
+  // For STUDENT-role users the `/auth/profile` response returns the student's
+  // own id as `user.id` and does NOT include a separate `studentId` field.
+  // Fall back to `id` so downstream queries (mistakes, history, etc.) that key
+  // off `studentId` actually run. We still prefer an explicit `studentId` if a
+  // future profile shape provides one.
+  const profile = userProfile as
+    | { id?: string; studentId?: string; role?: string }
+    | undefined;
+  const studentId =
+    profile?.studentId ??
+    (profile?.role === "STUDENT" ? profile?.id : undefined);
 
   const query = useQuery({
     queryKey: ["student-portal", studentId],

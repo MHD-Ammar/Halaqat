@@ -189,6 +189,10 @@ export interface PageRecitationAttempt {
   recitationId: string | null;
   recitedAt: string;
   mistakeCount: number;
+  /** "NEW_LESSON" | "REVIEW" | null (legacy). */
+  type: string | null;
+  /** RecitationQuality string | null (legacy). */
+  quality: string | null;
   mistakes: RecitationMistake[];
 }
 

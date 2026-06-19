@@ -73,13 +73,16 @@ export function CircleLiveFeed() {
 
   return (
     <div className="w-full flex justify-center mb-6">
-      <div className="flex items-center bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-primary/10 rounded-2xl h-14 px-4 shadow-sm w-full max-w-2xl overflow-hidden relative group">
-        <div className="flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-xl text-primary font-bold text-sm shrink-0 h-9 self-center">
+      <div className="flex items-center bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-primary/10 rounded-2xl min-h-16 py-2 px-3 sm:px-4 shadow-sm w-full max-w-2xl overflow-hidden relative group">
+        <div className="flex items-center gap-2 bg-primary/10 px-2.5 sm:px-3 py-1.5 rounded-xl text-primary font-bold text-sm shrink-0 self-center">
           <span className="text-base leading-none">📣</span>
-          {t("circleNews")}
+          {/* Label hidden on the narrowest screens to leave room for the news text. */}
+          <span className="hidden sm:inline">{t("circleNews")}</span>
         </div>
-        
-        <div className="flex-1 overflow-hidden relative h-full flex items-center mx-4">
+
+        {/* Fixed two-line height keeps the crossfade smooth while letting the
+            full message show across up to two lines instead of one word. */}
+        <div className="flex-1 overflow-hidden relative h-11 flex items-center mx-2 sm:mx-4">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentItem.id}
@@ -87,10 +90,10 @@ export function CircleLiveFeed() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -20, opacity: 0 }}
               transition={{ duration: 0.4, ease: "easeInOut" }}
-              className="absolute inset-0 flex items-center gap-3 font-medium text-slate-700 dark:text-slate-200 w-full truncate"
+              className="absolute inset-0 flex items-center gap-2.5 font-medium text-slate-700 dark:text-slate-200 w-full"
             >
               <span className="text-xl leading-none shrink-0">{currentItem.emoji}</span>
-              <span className="truncate text-sm md:text-base">
+              <span className="line-clamp-2 text-sm md:text-base leading-snug">
                 {renderText()}
               </span>
             </motion.div>

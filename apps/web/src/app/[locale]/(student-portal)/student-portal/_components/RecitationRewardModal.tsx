@@ -5,6 +5,7 @@ import { Star, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import Confetti from "react-confetti";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -35,9 +36,15 @@ export function RecitationRewardModal({ xpAwarded, quality, surahName, isOpen, o
 
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== "undefined") {
-      setWindowDimension({ width: window.innerWidth, height: window.innerHeight });
-    }
+    if (typeof window === "undefined") return;
+    const measure = () =>
+      setWindowDimension({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
   }, []);
 
   if (!mounted) return null;
@@ -47,18 +54,25 @@ export function RecitationRewardModal({ xpAwarded, quality, surahName, isOpen, o
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md bg-transparent border-none shadow-none text-center flex flex-col items-center justify-center overflow-visible">
-        {isOpen && (
-          <div className="fixed inset-0 pointer-events-none z-50">
-            <Confetti
-              width={windowDimension.width}
-              height={windowDimension.height}
-              recycle={false}
-              numberOfPieces={600}
-              gravity={0.12}
-              colors={['#facc15', '#fef08a', '#eab308', '#ca8a04', '#14b8a6', '#f43f5e']}
-            />
-          </div>
-        )}
+        {/* Confetti is portaled to <body> so its `fixed inset-0` is relative
+            to the real viewport. Rendering it inside DialogContent would trap
+            it inside Radix's centering `transform`, making the pieces fall
+            from the middle of the screen instead of the very top. */}
+        {isOpen &&
+          typeof document !== "undefined" &&
+          createPortal(
+            <div className="fixed inset-0 pointer-events-none z-[100]">
+              <Confetti
+                width={windowDimension.width}
+                height={windowDimension.height}
+                recycle={false}
+                numberOfPieces={600}
+                gravity={0.12}
+                colors={['#facc15', '#fef08a', '#eab308', '#ca8a04', '#14b8a6', '#f43f5e']}
+              />
+            </div>,
+            document.body,
+          )}
         <AnimatePresence>
           {isOpen && (
             <motion.div 
