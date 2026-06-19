@@ -151,6 +151,8 @@ export class MushafService {
       recitationId: string | null;
       recitedAt: string;
       mistakeCount: number;
+      type: string | null;
+      quality: string | null;
       mistakes: RecitationMistake[];
     }>
   > {
@@ -184,12 +186,21 @@ export class MushafService {
       recitationId: string | null;
       recitedAt: string;
       mistakeCount: number;
+      type: string | null;
+      quality: string | null;
       mistakes: RecitationMistake[];
     }> = recitations.map((r) => {
       const mistakes = mistakesByRecitation.get(r.id) ?? [];
       const recitedAt =
         r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt);
-      return { recitationId: r.id, recitedAt, mistakeCount: mistakes.length, mistakes };
+      return {
+        recitationId: r.id,
+        recitedAt,
+        mistakeCount: mistakes.length,
+        type: r.type ?? null,
+        quality: r.quality ?? null,
+        mistakes,
+      };
     });
 
     // Append a synthetic entry for legacy null-recitationId mistakes if any
@@ -206,6 +217,8 @@ export class MushafService {
         recitationId: null,
         recitedAt,
         mistakeCount: legacyMistakes.length,
+        type: null,
+        quality: null,
         mistakes: legacyMistakes,
       });
     }

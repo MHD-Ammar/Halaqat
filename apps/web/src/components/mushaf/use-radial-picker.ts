@@ -38,8 +38,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const LONG_PRESS_MS = 300;
-const MOVE_TOLERANCE_PX = 8;
+// Tuned so the picker feels near-instant: a slightly shorter press opens it
+// before the finger has travelled far, and a more forgiving move tolerance
+// means small vertical jitter (e.g. while aiming for the memorization option
+// that sits straight up) no longer cancels the press into a scroll.
+const LONG_PRESS_MS = 240;
+const MOVE_TOLERANCE_PX = 14;
 const HAPTIC_PULSE_MS = 12;
 
 /**

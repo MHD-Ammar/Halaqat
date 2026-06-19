@@ -26,6 +26,7 @@ import {
   useMyMushafState,
   useUpdateMyMushafState,
   useStudentMistakes,
+  usePageRecitationHistory,
   triggerPrefetch,
 } from "@/hooks/use-mushaf";
 import { useStudentPortal } from "@/hooks/use-student-portal";
@@ -68,6 +69,14 @@ export default function MushafViewerPage() {
     currentPage,
     true,
   );
+
+  // 5b. Page history — drives the history button visibility (hidden when the
+  // page has never been recited) and is reused by the history panel.
+  const { data: pageHistory } = usePageRecitationHistory(
+    studentId || "",
+    currentPage,
+  );
+  const hasHistory = (pageHistory?.length ?? 0) > 0;
 
   // 6. Fetch surahs for the picker
   const { data: surahList } = useSurahsWithPages();
@@ -290,16 +299,19 @@ export default function MushafViewerPage() {
               </DialogContent>
             </Dialog>
 
-            {/* Recitation history for this page */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowHistory(true)}
-              title="سجل التسميع"
-              aria-label="سجل التسميع"
-            >
-              <History className="h-5 w-5" />
-            </Button>
+            {/* Recitation history — only shown once the page has been recited
+                at least once, otherwise there is nothing to show. */}
+            {hasHistory && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowHistory(true)}
+                title="سجل التسميع"
+                aria-label="سجل التسميع"
+              >
+                <History className="h-5 w-5" />
+              </Button>
+            )}
 
             {/* Surah Picker Dialog */}
             <Dialog open={showSurahPicker} onOpenChange={setShowSurahPicker}>

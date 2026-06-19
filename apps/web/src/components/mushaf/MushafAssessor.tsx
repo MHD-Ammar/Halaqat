@@ -47,6 +47,7 @@ import {
   ChevronRight,
   History,
   Loader2,
+  MoreVertical,
   RefreshCw,
   RotateCcw,
   Search,
@@ -54,6 +55,7 @@ import {
   Undo2,
   X,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React, {
   useCallback,
   useEffect,
@@ -61,6 +63,14 @@ import React, {
   useState,
 } from "react";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -74,6 +84,7 @@ import {
 } from "@/hooks/use-mushaf";
 import { useSurahsWithPages } from "@/hooks/use-surahs-with-pages";
 import { useToast } from "@/hooks/use-toast";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
 
 import { LiveScoreHeader } from "./LiveScoreHeader";
@@ -129,6 +140,24 @@ interface MushafAssessorProps {
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
+/** Arabic labels for each quality bucket (read-only display on locked pages). */
+const QUALITY_LABEL_AR: Record<string, string> = {
+  EXCELLENT: "ممتاز",
+  VERY_GOOD: "جيد جداً",
+  GOOD: "جيد",
+  ACCEPTABLE: "مقبول",
+  POOR: "إعادة",
+};
+
+/** Text colour per quality bucket, matching the live score header palette. */
+const QUALITY_COLOR_AR: Record<string, string> = {
+  EXCELLENT: "text-emerald-600 dark:text-emerald-400",
+  VERY_GOOD: "text-green-600 dark:text-green-400",
+  GOOD: "text-blue-600 dark:text-blue-400",
+  ACCEPTABLE: "text-amber-600 dark:text-amber-400",
+  POOR: "text-red-600 dark:text-red-400",
+};
+
 /**
  * Parse a wordLocation string ("surah:ayah:position") into integer parts,
  * with safe fallbacks for malformed values (defensive against API drift).
@@ -156,15 +185,19 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
   onSaved,
 }) => {
   const { toast } = useToast();
+  const tErr = useTranslations("ApiErrors");
 
   /**
-   * Lesson type for the whole assessment. Mistake-marking is usually done
-   * during review, so REVIEW is the default; the teacher can flip it to a new
-   * lesson before saving.
+   * Lesson type **per page**. Mirrors `pendingMistakesByPage` /
+   * `qualityOverridesByPage` so a multi-page save stamps each page with its
+   * own type rather than the last-visited page's. The default for a page is
+   * derived from its history (see the effect below): a first-ever recitation
+   * is NEW_LESSON (حفظ جديد), an already-recited page is REVIEW (مراجعة). A
+   * manual pick simply overwrites that page's entry.
    */
-  const [lessonType, setLessonType] = useState<RecitationType>(
-    RecitationType.REVIEW,
-  );
+  const [lessonTypeByPage, setLessonTypeByPage] = useState<
+    Record<number, RecitationType>
+  >({});
 
   // ── Page navigation state ────────────────────────────────────────────
   const [currentPage, setCurrentPage] = useState(initialPage ?? 1);
@@ -245,6 +278,43 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
     true,
   );
 
+  // Always-on history fetch for the current page — used to detect whether a
+  // saved attempt exists even when the student recited perfectly (zero
+  // mistakes), to drive the lesson-type default, and to lock editing.
+  const { data: pageHistory } = usePageRecitationHistory(student.id, currentPage);
+
+  /** Whether the current page already has a saved attempt. */
+  const hasSavedAttempt = (pageHistory?.length ?? 0) > 0;
+
+  /** True while the current page is being re-recited as a fresh attempt. */
+  const isReReciting = reRecitePages.has(currentPage);
+
+  /**
+   * A page that already has a saved attempt is READ-ONLY by default: the
+   * teacher cannot quietly append mistakes to (and thereby re-score) the
+   * existing attempt. To make changes they must explicitly start a fresh
+   * attempt via "إعادة تسميع", which records a new recitation and keeps the
+   * old one in the history.
+   */
+  const pageLocked = hasSavedAttempt && !isReReciting;
+
+  /**
+   * Effective lesson type for the page on screen: the stored per-page value if
+   * present, otherwise the history-derived default (REVIEW for a page with a
+   * saved attempt, NEW_LESSON for a fresh one).
+   */
+  const currentLessonType =
+    lessonTypeByPage[currentPage] ??
+    (hasSavedAttempt ? RecitationType.REVIEW : RecitationType.NEW_LESSON);
+
+  /** Manual pick — stored against the current page. */
+  const chooseLessonType = useCallback(
+    (next: RecitationType) => {
+      setLessonTypeByPage((prev) => ({ ...prev, [currentPage]: next }));
+    },
+    [currentPage],
+  );
+
   const assessMushaf = useRecordMushafAssessment();
 
   // ── Derived: page-level mistake set + map ────────────────────────────
@@ -260,9 +330,6 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
     () => new Set(pendingForPage.map((m) => m.wordLocation)),
     [pendingForPage],
   );
-
-  /** True while the current page is being re-recited as a fresh attempt. */
-  const isReReciting = reRecitePages.has(currentPage);
 
   /**
    * Map of saved mistakes for this page, keyed by wordLocation. While
@@ -431,6 +498,9 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
 
   const handleWordPointerDown = useCallback(
     (e: WordPointerEvent) => {
+      // A page with a saved attempt is read-only until the teacher starts a
+      // re-recite, so marking is disabled entirely here.
+      if (pageLocked) return;
       // Tapping a saved mistake is a no-op; we still cancel the system
       // long-press menu via the renderer's onContextMenu.
       if (savedHighlightMap.has(e.word.location)) return;
@@ -444,15 +514,27 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
         capturingElement: e.element,
       });
     },
-    [radial, savedHighlightMap],
+    [radial, savedHighlightMap, pageLocked],
   );
 
-  // Always-on history fetch for the current page — used to detect whether a
-  // saved attempt exists even when the student recited perfectly (zero mistakes).
-  const { data: pageHistory } = usePageRecitationHistory(student.id, currentPage);
-
-  /** Whether the current page already has a saved attempt to re-recite. */
-  const hasSavedAttempt = (pageHistory?.length ?? 0) > 0;
+  /**
+   * Seed the current page's default lesson type from its history, once that
+   * history resolves: first-ever recitation ⇒ NEW_LESSON (حفظ جديد), an
+   * already-recited page ⇒ REVIEW (مراجعة). We only write when the page has
+   * no entry yet, so a manual pick (which writes an entry) is never clobbered.
+   */
+  useEffect(() => {
+    if (pageHistory === undefined) return; // wait for history to load
+    setLessonTypeByPage((prev) => {
+      if (currentPage in prev) return prev; // manual or already-seeded
+      return {
+        ...prev,
+        [currentPage]: hasSavedAttempt
+          ? RecitationType.REVIEW
+          : RecitationType.NEW_LESSON,
+      };
+    });
+  }, [pageHistory, hasSavedAttempt, currentPage]);
 
   /** Start a fresh attempt on the current page (unlocks the saved words). */
   const startReRecite = useCallback(() => {
@@ -567,7 +649,10 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
         return {
           pageNumber: pageNum,
           quality,
-          type: lessonType,
+          // Each page carries its own lesson type. A page that was marked must
+          // have been visited, so its entry is seeded; NEW_LESSON is a safe
+          // fallback for the rare race where history hadn't resolved yet.
+          type: lessonTypeByPage[pageNum] ?? RecitationType.NEW_LESSON,
           mistakes: list.map((m) => ({
             wordLocation: m.wordLocation,
             surahNumber: m.surahNumber,
@@ -591,20 +676,20 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
         description: `${result.pageCount} ${result.pageCount === 1 ? "صفحة" : "صفحات"} · ${count} ${count === 1 ? "خطأ" : "أخطاء"} · +${result.totalPointsAwarded} نقطة`,
       });
 
-      // Reset all pending state on successful save.
+      // Reset all pending state on successful save. Clearing the lesson-type
+      // map lets each page re-derive its default next time (the just-saved
+      // pages now have history, so they'll default to REVIEW).
       setPendingMistakesByPage({});
       setQualityOverridesByPage({});
+      setLessonTypeByPage({});
       setReRecitePages(new Set());
       setShowReview(false);
       onSaved?.(count);
     } catch (error) {
-      const message =
-        (error as { response?: { data?: { message?: string } } })?.response
-          ?.data?.message ?? "تحقق من اتصالك وحاول مرة أخرى.";
       toast({
         variant: "destructive",
         title: "خطأ في الحفظ",
-        description: Array.isArray(message) ? message.join("، ") : message,
+        description: getApiErrorMessage(error, tErr),
       });
     }
   };
@@ -664,82 +749,139 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
       className="relative flex flex-1 flex-col overflow-hidden bg-background"
       dir="rtl"
     >
-      {/* Toolbar: page navigation only — mistake "mode" is owned by the
-          radial picker, no toggle needed here. */}
-      <div className="flex-none flex items-center gap-2 px-3 py-2 border-b bg-card shadow-sm">
+      {/* ── Unified top bar ──────────────────────────────────────────────
+          One slim row holds everything that used to be spread over two:
+          - surah / page chip (opens the navigator)
+          - tiny prev/next (swipe is the primary gesture; these are backup)
+          - a single "⋯" menu for the secondary tools (history, re-recite,
+            lesson type) so the chrome stays out of the teacher's way. */}
+      <div className="flex-none flex items-center gap-2 px-2.5 py-1.5 border-b bg-card shadow-sm">
         <button
           onClick={() => setShowNav(true)}
-          className="flex items-center gap-1.5 h-9 px-3 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-sm font-bold transition-colors active:scale-95 max-w-[40%] truncate"
+          className="flex items-center gap-1.5 h-9 px-3 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-sm font-bold transition-colors active:scale-95 min-w-0 max-w-[45%]"
           title="الانتقال إلى سورة أو صفحة"
         >
           <BookMarked className="h-4 w-4 shrink-0" />
           <span className="truncate">
             {pageData?.topPageSurah?.name ?? "سورة"}
           </span>
+          <span className="text-[11px] font-normal opacity-70 tabular-nums shrink-0">
+            · {currentPage}
+          </span>
         </button>
 
-        {/* History of past attempts for this page */}
-        <button
-          onClick={() => setShowHistory(true)}
-          className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center hover:bg-muted/70 active:scale-95 transition-all"
-          title="سجل التسميع"
-          aria-label="سجل التسميع"
-        >
-          <History className="h-4 w-4" />
-        </button>
-
-        {/* Re-recite: start a fresh attempt on a page that already has one. */}
-        {hasSavedAttempt &&
-          (isReReciting ? (
-            <button
-              onClick={cancelReRecite}
-              className="h-9 px-2.5 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 flex items-center gap-1 text-xs font-bold hover:bg-amber-200 active:scale-95 transition-all"
-              title="إلغاء إعادة التسميع"
-            >
-              <X className="h-3.5 w-3.5" />
-              إلغاء الإعادة
-            </button>
-          ) : (
-            <button
-              onClick={startReRecite}
-              className="h-9 px-2.5 rounded-lg bg-primary/10 text-primary flex items-center gap-1 text-xs font-bold hover:bg-primary/20 active:scale-95 transition-all"
-              title="إعادة تسميع هذه الصفحة"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              إعادة تسميع
-            </button>
-          ))}
-
-        <div className="ms-auto flex items-center gap-1">
+        {/* Backup page nav — small, swipe stays primary. */}
+        <div className="flex items-center gap-0.5">
           <button
             onClick={() => goToPage(currentPage - 1)}
             disabled={currentPage <= 1}
-            className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center disabled:opacity-40 hover:bg-muted/70 active:scale-95 transition-all"
+            className="h-9 w-8 rounded-lg flex items-center justify-center text-muted-foreground disabled:opacity-30 hover:bg-muted active:scale-95 transition-all"
             title="الصفحة السابقة"
             aria-label="الصفحة السابقة"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
           <button
-            onClick={() => setShowNav(true)}
-            className="h-9 min-w-[3.5rem] px-2 rounded-lg bg-muted hover:bg-primary/10 hover:text-primary font-bold text-sm transition-colors tabular-nums"
-            title="الانتقال إلى صفحة"
-          >
-            {currentPage}
-          </button>
-          <button
             onClick={() => goToPage(currentPage + 1)}
             disabled={currentPage >= 604}
-            className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center disabled:opacity-40 hover:bg-muted/70 active:scale-95 transition-all"
+            className="h-9 w-8 rounded-lg flex items-center justify-center text-muted-foreground disabled:opacity-30 hover:bg-muted active:scale-95 transition-all"
             title="الصفحة التالية"
             aria-label="الصفحة التالية"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
         </div>
+
+        {/* Session average — only when more than one page has been marked,
+            so it adds signal without cluttering single-page assessments. */}
+        {sessionResult &&
+          Object.values(pendingMistakesByPage).filter((l) => l.length > 0)
+            .length > 1 && (
+            <div className="ms-auto flex items-center gap-1 rounded-lg bg-primary/10 px-2 py-1 text-xs text-primary">
+              <span className="opacity-70">معدّل الجلسة</span>
+              <span className="font-black tabular-nums">
+                {sessionResult.score.toFixed(1)}
+              </span>
+            </div>
+          )}
+
+        {/* Secondary tools tucked into one menu. */}
+        <div
+          className={
+            sessionResult &&
+            Object.values(pendingMistakesByPage).filter((l) => l.length > 0)
+              .length > 1
+              ? ""
+              : "ms-auto"
+          }
+        >
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center hover:bg-muted/70 active:scale-95 transition-all"
+                title="المزيد"
+                aria-label="المزيد"
+              >
+                <MoreVertical className="h-5 w-5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 text-right">
+              <DropdownMenuItem onClick={() => setShowHistory(true)}>
+                <History className="h-4 w-4 ms-0 me-2" />
+                سجل التسميع
+              </DropdownMenuItem>
+
+              {hasSavedAttempt &&
+                (isReReciting ? (
+                  <DropdownMenuItem onClick={cancelReRecite}>
+                    <X className="h-4 w-4 me-2" />
+                    إلغاء إعادة التسميع
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onClick={startReRecite}>
+                    <RotateCcw className="h-4 w-4 me-2" />
+                    إعادة تسميع هذه الصفحة
+                  </DropdownMenuItem>
+                ))}
+
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[11px] text-muted-foreground font-medium">
+                نوع التسميع
+              </DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => chooseLessonType(RecitationType.REVIEW)}
+              >
+                {currentLessonType === RecitationType.REVIEW && (
+                  <Check className="h-4 w-4 me-2" />
+                )}
+                <span
+                  className={
+                    currentLessonType === RecitationType.REVIEW ? "" : "ms-6"
+                  }
+                >
+                  مراجعة
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => chooseLessonType(RecitationType.NEW_LESSON)}
+              >
+                {currentLessonType === RecitationType.NEW_LESSON && (
+                  <Check className="h-4 w-4 me-2" />
+                )}
+                <span
+                  className={
+                    currentLessonType === RecitationType.NEW_LESSON ? "" : "ms-6"
+                  }
+                >
+                  حفظ جديد
+                </span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
-      {/* Live score header */}
+      {/* Live score header — chips + score, only meaningful once marking. */}
       <LiveScoreHeader
         counts={liveCounts}
         result={liveResult}
@@ -755,9 +897,37 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
         </div>
       )}
 
-      {/* Mushaf body */}
+      {/* Locked banner — this page already has a saved attempt, so it is
+          read-only. Editing requires starting a fresh attempt. */}
+      {pageLocked && (
+        <div className="flex-none flex items-center justify-between gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 text-xs font-medium border-b border-amber-200 dark:border-amber-900">
+          <span className="flex items-center gap-1.5">
+            <History className="h-3.5 w-3.5" />
+            هذه الصفحة مسمّعة من قبل — للتعديل ابدأ إعادة تسميع
+          </span>
+          <button
+            onClick={startReRecite}
+            className="flex items-center gap-1 rounded-lg bg-primary/10 text-primary px-2 py-1 font-bold hover:bg-primary/20 active:scale-95 transition-all shrink-0"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            إعادة تسميع
+          </button>
+        </div>
+      )}
+
+      {/* Mushaf body.
+          While the radial mistake picker is open we lock scrolling entirely
+          (overflow-hidden + touch-none) so a vertical finger drag selects the
+          mistake option above the word (e.g. the memorization option, which
+          sits straight up) instead of scrolling the page away. Normal reading
+          keeps vertical scroll + horizontal swipe-to-flip. */}
       <div
-        className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y"
+        className={cn(
+          "flex-1 min-h-0 overscroll-contain",
+          radial.state !== null
+            ? "overflow-hidden touch-none"
+            : "overflow-y-auto touch-pan-y",
+        )}
         onTouchStart={swipeHandlers.onTouchStart}
         onTouchEnd={swipeHandlers.onTouchEnd}
       >
@@ -782,7 +952,7 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
         ) : pageData ? (
           <MushafPageRenderer
             page={pageData}
-            interactive
+            interactive={!pageLocked}
             onWordPointerDown={handleWordPointerDown}
             selectedWords={selectedWords}
             highlightedWords={combinedHighlightMap}
@@ -790,9 +960,13 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
         ) : null}
       </div>
 
-      {/* Quality override row — shown only when there's at least one
-          mistake on the current page. */}
-      {pageHasAnyMistake && (
+      {/* Quality row.
+          - Editable picker: only on an unlocked page with at least one
+            mistake. On a locked (already-recited) page the picker is hidden
+            so the saved rating cannot be silently changed and re-saved.
+          - Read-only chip: on a locked page, show the rating that was actually
+            saved for the latest attempt (from its recitation row). */}
+      {pageHasAnyMistake && !pageLocked && (
         <QualityOverridePicker
           suggested={liveResult.suggestedQuality}
           override={qualityOverridesByPage[currentPage] ?? null}
@@ -804,6 +978,24 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
           }
           className="flex-none mx-3 mb-1"
         />
+      )}
+
+      {pageLocked && pageHistory?.[0]?.quality && (
+        <div className="flex-none mx-3 mb-1 flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2 text-xs">
+          <span className="font-medium text-muted-foreground">
+            التقييم المحفوظ
+          </span>
+          <span
+            className={cn(
+              "font-bold",
+              QUALITY_COLOR_AR[pageHistory[0].quality as string] ??
+                "text-foreground",
+            )}
+          >
+            {QUALITY_LABEL_AR[pageHistory[0].quality as string] ??
+              pageHistory[0].quality}
+          </span>
+        </div>
       )}
 
       {/* Pending review panel */}
@@ -902,76 +1094,34 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
         </div>
       )}
 
-      {/* Bottom action bar */}
+      {/* ── Bottom action bar ────────────────────────────────────────────
+          Lean by design: the undo + review controls only appear once there
+          is something pending, so an untouched page shows just a calm,
+          full-width primary action. */}
       <div className="flex-none flex items-center gap-2 px-3 py-2.5 border-t bg-card">
-        <button
-          onClick={undoLastOnPage}
-          disabled={pendingForPage.length === 0}
-          className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center disabled:opacity-30 hover:bg-muted/70 transition-colors active:scale-95"
-          title="تراجع عن الأخير"
-          aria-label="تراجع عن الأخير"
-        >
-          <Undo2 className="h-4 w-4" />
-        </button>
+        {pendingTotal > 0 && (
+          <>
+            <button
+              onClick={undoLastOnPage}
+              disabled={pendingForPage.length === 0}
+              className="h-11 w-11 rounded-xl bg-muted flex items-center justify-center disabled:opacity-30 hover:bg-muted/70 transition-colors active:scale-95"
+              title="تراجع عن الأخير"
+              aria-label="تراجع عن الأخير"
+            >
+              <Undo2 className="h-4 w-4" />
+            </button>
 
-        {/* Lesson-type toggle — applies to the whole assessment when saved. */}
-        <div className="flex-none flex items-center rounded-xl bg-muted p-0.5 text-xs font-bold">
-          <button
-            onClick={() => setLessonType(RecitationType.REVIEW)}
-            className={cn(
-              "h-9 px-2.5 rounded-lg transition-all",
-              lessonType === RecitationType.REVIEW
-                ? "bg-background shadow-sm text-foreground"
-                : "text-muted-foreground",
-            )}
-            title="مراجعة"
-          >
-            مراجعة
-          </button>
-          <button
-            onClick={() => setLessonType(RecitationType.NEW_LESSON)}
-            className={cn(
-              "h-9 px-2.5 rounded-lg transition-all",
-              lessonType === RecitationType.NEW_LESSON
-                ? "bg-background shadow-sm text-foreground"
-                : "text-muted-foreground",
-            )}
-            title="درس جديد"
-          >
-            جديد
-          </button>
-        </div>
-
-        {pendingTotal > 0 ? (
-          <button
-            onClick={() => setShowReview((v) => !v)}
-            className="h-10 px-3 rounded-xl text-sm font-bold flex items-center gap-1.5 bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-950/60 active:scale-95 transition-all"
-          >
-            <span className="min-w-[1.5rem] h-5 rounded-full bg-red-500 text-white text-xs font-bold inline-flex items-center justify-center px-1 tabular-nums">
-              {pendingTotal}
-            </span>
-            {showReview ? "إخفاء" : "مراجعة"}
-          </button>
-        ) : (
-          <div className="h-10 px-3 rounded-xl text-sm flex items-center gap-1.5 bg-muted text-muted-foreground opacity-50 select-none">
-            <span className="min-w-[1.5rem] h-5 rounded-full bg-muted-foreground/20 text-xs inline-flex items-center justify-center px-1 tabular-nums">
-              0
-            </span>
-            أخطاء
-          </div>
-        )}
-
-        {/* Session-level score chip — shown when more than one page has
-            been touched so we don't display redundant numbers. */}
-        {sessionResult &&
-          Object.keys(pendingMistakesByPage).length > 1 && (
-            <div className="hidden sm:flex h-10 px-3 rounded-xl text-xs items-center gap-1.5 bg-primary/10 text-primary">
-              <span className="opacity-70">جلسة</span>
-              <span className="font-black tabular-nums">
-                {sessionResult.score.toFixed(1)}
+            <button
+              onClick={() => setShowReview((v) => !v)}
+              className="h-11 px-3 rounded-xl text-sm font-bold flex items-center gap-1.5 bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-950/60 active:scale-95 transition-all"
+            >
+              <span className="min-w-[1.5rem] h-5 rounded-full bg-red-500 text-white text-xs font-bold inline-flex items-center justify-center px-1 tabular-nums">
+                {pendingTotal}
               </span>
-            </div>
-          )}
+              {showReview ? "إخفاء" : "مراجعة"}
+            </button>
+          </>
+        )}
 
         <button
           onClick={handleSave}
@@ -980,7 +1130,7 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
             "flex-1 h-11 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]",
             pendingTotal > 0 && !assessMushaf.isPending
               ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
-              : "bg-muted text-muted-foreground cursor-not-allowed opacity-40",
+              : "bg-muted text-muted-foreground cursor-not-allowed opacity-50",
           )}
         >
           {assessMushaf.isPending ? (
@@ -988,15 +1138,18 @@ export const MushafAssessor: React.FC<MushafAssessorProps> = ({
               <Loader2 className="h-4 w-4 animate-spin" />
               <span>جاري الحفظ...</span>
             </>
-          ) : (
+          ) : pendingTotal > 0 ? (
             <>
               <Check className="h-4 w-4" />
               حفظ التسميع
-              {pendingTotal > 0 && (
-                <span className="opacity-75 font-normal text-xs tabular-nums">
-                  ({pendingTotal})
-                </span>
-              )}
+              <span className="opacity-75 font-normal text-xs tabular-nums">
+                ({pendingTotal})
+              </span>
+            </>
+          ) : (
+            <>
+              <Check className="h-4 w-4" />
+              اضغط مطولاً على كلمة لتحديد خطأ
             </>
           )}
         </button>

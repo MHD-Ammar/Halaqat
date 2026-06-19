@@ -18,6 +18,7 @@ import {
   ParseUUIDPipe,
   UseInterceptors,
   ClassSerializerInterceptor,
+  ForbiddenException,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -205,18 +206,27 @@ export class StudentsController {
    * GET /api/students/:id/profile
    */
   @Get(":id/profile")
-  @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.EXAMINER)
+  @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.EXAMINER, UserRole.STUDENT)
   @ApiOperation({
     summary: "Get student profile",
-    description: "Get comprehensive student profile with stats",
+    description:
+      "Get comprehensive student profile with stats. Students may only read their own profile.",
   })
   @ApiParam({ name: "id", description: "Student UUID" })
   @ApiResponse({ status: 200, description: "Student profile with stats" })
+  @ApiResponse({ status: 403, description: "A student requested another student's profile" })
   @ApiResponse({ status: 404, description: "Student not found" })
   getProfile(
     @Param("id", ParseUUIDPipe) id: string,
     @CurrentUser() user: { id: string; role: UserRole },
   ) {
+    // A STUDENT may only read their own profile; their JWT `id` is the
+    // student id. Anyone else (admin/teacher/examiner) keeps full access.
+    if (user.role === UserRole.STUDENT && user.id !== id) {
+      throw new ForbiddenException(
+        "You do not have permission to view this student",
+      );
+    }
     const teacherId = user.role === UserRole.TEACHER ? user.id : undefined;
     return this.studentsService.getStudentProfile(id, teacherId);
   }

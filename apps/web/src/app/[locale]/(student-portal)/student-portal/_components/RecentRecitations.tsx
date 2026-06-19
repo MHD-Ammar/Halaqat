@@ -23,11 +23,16 @@ export function RecentRecitations({ recitations }: RecentRecitationsProps) {
   const ta = useTranslations("StudentAction");
   const locale = useLocale();
 
+  // Keys must match the RecitationQuality enum exactly
+  // (EXCELLENT / VERY_GOOD / GOOD / ACCEPTABLE / POOR). The previous map was
+  // missing VERY_GOOD and POOR and mislabelled GOOD/ACCEPTABLE, so e.g. a
+  // VERY_GOOD recitation fell through to the "good" label.
   const QUALITY_MAP: Record<string, { label: string; color: string }> = {
-    EXCELLENT: { label: ta("excellent"), color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800" },
-    GOOD: { label: ta("veryGood"), color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800" },
-    ACCEPTABLE: { label: ta("good"), color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800" },
-    NEEDS_IMPROVEMENT: { label: t("needsReview"), color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800" },
+    EXCELLENT: { label: ta("excellent"), color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800" },
+    VERY_GOOD: { label: ta("veryGood"), color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800" },
+    GOOD: { label: ta("good"), color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800" },
+    ACCEPTABLE: { label: ta("acceptable"), color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800" },
+    POOR: { label: ta("notAccepted"), color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800" },
   };
 
   if (!recitations || recitations.length === 0) {

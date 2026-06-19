@@ -6,9 +6,11 @@
  * Touch-based horizontal swipe-to-paginate hook. Built deliberately to
  * coexist with the radial picker:
  *
- * 1. The hook ignores any gesture that originates inside `.mushaf-word`
- *    (or any element matching `excludeSelector`). The radial picker owns
- *    those gestures.
+ * 1. A swipe may start anywhere — including on a word. The picker and the
+ *    swipe are told apart by *intent*: the picker needs a stationary
+ *    long-press, while a swipe is a fast horizontally-dominant flick. (The
+ *    Mushaf's justified text leaves almost no gaps, so excluding word-touches
+ *    would mean swipe never fires.)
  * 2. The hook ignores any gesture while a picker is active (passed in via
  *    `isBlocked`).
  * 3. Vertical drags are passed through so the page can scroll within
@@ -36,21 +38,15 @@ const HORIZONTAL_DOMINANCE = 1.4;
 const MAX_SWIPE_MS = 750;
 
 interface UsePageSwipeOptions {
-  /** Called when the user swipes from right-to-left (RTL: previous page). */
+  /** Called when the user swipes right-to-left (previous page). */
   onSwipePrev: () => void;
-  /** Called when the user swipes from left-to-right (RTL: next page). */
+  /** Called when the user swipes left-to-right (next page). */
   onSwipeNext: () => void;
   /**
    * When true, the hook is dormant. Set this to `radial.state !== null` so
    * a swipe started during the picker is silently ignored.
    */
   isBlocked?: boolean;
-  /**
-   * CSS selector for elements whose touchstart should be ignored by the
-   * swipe layer. Defaults to mushaf words / ayah markers so the picker
-   * owns those gestures end-to-end.
-   */
-  excludeSelector?: string;
 }
 
 interface SwipeStart {
@@ -60,17 +56,15 @@ interface SwipeStart {
 }
 
 /**
- * In Arabic / Mushaf reading, swiping the finger from right to left moves
- * the reader **forward** (next page = higher page number). Swiping from
- * left to right moves backward. The thresholds and signs below encode
- * exactly that mapping; if a future caller needs LTR semantics they can
- * pass swapped callbacks.
+ * Swiping the finger from left to right moves the reader **forward**
+ * (next page = higher page number); right-to-left moves backward. This
+ * matches the product's chosen convention across the student and teacher
+ * Mushaf surfaces.
  */
 export function usePageSwipe({
   onSwipePrev,
   onSwipeNext,
   isBlocked,
-  excludeSelector = ".mushaf-word, .mushaf-ayah-end",
 }: UsePageSwipeOptions) {
   const startRef = useRef<SwipeStart | null>(null);
 
@@ -85,18 +79,26 @@ export function usePageSwipe({
         startRef.current = null;
         return;
       }
-      // If the touch started on a word, the radial picker owns the gesture.
-      const target = e.target as Element | null;
-      if (target?.closest?.(excludeSelector)) {
-        startRef.current = null;
-        return;
-      }
 
+      // NOTE: we deliberately record the start position even when the touch
+      // begins on a word. The Mushaf's justified text leaves almost no gap
+      // between words, so excluding word-touches (the previous behaviour)
+      // meant swipe-to-flip effectively never fired on the teacher assessor.
+      //
+      // This is safe because the two gestures are disambiguated by *intent*,
+      // not by start target:
+      //   - The radial picker needs a ~240ms stationary long-press; once it
+      //     opens, `isBlocked` becomes true and the in-flight swipe below is
+      //     discarded on touchend.
+      //   - A swipe is a fast, horizontally-dominant flick — see the strict
+      //     distance / dominance / duration checks in onTouchEnd.
+      // A quick tap to mark a mistake moves <14px, so it fails the swipe
+      // distance threshold and never flips the page.
       const t = e.touches[0];
       if (!t) return;
       startRef.current = { x: t.clientX, y: t.clientY, t: Date.now() };
     },
-    [excludeSelector, isBlocked],
+    [isBlocked],
   );
 
   const onTouchEnd = useCallback(
@@ -118,11 +120,11 @@ export function usePageSwipe({
       if (Math.abs(dx) < SWIPE_DISTANCE_THRESHOLD) return;
       if (Math.abs(dx) < Math.abs(dy) * HORIZONTAL_DOMINANCE) return;
 
-      // RTL semantics: positive dx (left-to-right swipe) ⇒ go BACK; negative
-      // dx (right-to-left swipe) ⇒ go FORWARD. Matches how a physical
-      // Mushaf is leafed.
-      if (dx > 0) onSwipePrev();
-      else onSwipeNext();
+      // Swipe left-to-right (positive dx) ⇒ NEXT page (higher number);
+      // swipe right-to-left (negative dx) ⇒ PREVIOUS page. This matches the
+      // student viewer and the teacher's expectation.
+      if (dx > 0) onSwipeNext();
+      else onSwipePrev();
     },
     [isBlocked, onSwipeNext, onSwipePrev],
   );

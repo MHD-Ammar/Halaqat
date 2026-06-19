@@ -267,6 +267,7 @@ export class PointsService {
     // Create transaction
     const transaction = this.transactionRepository.create({
       studentId,
+      mosqueId,
       amount: multiplier * rule.points,
       reason: reason || rule.description,
       sourceType,
@@ -327,6 +328,7 @@ export class PointsService {
       transactionsToSave.push(
         this.transactionRepository.create({
           studentId: award.studentId,
+          mosqueId,
           amount: points,
           reason: award.reason || rule.description,
           sourceType,
@@ -374,6 +376,25 @@ export class PointsService {
       throw new BadRequestException("This reward rule is not active");
     }
 
+    // Verify the target student exists and belongs to the teacher's mosque.
+    // This closes a cross-mosque authorization gap and guarantees the
+    // transaction's mosque_id always matches the student's mosque (consistent
+    // with how historical rows are backfilled from student.mosque_id).
+    const student = await this.studentRepository.findOne({
+      where: { id: dto.studentId },
+      select: ["id", "mosqueId"],
+    });
+
+    if (!student) {
+      throw new NotFoundException("Student not found");
+    }
+
+    if (student.mosqueId !== mosqueId) {
+      throw new ForbiddenException(
+        "You cannot award points to a student from another mosque",
+      );
+    }
+
     // Determine the points to award
     let pointsToAward: number;
     if (rule.isCustomEntry) {
@@ -413,9 +434,10 @@ export class PointsService {
       }
     }
 
-    // Create transaction
+    // Create transaction (mosque_id sourced from the verified student)
     const transaction = this.transactionRepository.create({
       studentId: dto.studentId,
+      mosqueId: student.mosqueId,
       amount: pointsToAward,
       reason: rule.description,
       sourceType: PointSourceType.MANUAL_REWARD,
@@ -460,8 +482,9 @@ export class PointsService {
 
     // Calculate current budget usage for this teacher in this week (only if positive reward)
     if (dto.amount > 0) {
-      const mosque = await this.mosqueRepository.findOne({ where: { id: mosqueId } });
-      const limit = mosque?.manualPointLimit ?? 20;
+      // The mosque is already loaded via the student relation above — reuse it
+      // instead of issuing a second query for the same row.
+      const limit = student.mosque?.manualPointLimit ?? 20;
 
       const currentUsage = await this.getTeacherWeeklyBudgetUsage(
         teacherId,
@@ -487,6 +510,7 @@ export class PointsService {
     // Create transaction
     const transaction = this.transactionRepository.create({
       studentId: dto.studentId,
+      mosqueId,
       amount: dto.amount,
       reason: dto.reason,
       sourceType,

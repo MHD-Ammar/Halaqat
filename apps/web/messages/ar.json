@@ -42,6 +42,19 @@
     "submitting": "جاري الإرسال...",
     "continue": "متابعة"
   },
+  "ApiErrors": {
+    "generic": "حدث خطأ ما. حاول مرة أخرى.",
+    "badRequest": "طلب غير صالح.",
+    "unauthorized": "انتهت الجلسة. يرجى تسجيل الدخول من جديد.",
+    "forbidden": "ليس لديك صلاحية للقيام بهذا الإجراء.",
+    "notFound": "العنصر المطلوب غير موجود.",
+    "conflict": "هناك تعارض مع بيانات موجودة.",
+    "validation": "تحقق من البيانات المُدخلة وحاول مجدداً.",
+    "tooManyRequests": "محاولات كثيرة. انتظر قليلاً ثم حاول مجدداً.",
+    "serverError": "خطأ في الخادم. حاول لاحقاً.",
+    "forbiddenStudent": "لا يمكنك الوصول إلى ملف طالب آخر.",
+    "forbiddenCircleMove": "لا يمكنك نقل الطالب إلى حلقة لا تملكها."
+  },
   "Nav": {
     "overview": "نظرة عامة",
     "circles": "الحلقات",
@@ -740,9 +753,12 @@
       "achievementCompletedNoTitle": "{name} حصل على وسام {item}!",
       "milestoneCompleted": "{name} ({title}) فتح مكافأة {item}!",
       "milestoneCompletedNoTitle": "{name} فتح مكافأة {item}!",
-      "levelUpCompleted": "🎉 {name} وصل للمستوى {item}!",
-      "streakMilestoneCompleted": "🔥 {name} وصل لسلسلة {item} يوم متتالية!",
-      "leaguePromotionCompleted": "📈 {name} صعد إلى دوري {item}!",
+      "levelUpCompleted": "{name} وصل للمستوى {item}!",
+      "levelUpCompletedNoTitle": "{name} وصل للمستوى {item}!",
+      "streakMilestoneCompleted": "{name} وصل لسلسلة {item} يوم متتالية!",
+      "streakMilestoneCompletedNoTitle": "{name} وصل لسلسلة {item} يوم متتالية!",
+      "leaguePromotionCompleted": "{name} صعد إلى دوري {item}!",
+      "leaguePromotionCompletedNoTitle": "{name} صعد إلى دوري {item}!",
       "congrats": "مبارك 🎊"
     },
     "unknown": "غير معروف",
