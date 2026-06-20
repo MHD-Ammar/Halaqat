@@ -14,7 +14,7 @@
 
 import { tallyMistakes } from "@halaqat/types";
 import { History, CalendarClock, Sparkles, Loader2 } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 
 import {
@@ -42,6 +42,8 @@ export const PageHistorySheet: React.FC<PageHistorySheetProps> = ({
   pageNumber,
 }) => {
   const locale = useLocale();
+  const t = useTranslations("PageHistorySheet");
+  const dir = locale === "ar" ? "rtl" : "ltr";
   const { data: attempts, isLoading } = usePageRecitationHistory(
     studentId,
     pageNumber,
@@ -62,13 +64,13 @@ export const PageHistorySheet: React.FC<PageHistorySheetProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        dir="rtl"
+        dir={dir}
         className="max-h-[80vh] overflow-hidden flex flex-col p-0 max-w-[420px]"
       >
         <DialogHeader className="p-4 border-b">
           <DialogTitle className="flex items-center justify-center gap-2 text-center">
             <History className="h-5 w-5 text-primary" />
-            سجل تسميع صفحة {pageNumber}
+            {t("title", { pageNumber })}
           </DialogTitle>
         </DialogHeader>
 
@@ -83,7 +85,7 @@ export const PageHistorySheet: React.FC<PageHistorySheetProps> = ({
                 <History className="h-8 w-8 text-muted-foreground/40" />
               </div>
               <p className="text-sm font-medium text-muted-foreground">
-                لا يوجد سجل تسميع لهذه الصفحة بعد
+                {t("emptyState")}
               </p>
             </div>
           ) : (
@@ -116,13 +118,13 @@ export const PageHistorySheet: React.FC<PageHistorySheetProps> = ({
                                 : "bg-sky-500/15 text-sky-600 dark:text-sky-400",
                             )}
                           >
-                            {attempt.type === "NEW_LESSON" ? "حفظ جديد" : "مراجعة"}
+                            {attempt.type === "NEW_LESSON" ? t("newLesson") : t("review")}
                           </span>
                         )}
                         {isLatest && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
                             <Sparkles className="h-3 w-3" />
-                            الأحدث
+                            {t("latest")}
                           </span>
                         )}
                       </div>
@@ -130,7 +132,7 @@ export const PageHistorySheet: React.FC<PageHistorySheetProps> = ({
 
                     {attempt.mistakeCount === 0 ? (
                       <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                        بدون أخطاء — ما شاء الله 🌟
+                        {t("noMistakes")}
                       </p>
                     ) : (
                       <div className="flex items-center gap-3">

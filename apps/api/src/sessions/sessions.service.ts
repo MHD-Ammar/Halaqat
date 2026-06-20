@@ -143,6 +143,7 @@ export class SessionsService {
         this.attendanceRepository.create({
           sessionId: session.id,
           studentId: student.id,
+          mosqueId: session.mosqueId,
           status: AttendanceStatus.PRESENT, // Default to PRESENT
         }),
       );

@@ -14,11 +14,14 @@ import {
 } from "typeorm";
 
 import { Quest } from "./quest.entity";
+import { Mosque } from "../../mosques/entities/mosque.entity";
 import { Student } from "../../students/entities/student.entity";
 
 @Entity("quest_completion")
 @Index(["studentId", "questId"])
 @Index(["studentId", "questId", "completedAt"])
+// Mosque-scoped activity feed filters by mosque and orders by completion time.
+@Index(["mosqueId", "completedAt"])
 export class QuestCompletion {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
@@ -48,4 +51,16 @@ export class QuestCompletion {
   @ManyToOne(() => Quest, (quest) => quest.completions, { onDelete: "CASCADE" })
   @JoinColumn({ name: "quest_id" })
   quest!: Quest;
+
+  /**
+   * The mosque this completion belongs to.
+   * Denormalized from the owning student so the mosque activity feed and
+   * per-mosque quest stats can filter on an indexed column without joining student.
+   */
+  @ManyToOne(() => Mosque, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "mosque_id" })
+  mosque!: Mosque;
+
+  @Column({ name: "mosque_id", type: "uuid" })
+  mosqueId!: string;
 }

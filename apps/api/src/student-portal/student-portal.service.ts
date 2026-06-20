@@ -449,6 +449,7 @@ export class StudentPortalService {
       const completion = queryRunner.manager.create(QuestCompletion, {
         studentId,
         questId,
+        mosqueId: student.mosqueId,
         currentProgress: quest.target,
         completedAt: new Date(),
       });
@@ -531,6 +532,22 @@ export class StudentPortalService {
     // If frequency is DAILY or WEEKLY, ensure the in-progress completion is actually from the current period
     // (We'll assume if it's null, it's the current one for now, as per simplified logic in Task-35.md)
 
+    // Resolve the student's mosque for any new completion row *before* opening the
+    // transaction, to avoid an extra query while row locks are held. An existing
+    // completion already carries the mosque (same student → same mosque); only fall
+    // back to a student lookup when there are no prior completions at all.
+    let mosqueId = existingCompletions[0]?.mosqueId;
+    if (!mosqueId) {
+      const student = await this.studentRepo.findOne({
+        where: { id: studentId },
+        select: ["id", "mosqueId"],
+      });
+      if (!student) {
+        throw new NotFoundException("Student not found");
+      }
+      mosqueId = student.mosqueId;
+    }
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -540,15 +557,21 @@ export class StudentPortalService {
         completion = queryRunner.manager.create(QuestCompletion, {
           studentId,
           questId,
+          mosqueId,
           currentProgress: 0,
           completedAt: null,
         });
       } else {
-        // Find again within transaction for locking
+        // Re-fetch inside the transaction to take a row lock.
         completion = await queryRunner.manager.findOne(QuestCompletion, {
           where: { id: completion.id },
           lock: { mode: "pessimistic_write" },
         });
+        // The row may have been removed by a concurrent transaction between the
+        // initial read and this locked re-fetch — guard before dereferencing.
+        if (!completion) {
+          throw new NotFoundException("Quest completion not found");
+        }
       }
 
       const newProgress = Math.min(completion!.currentProgress + amount, quest.target);

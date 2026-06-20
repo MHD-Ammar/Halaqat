@@ -1311,5 +1311,13 @@
     "fulfillmentNotes": "ملاحظات إضافية (اختياري)",
     "cancel": "تراجع",
     "confirm": "تأكيد"
+  },
+  "PageHistorySheet": {
+    "title": "سجل تسميع صفحة {pageNumber}",
+    "emptyState": "لا يوجد سجل تسميع لهذه الصفحة بعد",
+    "newLesson": "حفظ جديد",
+    "review": "مراجعة",
+    "latest": "الأحدث",
+    "noMistakes": "بدون أخطاء — ما شاء الله 🌟"
   }
 }

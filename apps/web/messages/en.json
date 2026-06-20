@@ -1248,5 +1248,13 @@
     "fulfillmentNotes": "Additional Notes (Optional)",
     "cancel": "Go Back",
     "confirm": "Confirm"
+  },
+  "PageHistorySheet": {
+    "title": "Page {pageNumber} Recitation History",
+    "emptyState": "No recitation history for this page yet",
+    "newLesson": "New Lesson",
+    "review": "Review",
+    "latest": "Latest",
+    "noMistakes": "No mistakes — Masha'Allah 🌟"
   }
 }
